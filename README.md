@@ -23,14 +23,29 @@ A real-time training dashboard for the Concept2 PM5 rowing monitor. Built becaus
 
 ## Screenshots
 
-> Placeholders — drop screenshots into `docs/screenshots/` and uncomment.
+**Home menu**
 
-<!--
 ![Home menu](docs/screenshots/home.png)
-![Race preset](docs/screenshots/race-preset.png)
-![Force curve with best+avg overlays](docs/screenshots/force-curve.png)
+
+**Focus preset picker — six curated modes, each with locked "defining" metrics**
+
+![Focus preset picker](docs/screenshots/focus-presets.png)
+
+**Workout builder — programmable intervals with per-row duplicate / time-cap**
+
 ![Workout builder](docs/screenshots/workout-builder.png)
--->
+
+**Saved workouts library**
+
+![Saved workouts](docs/screenshots/workouts-library.png)
+
+**Settings — layout / theme / HR / force-curve overlays**
+
+![Settings dialog](docs/screenshots/settings.png)
+
+**Benchmarks — personal records, each with a one-tap test workout**
+
+![Benchmarks section in Settings](docs/screenshots/benchmarks.png)
 
 ---
 
@@ -197,6 +212,12 @@ build_exe.bat
 - **Multi-coach mode** — Firebase Auth + Firestore so coaches can share lineups with their athletes (Phase 2 schema and security rules are already in the codebase, dormant behind a placeholder config).
 - **Session replay** — scrub through a finished workout and watch each stroke's force curve evolve.
 - **Multi-erg sync** — for winter team training: 8 ergs paired to one coach dashboard for crew synchronization analysis.
+
+---
+
+## Reflection
+
+For a short writeup of what I learned, what surprised me, and what I'd do differently if I started over, see [`docs/reflection.md`](docs/reflection.md).
 
 ---
 

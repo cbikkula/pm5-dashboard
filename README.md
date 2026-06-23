@@ -20,8 +20,6 @@
 
 > Open in Chrome or Edge on a desktop or Android phone. Click **Connect**, pair the PM5 over Bluetooth, and row.
 
-> _A demo GIF will land here once I've recorded a session against my own PM5. The static screenshots below show every screen the GIF would cycle through._
-
 ---
 
 ## What it does

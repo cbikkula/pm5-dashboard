@@ -1,10 +1,26 @@
+<div align="center">
+
+<img src="docs/logo.svg" alt="PM5 Dashboard" width="320">
+
 # PM5 Dashboard
 
-A real-time training dashboard for the Concept2 PM5 rowing monitor. Built because the on-board PM5 screen leaves a lot of detail on the table — peak force timing, drive length, ratio, stroke-by-stroke force curves, HR zone drift, decoupling — and there was no free tool that put it all in one place on a device I could actually use at school.
+**Real-time Bluetooth dashboard for the Concept2 PM5 — built by a rower, for rowers.**
 
-**Live:** [pm5row.surge.sh](https://pm5row.surge.sh) · [rowerg-dashboard.surge.sh](https://rowerg-dashboard.surge.sh) · [ergdash.surge.sh](https://ergdash.surge.sh)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Vanilla JS](https://img.shields.io/badge/JavaScript-vanilla%20%C2%B7%20no%20bundler-yellow.svg)
+![PWA](https://img.shields.io/badge/PWA-installable-9b66ff.svg)
+![Web Bluetooth](https://img.shields.io/badge/Web%20Bluetooth-supported-4cc2ff.svg)
+![Chrome / Edge](https://img.shields.io/badge/browser-Chrome%20%C2%B7%20Edge-22a753.svg)
+![Concept2 PM5](https://img.shields.io/badge/Concept2-PM5-f5712f.svg)
+
+**Live demo:**
+[pm5row.surge.sh](https://pm5row.surge.sh) · [rowerg-dashboard.surge.sh](https://rowerg-dashboard.surge.sh) · [ergdash.surge.sh](https://ergdash.surge.sh)
+
+</div>
 
 > Open in Chrome or Edge on a desktop or Android phone. Click **Connect**, pair the PM5 over Bluetooth, and row.
+
+> _A demo GIF will land here once I've recorded a session against my own PM5. The static screenshots below show every screen the GIF would cycle through._
 
 ---
 
@@ -13,9 +29,9 @@ A real-time training dashboard for the Concept2 PM5 rowing monitor. Built becaus
 | | |
 |---|---|
 | **Live force curve** | Reads the raw force-vs-position curve from the PM5 every stroke, draws it smoothed in real time, and overlays your **best stroke** and **session average** as ghost curves. Peak-force markers show where in the drive the peak occurs — early peak vs late peak is the most actionable technique signal you can give a rower. |
-| **40+ live metrics** | Stroke rate, pace, watts, distance, peak force, avg force, work/stroke, drive length, drive ratio, slip (catch/release), peak force timing, meters/stroke, drag factor, calories, splits, and 19 HR-specific metrics (current zone, % max, % HRR, time-in-zone, drift, decoupling, recovery deltas, TRIMP load). |
-| **Tier-based layouts + 6 focus presets** | Cards size themselves by importance tier (primary / secondary / passive). Six curated presets — Balanced, Technical, Power, Heart Rate, Endurance, Race — rewrite the entire screen in one tap. Race mode pins **split** as a 168px primary; Heart Rate mode swaps the force curve out for HR-zone-driven metrics. Each preset enforces **locked metrics** that can't be removed without breaking the mode. |
-| **Workout builder + benchmark tests** | Build interval workouts (1 min · 500m · 1k · 2k · 5k · 6k · 10k · 30 min · 1 hour · half & full marathon). One-tap tests for the standard distances pre-fill the right interval structure (e.g. 2k → 8×250m, no rest). Plans sync across devices. |
+| **45 live metrics** | Stroke rate, pace, watts, distance, peak force, avg force, work/stroke, drive length, drive ratio, slip (catch/release), peak force timing, meters/stroke, drag factor, calories, splits, and 18 HR-specific metrics (current zone, % max, % HRR, time-in-zone, drift, decoupling, recovery deltas, TRIMP load). |
+| **Tier-based layouts + 6 focus presets** | Cards size themselves by importance tier (primary / secondary / passive). Six curated presets — Balanced, Technical, Power, Heart Rate, Endurance, Race — rewrite the entire screen in one tap. Race mode pins **split** as a 168 px primary; Heart Rate mode swaps the force curve out for HR-zone-driven metrics. Each preset enforces **locked metrics** that can't be removed without breaking the mode. |
+| **Workout builder + benchmark tests** | Build interval workouts (1 min · 500 m · 1k · 2k · 5k · 6k · 10k · 30 min · 1 hour · half & full marathon). One-tap tests for the standard distances pre-fill the right interval structure (e.g. 2k → 8×250 m, no rest). Plans sync across devices. |
 | **PWA + Drive sync** | Installable on Android (and desktop) with an offline-capable service worker. Google Drive `appdata` scope syncs your workout history, saved plans, layout, and HR prefs across every device you sign into. |
 | **Cross-user counter** | A global workout counter ticks every time anyone, anywhere, logs a session. |
 
@@ -23,159 +39,103 @@ A real-time training dashboard for the Concept2 PM5 rowing monitor. Built becaus
 
 ## Screenshots
 
-**Home menu**
+### Home menu
+
+> Three-column grid of action cards. The active Drive sync session and global workout counter sit at the bottom.
 
 ![Home menu](docs/screenshots/home.png)
 
-**Focus preset picker — six curated modes, each with locked "defining" metrics**
+### Focus preset picker
+
+> Six curated layouts. The primary (defining) metrics are pinned with a coloured pill; each preset has its own accent. Tapping one rewrites the whole on-screen layout and applies a body-class theme.
 
 ![Focus preset picker](docs/screenshots/focus-presets.png)
 
-**Workout builder — programmable intervals with per-row duplicate / time-cap**
+### Workout builder
+
+> Programmable intervals — distance or time, with rest, with a duplicate button and an optional time cap. Saving stores the plan in your library and syncs it to Drive.
 
 ![Workout builder](docs/screenshots/workout-builder.png)
 
-**Saved workouts library**
+### Saved workouts library
 
-![Saved workouts](docs/screenshots/workouts-library.png)
+> Every plan you've built. Click **Use →** to activate, **Edit** to modify, ✕ to delete.
 
-**Settings — layout / theme / HR / force-curve overlays**
+![Saved workouts library](docs/screenshots/workouts-library.png)
+
+### Settings — layout, theme, HR, force-curve overlays
+
+> Per-area card slots (left column, right column, bottom strip). Each slot picks any of the 45 metrics. Theme picker, FC overlay toggles, and HR prefs all live here.
 
 ![Settings dialog](docs/screenshots/settings.png)
 
-**Benchmarks — personal records, each with a one-tap test workout**
+### Benchmarks — personal records + one-tap tests
+
+> Inside Settings. Each row is a standard rowing distance or time-trial; the **TEST** button spawns the right interval workout (2k → 8×250 m, 5k → 10×500 m, etc.) and drops you into the monitor view.
 
 ![Benchmarks section in Settings](docs/screenshots/benchmarks.png)
 
 ---
 
-## Why I built it
+## By the numbers
 
-I row. The PM5 monitor shows the basics — split, rate, distance — but the BLE port exposes way more, and the official Concept2 apps (ErgData, RowPro) either hide the advanced metrics, lock them behind paid tiers, or don't work on the device I have at school. I wanted:
-
-- **Force curve comparisons** so I can see my best stroke ghosted behind every live one
-- **Peak-force timing** as a number, not just a shape
-- **HR drift / decoupling** for steady-state pacing work
-- **A configurable layout** so I can show what matters today (race day vs technique day)
-
-The first version was a Python + PySide6 desktop app (in `pm5dashboard/`). It worked but only on a computer where I could install Python. My school laptop can't run downloaded programs, only a browser — so I ported the whole thing to a single-file PWA that runs in Chrome's Web Bluetooth stack.
-
----
-
-## Architecture
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                       Browser (Chrome / Edge)                    │
-│                                                                  │
-│  ┌────────────────┐    ┌──────────────────┐    ┌──────────────┐  │
-│  │  Web Bluetooth │    │  Google Identity │    │  Service     │  │
-│  │  GATT client   │    │  Services + OAuth│    │  Worker (v19)│  │
-│  └───────┬────────┘    └────────┬─────────┘    └──────┬───────┘  │
-│          │                      │                     │          │
-│          ▼                      ▼                     ▼          │
-│  ┌──────────────────────────────────────────────────────────┐    │
-│  │              Single-page app (index.html)                │    │
-│  │  state · BLE parser · render loop · layout engine · UI   │    │
-│  └────┬─────────────────────────────┬──────────────────┬────┘    │
-│       │                             │                  │         │
-└───────┼─────────────────────────────┼──────────────────┼─────────┘
-        │                             │                  │
-        ▼                             ▼                  ▼
-   Concept2 PM5                  Google Drive       Counter API
-   (BLE GATT)                    (appdata folder)   (counterapi.dev)
-```
-
-### Stack
-
-- **Frontend:** vanilla HTML / CSS / JavaScript. **No framework, no bundler, no build step.** The entire app is a single `index.html` (~240 KB) plus a manifest, service worker, and icons. This was a deliberate constraint — it makes deployment a single `npx surge` command, and the app stays installable as a PWA on any browser that implements Web Bluetooth.
-- **Bluetooth:** [Web Bluetooth API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API). The PM5 exposes its data over BLE GATT; I subscribe to four notification characteristics, parse the raw bytes against the [Concept2 PM5 BLE Spec v1.30](docs/ble-protocol.md), and feed the values into a global state object.
-- **Auth + sync:** Google Identity Services for OAuth, Google Drive `appdata` scope for hidden per-user JSON storage. No backend, no database, no server I have to maintain.
-- **Hosting:** [Surge.sh](https://surge.sh) free static hosting, deployed to three mirror subdomains.
-- **Offline:** A service worker (`sw.js`) does network-first for the HTML so updates land immediately, cache-first for static assets so the app loads instantly on revisit. The PWA manifest makes it installable on Android (home screen icon, splash, standalone window).
-
-### Files
-
-```
-pm5-dashboard/
-├── pm5web/                  ← The web app (deployed)
-│   ├── index.html           ← Single-file app — markup, CSS, JS
-│   ├── manifest.json        ← PWA manifest
-│   ├── sw.js                ← Service worker (cache strategy)
-│   ├── gen_icons.py         ← Generates PWA icons from a single source
-│   └── icon-*.png           ← Generated PWA icons (incl. maskable variants)
-│
-├── pm5dashboard/            ← Original Python desktop app
-│   ├── pm5dashboard.py      ← Entry point
-│   ├── app/                 ← Modules (PySide6 UI, BLE client, state)
-│   ├── requirements.txt     ← Python deps (PySide6, bleak, pyqtgraph, qasync)
-│   ├── PM5Dashboard.spec    ← PyInstaller spec (builds a single .exe)
-│   ├── build_exe.bat        ← Windows build script
-│   └── run.bat              ← Dev runner
-│
-└── docs/
-    ├── architecture.md      ← Deeper dive on system design
-    └── ble-protocol.md      ← My notes on parsing the PM5's BLE protocol
-```
+|                                  |               |
+|----------------------------------|---------------|
+| Lines of code                    | **8,837**     |
+| Shipped bundle                   | **332 KB**    |
+| Live metrics                     | **45**        |
+| Of those, heart-rate metrics     | **18**        |
+| Focus presets                    | **6**         |
+| Supported boat classes (lineup builder) | **8**  |
+| Force-curve resample resolution  | **64 samples**|
+| Updates per stroke               | every PM5 BLE notification (~20 Hz peak) |
+| Render time (mid-tier hardware)  | < 10 ms       |
+| Offline-capable                  | yes (after first load) |
+| External backend                 | **none**      |
 
 ---
 
-## Hard problems I solved
+## Architecture (TL;DR)
 
-### 1. Decoding the PM5's binary BLE protocol
+```mermaid
+flowchart LR
+    PM5[Concept2 PM5<br/>BLE GATT]
+    Chrome[Browser<br/>Chrome / Edge<br/>desktop or Android]
+    Drive[Google Drive<br/>appdata folder]
+    GIS[Google Identity<br/>Services]
+    SW[Service Worker<br/>cache-aware shell]
+    Counter[counterapi.dev<br/>cross-user counter]
 
-The PM5 publishes data over BLE GATT characteristics, but the bytes coming out of `notifications` are raw — multi-byte integers in little-endian order, packed with no padding, and the field layout depends on which characteristic you're reading. The official spec PDF describes them, but the parser still needed careful alignment work — I had an off-by-3 bug in my first version where pace, rate, and watts were all reading their bytes from the elapsed-time field, because the General Status 1 characteristic starts with a 3-byte timestamp I'd forgotten about. See [`docs/ble-protocol.md`](docs/ble-protocol.md) for the layout I reverse-engineered.
+    PM5 -- Web Bluetooth --> Chrome
+    Chrome -- OAuth --> GIS
+    GIS --> Drive
+    Chrome -- per-user JSON --> Drive
+    Chrome --- SW
+    Chrome -- POST --> Counter
 
-### 2. Force curve resampling for stroke comparison
+    subgraph "Browser (single index.html)"
+      Chrome
+      SW
+    end
+```
 
-Force-curve packets from the PM5 vary in length (24–40 samples depending on stroke duration). To average strokes against each other or overlay a "best stroke" ghost, every curve needs a common x-axis. I resample each completed stroke to a fixed 64 samples using linear interpolation, then maintain two parallel buffers:
+The full deep-dive lives in [`docs/architecture.md`](docs/architecture.md) — state model, BLE pipeline, force-curve resampling, layout engine, focus presets, auth + Drive flow, service worker strategy, PWA vs TWA vs native tradeoffs.
 
-- **Best stroke** — the highest-peak stroke this session (with a 0.5 lbf hysteresis so noisy peaks don't flip-flop the ghost).
-- **Running average** — Welford-style online mean update, so I don't have to keep every stroke in memory.
-
-The renderer draws all three (live + best + avg) with peak markers, dashed-line ghosts, and a small legend.
-
-### 3. Tier-based layout engine
-
-Six focus presets, each declaring three tiers of importance (`primary` / `secondary` / `passive`) plus a `locked` list. The renderer maps tiers → CSS classes → font sizes. A `body.preset-X` class drives the visual identity per mode — Race mode jacks the primary value to 168 px and dims everything else; Technical mode uses thinner type and gives the force curve hero extra height; Heart Rate mode swaps the accent to red. Each preset *enforces* its locked metrics in the Settings dialog — if you try to remove them, the dropdown is disabled and a 🔒 replaces the ✕.
-
-### 4. Per-user state isolation + Drive sync
-
-When a user signs in with Google, every piece of state (history, saved plans, layout, prefs, force-curve overlay toggles) gets keyed by their Google user ID in `localStorage`, then syncs to a private `appdata` file in their Drive. Sign-out leaves the data on the device (so re-signing-in restores it). Sign-in on a new device pulls down the cloud copy and merges any local changes. Conflict strategy: last-write-wins on layout / prefs (those are tiny and rarely conflict), per-id merge on history and saved plans (so two devices can record different workouts and both are preserved).
-
-### 5. Evolution from desktop to web
-
-The Python desktop app worked, but it required Python installed locally — not an option on my school's locked-down Windows laptops. The web port had to match feature parity using only what the browser exposes:
-
-| Python desktop | Web port |
-|---|---|
-| `bleak` BLE library | Web Bluetooth API |
-| `pyqtgraph` for force curve | HTML canvas + quadratic Bézier smoothing |
-| `qasync` for asyncio + Qt event loop | Native browser event loop + `Promise` |
-| `PyInstaller` single-exe builds | PWA install via manifest + service worker |
-| Direct file system writes | `localStorage` + Drive `appdata` |
-| `PySide6` widgets | Vanilla HTML + CSS grid |
-
-Same architecture, completely different runtime. The web port is now the canonical version; the Python code stays in the repo as the prototype.
+For the BLE byte-layouts I reverse-engineered against the Concept2 spec (and the off-by-3 bug I shipped first), see [`docs/ble-protocol.md`](docs/ble-protocol.md).
 
 ---
 
 ## Tech stack
 
 **Web (`pm5web/`)**
-- Vanilla HTML / CSS / JavaScript (no framework, no bundler)
+- Vanilla HTML / CSS / JavaScript (no framework, no bundler, no build step)
 - Web Bluetooth API
-- Google Identity Services + Google Drive API
+- Google Identity Services + Google Drive API (`drive.appdata` scope)
 - Service Worker (PWA install + offline shell)
 - Surge.sh hosting (free static)
 
-**Desktop (`pm5dashboard/`)**
-- Python 3.11+
-- [PySide6](https://pypi.org/project/PySide6/) (Qt for Python)
-- [bleak](https://github.com/hbldh/bleak) (cross-platform BLE)
-- [pyqtgraph](http://www.pyqtgraph.org/) (real-time plotting)
-- [qasync](https://github.com/CabbageDevelopment/qasync) (asyncio + Qt event loop integration)
-- [PyInstaller](https://www.pyinstaller.org/) (single-exe distribution)
+**Desktop (`pm5dashboard/`)** — original prototype
+- Python 3.11+, PySide6 (Qt), bleak (BLE), pyqtgraph (real-time plots), qasync (asyncio + Qt loop), PyInstaller (single-exe)
 
 ---
 
@@ -183,7 +143,7 @@ Same architecture, completely different runtime. The web port is now the canonic
 
 ### Web (recommended)
 
-Just open one of the live URLs in Chrome or Edge:
+Open one of the live URLs in Chrome or Edge:
 
 - https://pm5row.surge.sh
 - https://rowerg-dashboard.surge.sh
@@ -199,25 +159,60 @@ pip install -r requirements.txt
 python pm5dashboard.py
 ```
 
-Or build a single-file `.exe` with PyInstaller (Windows):
+Or build a single-file `.exe` with PyInstaller (Windows): `build_exe.bat`.
 
-```bash
-build_exe.bat
+---
+
+## Project repo
+
+```
+pm5-dashboard/
+├── pm5web/                  ← The web app (deployed)
+├── pm5dashboard/            ← Original Python desktop app
+└── docs/
+    ├── architecture.md      ← Deep dive on system design
+    ├── ble-protocol.md      ← BLE byte-layout notes
+    ├── reflection.md        ← What I learned + would do differently
+    ├── testing.md           ← Browsers / devices / firmware tested
+    ├── timeline.md          ← Development timeline
+    ├── faq.md               ← Mac? iOS? ErgData? Privacy?
+    ├── known-issues.md      ← Open bugs / browser limitations
+    ├── logo.svg             ← Vector logo
+    └── screenshots/         ← In-app captures
 ```
 
 ---
 
 ## What's next
 
-- **Multi-coach mode** — Firebase Auth + Firestore so coaches can share lineups with their athletes (Phase 2 schema and security rules are already in the codebase, dormant behind a placeholder config).
-- **Session replay** — scrub through a finished workout and watch each stroke's force curve evolve.
-- **Multi-erg sync** — for winter team training: 8 ergs paired to one coach dashboard for crew synchronization analysis.
+Top of the list (in priority order):
+
+1. **Multi-coach mode** — Firebase Auth + Firestore so coaches can share lineups with their athletes (Phase 2 schema and security rules are already in the codebase, dormant behind a placeholder config).
+2. **Session replay** — scrub through a finished workout and watch each stroke's force curve evolve.
+3. **Multi-erg sync** — for winter team training: 8 ergs paired to one coach dashboard for crew synchronization analysis. Genuinely useful in a way nothing else on the market is.
+4. **AI technique analysis** — peak-force timing patterns, drive-length decay over a piece, "you tend to shorten the drive after stroke 200" callouts.
+5. **Race prediction** — extrapolate current pace + HR drift to a finish-line projection.
+6. **Garmin / Apple Health integration** — pull HR from Garmin / Apple Watch instead of (or alongside) a chest strap.
+7. **CSV export** — for athletes who keep their own training logs.
+8. **Wear OS companion** — heart-rate complication that mirrors the dashboard's current zone.
+9. **Session sharing** — signed read-only URLs so a coach can review a session their athlete just finished.
+10. **Trusted Web Activity build for the Play Store** — wrap the PWA as a real `.apk` via `bubblewrap`. ~10 minutes; $25 one-time for Play Store distribution.
 
 ---
 
-## Reflection
+## Documentation
 
-For a short writeup of what I learned, what surprised me, and what I'd do differently if I started over, see [`docs/reflection.md`](docs/reflection.md).
+| File | What's inside |
+|---|---|
+| [`docs/architecture.md`](docs/architecture.md) | System design deep dive |
+| [`docs/ble-protocol.md`](docs/ble-protocol.md) | PM5 BLE byte-layouts I reverse-engineered |
+| [`docs/reflection.md`](docs/reflection.md) | What I learned, what I'd do differently |
+| [`docs/testing.md`](docs/testing.md) | Browsers / devices / PM5 firmware tested |
+| [`docs/timeline.md`](docs/timeline.md) | Development timeline |
+| [`docs/faq.md`](docs/faq.md) | Common questions |
+| [`docs/known-issues.md`](docs/known-issues.md) | Open bugs and browser limitations |
+| [`CHANGELOG.md`](CHANGELOG.md) | Versioned release notes |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to run locally + contribute |
 
 ---
 
@@ -227,4 +222,4 @@ For a short writeup of what I learned, what surprised me, and what I'd do differ
 
 ---
 
-*Built by Charan Bikkula. The PM5 BLE protocol reference belongs to Concept2; this is an independent project not affiliated with or endorsed by Concept2 Inc.*
+<sub>*Built by Charan Bikkula. The PM5 BLE protocol reference belongs to Concept2; this is an independent project not affiliated with or endorsed by Concept2 Inc.*</sub>

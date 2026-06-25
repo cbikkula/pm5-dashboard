@@ -7562,6 +7562,26 @@ async function syncHistoryToDrive() {
   // Demo Mode pauses Drive sync — fake workouts must never leak into
   // the user's real Drive document.
   if (demoActive()) return;
+  try {
+    return await _syncHistoryToDriveInner();
+  } catch (err) {
+    console.warn("Drive sync failed:", err);
+    // Surface ONCE per cooldown window so a flapping network doesn't
+    // toast-spam. Local storage still has the data — explain that so
+    // users don't think they lost the workout.
+    const now = Date.now();
+    if (!_lastDriveSyncToast || now - _lastDriveSyncToast > 30000) {
+      _lastDriveSyncToast = now;
+      const msg = (err && err.message) ? err.message : "network error";
+      setToast(`Google Drive sync failed (${msg}). Your workout is still saved locally.`, "warn");
+    }
+    return null;
+  }
+}
+let _lastDriveSyncToast = 0;
+
+async function _syncHistoryToDriveInner() {
+  if (!state.googleAccessToken) return;
   const body = JSON.stringify({
     version: 1,
     user: { id: state.user.id, email: state.user.email },
@@ -8771,13 +8791,44 @@ function checkCompatibility() {
   const banner = document.getElementById("compatBanner");
   if (!navigator.bluetooth) {
     banner.classList.add("shown");
-    banner.innerHTML = "Web Bluetooth is not available in this browser. Use the latest <b>Chrome</b> or <b>Edge</b> on Windows / macOS / Linux / Android. (Firefox and Safari don't support Web Bluetooth.) The page must also be served over HTTPS.";
+    // Detect iOS specifically — Safari is the only browser engine
+    // Apple allows, and none of them ship Web Bluetooth. A generic
+    // "use Chrome or Edge" is wrong on iPhone because Chrome on iOS
+    // is Safari under the hood.
+    const ua = navigator.userAgent || "";
+    const isIOS = /iPhone|iPad|iPod/.test(ua) || (/Mac/.test(ua) && "ontouchend" in document);
+    if (isIOS) {
+      banner.innerHTML =
+        "<b>iPhone / iPad isn't supported.</b> Apple doesn't allow any browser " +
+        "engine other than Safari on iOS, and Safari doesn't implement Web Bluetooth. " +
+        "Use Chrome or Edge on a desktop or an Android phone to connect to your PM5. " +
+        "You can still <a href='#' id='compatTryDemo' style='color: inherit; text-decoration: underline;'>try Demo Mode</a> here.";
+    } else {
+      banner.innerHTML =
+        "<b>Web Bluetooth isn't available in this browser.</b> Use the latest " +
+        "Chrome or Edge on Windows / macOS / Linux / Android. " +
+        "(Firefox and Safari don't support Web Bluetooth, by their own policy.) " +
+        "The page must also be served over HTTPS. " +
+        "You can still <a href='#' id='compatTryDemo' style='color: inherit; text-decoration: underline;'>try Demo Mode</a> in any browser.";
+    }
+    // Wire up the in-banner "try demo" affordance.
+    setTimeout(() => {
+      const a = document.getElementById("compatTryDemo");
+      if (a) a.addEventListener("click", (e) => {
+        e.preventDefault();
+        enterDemoMode();
+      });
+    }, 0);
     document.getElementById("connectBtn").disabled = true;
     return false;
   }
   if (location.protocol === "http:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
     banner.classList.add("shown");
-    banner.textContent = "Web Bluetooth requires HTTPS. Please open this page over https://...";
+    banner.innerHTML =
+      "<b>Web Bluetooth requires HTTPS.</b> Please open this page over " +
+      "<code>https://</code>. The deployed mirrors at " +
+      "<code>pm5row.surge.sh</code>, <code>rowerg-dashboard.surge.sh</code>, " +
+      "and <code>ergdash.surge.sh</code> are all HTTPS.";
   }
   return true;
 }

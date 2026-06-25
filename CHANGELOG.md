@@ -10,6 +10,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Session replay
 - AI technique analysis (peak-timing trends)
 
+## [v1.2.2] — June 2026 — Home menu restructure + Performance teaser
+
+### Added
+- **Performance card** on the home menu, with an orange `SOON` pill in the top-right corner. Tapping it opens a "Coming Soon" modal that previews the eight planned sections of the future Performance page (Personal Records, Training Overview, Performance Trends, Benchmark Progress, Technique Trends, Fatigue Trends, HR Distribution + Training Load, and **Insights** — the section highlighted as *"the section users will actually read"*). Modal links to [`docs/feature-backlog.md#L13`](docs/feature-backlog.md) for the full spec and roadmap status.
+- New screenshot: `docs/screenshots/performance-soon.png` showing the teaser modal.
+
+### Changed
+- **Home menu restructured** to a single tight row of five small utility cards (Workouts · History · Performance · Focus · Settings) beneath the wide Just Row banner. Cards shrunk — 30 px icon, 18 px name, 16 px padding, 140 px min-height — to fit the 5-column grid cleanly on desktop. Responsive breakpoints: 3-col at ≤1100 px, 2-col at ≤720, 1-col at ≤460.
+- Refreshed `docs/screenshots/home.png` to show the new layout.
+
 ## [v1.2.1] — June 2026 — Demo Mode home
 
 ### Changed

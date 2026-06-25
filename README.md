@@ -209,6 +209,7 @@ The roadmap is tracked in [`docs/feature-backlog.md`](docs/feature-backlog.md) s
 - GitHub Actions CI — automated checks on every commit
 
 **Long-term roadmap:**
+- ⭐ **Performance page** *(marquee)* — a whole new top-level area answering *"what does all this data actually mean?"* Training overview, performance trends, benchmark progress, technique trends, fatigue trends, heart-rate distribution, training load, personal records, compare sessions, and rule-based per-workout **Insights**: *"Longest drive length in 3 weeks. Lowest HR for this pace. Stroke consistency up 6%. Drive shortened after minute 24."* The reason someone keeps coming back. ([full spec](docs/feature-backlog.md#l13--performance-page-spec))
 - **Multi-coach Firebase mode** — invite links, role enforcement, audit log, real-time presence (Phase 2 scaffolding already shipped behind a placeholder config)
 - **Multi-erg synchronization** — winter team training: 8 ergs paired to one coach screen via WebRTC for crew rhythm analysis. Genuinely useful in a way nothing else on the market is.
 - **AI technique analysis** — peak-timing trends, fatigue patterns across many sessions

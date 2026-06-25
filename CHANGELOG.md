@@ -10,6 +10,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Session replay
 - AI technique analysis (peak-timing trends)
 
+## [v1.3.0] — June 2026 — Performance view, Phase 1 (page shell)
+
+### Added
+- **Performance view** — a real navigable top-level page (`performanceView`) replacing the v1.2.2 teaser modal. Six tabs across the top: **Overview · Insights · Technique · Fitness · Goals · Compare**.
+- **Overview tab**: empty state when no history exists, pointing users at Demo Mode. Card grid placeholder ready for Phase 2.
+- **Insights tab**: a five-card preview of every insight type the engine will emit — positive, warning, technique, fitness, recommendation — each colour-coded with a left border (mint / amber / cyan / red / orange). Real examples from the spec.
+- **Technique / Fitness / Goals / Compare tabs**: each shows a 2×2 spec-card grid documenting the planned sub-sections, plus a *"Phase N coming next from backlog pull #M"* callout so visitors know exactly what's pending and where to track it.
+- Two new screenshots: `docs/screenshots/performance-overview.png` (empty state) and `docs/screenshots/performance-insights.png` (Insights tab with all five card types).
+
+### Changed
+- Home-menu **Performance** card no longer shows the `SOON` pill — tapping it now opens the real view instead of a teaser modal.
+- The v1.2.2 teaser modal HTML stays in the file as dead code (one small listener stub preserved) so the diff is additive — clean to revert if needed, easy to delete later.
+
+### Next
+- **Phase 2** — Overview tab functional (last 7d / last 30d / best-recent-session / current-trend cards driven by real history).
+- **Phase 3** — Insights engine wired to your actual workouts (5 starter rules: drive-length drop, watts fade, HR drift, rate-without-power, peak-timing shift).
+- **Phases 4–7** — Technique force-curve comparison, Fitness HR/load/drift, Goals CRUD, Compare two-session overlay.
+
 ## [v1.2.2] — June 2026 — Home menu restructure + Performance teaser
 
 ### Added

@@ -2757,6 +2757,7 @@
       <div class="history-list" id="historyList"></div>
     </div>
     <div class="modal-buttons">
+      <button id="historyExportCsvBtn" class="left">Export CSV</button>
       <button id="historyExportBtn" class="left">Export JSON</button>
       <button class="accent" id="closeHistoryBtn">Close</button>
     </div>
@@ -2775,6 +2776,7 @@
       <table class="summary" id="summaryTable"></table>
     </div>
     <div class="modal-buttons">
+      <button id="summaryExportCsvBtn" class="left">Export CSV</button>
       <button class="accent" id="closeSummaryBtn">Close</button>
     </div>
   </div>
@@ -8906,14 +8908,108 @@ function exportHistoryJson() {
     [JSON.stringify({ user: state.user, history: state.history }, null, 2)],
     { type: "application/json" }
   );
+  triggerDownload(blob, `pm5-history-${new Date().toISOString().slice(0,10)}.json`);
+}
+
+// ----- CSV export -------------------------------------------------
+//
+// Two flavours:
+//   - Whole-history CSV: one row per session (totals only).
+//   - Per-session CSV:   one row per completed interval inside one
+//                        session (rich — pace, watts, rate, HR,
+//                        drive length, peak force).
+//
+// We don't currently persist per-stroke history, so a true
+// stroke-level CSV isn't possible without a schema change. Per-
+// interval is what we have; the column headers make that clear.
+
+function csvEscape(v) {
+  if (v == null) return "";
+  const s = String(v);
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+function csvRow(arr) { return arr.map(csvEscape).join(",") + "\n"; }
+function triggerDownload(blob, name) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `pm5-history-${new Date().toISOString().slice(0,10)}.json`;
+  a.download = name;
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+function exportHistoryCsv() {
+  const rows = [];
+  rows.push(csvRow([
+    "date","title","description","distance_m","elapsed_s","avg_pace_s_per_500m",
+    "avg_watts","interval_count","recovered",
+  ]));
+  for (const e of state.history) {
+    rows.push(csvRow([
+      e.date,
+      e.title || "",
+      e.description || "",
+      Math.round(e.totals?.distanceM || 0),
+      Math.round(e.totals?.elapsedS || 0),
+      e.totals?.avgPaceS ? e.totals.avgPaceS.toFixed(2) : "",
+      e.totals?.avgWatts ? Math.round(e.totals.avgWatts) : "",
+      (e.results || []).length,
+      e.recovered ? "1" : "",
+    ]));
+  }
+  const blob = new Blob([rows.join("")], { type: "text/csv" });
+  triggerDownload(blob, `pm5-history-${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+function exportSessionCsv(entry) {
+  // entry can be a history record OR null — null means "use the
+  // currently-rendered live session".
+  const results = entry ? (entry.results || []) : (state.planResults || []);
+  const totals  = entry ? (entry.totals  || {}) : {
+    distanceM: state.distanceM || 0,
+    elapsedS:  state.elapsedTimeS || 0,
+    avgWatts:  state.watts || null,
+    avgPaceS:  state.paceS || null,
+  };
+  const title = entry ? (entry.title || "session") : "live-session";
+  const rows = [];
+  rows.push(csvRow([
+    "interval","label","elapsed_s","distance_m","pace_s_per_500m",
+    "watts","stroke_rate","heart_rate","drive_length_m","peak_force_lbs",
+    "rest_s",
+  ]));
+  if (results.length) {
+    for (const r of results) {
+      rows.push(csvRow([
+        r.intervalIdx, r.label || "",
+        r.elapsedS != null ? r.elapsedS.toFixed(1) : "",
+        Math.round(r.distanceM || 0),
+        r.paceS    != null ? r.paceS.toFixed(2)    : "",
+        r.watts    != null ? Math.round(r.watts)   : "",
+        r.strokeRate || "",
+        r.heartRate  || "",
+        r.driveLengthM ? r.driveLengthM.toFixed(2) : "",
+        r.peakForceLbs ? r.peakForceLbs.toFixed(1) : "",
+        r.restS != null ? r.restS : "",
+      ]));
+    }
+  } else {
+    // No intervals — just one totals row.
+    rows.push(csvRow([
+      "(totals)", "",
+      totals.elapsedS != null ? totals.elapsedS.toFixed(1) : "",
+      Math.round(totals.distanceM || 0),
+      totals.avgPaceS != null ? totals.avgPaceS.toFixed(2) : "",
+      totals.avgWatts != null ? Math.round(totals.avgWatts) : "",
+      "", "", "", "", "",
+    ]));
+  }
+  const blob = new Blob([rows.join("")], { type: "text/csv" });
+  const safe = title.replace(/[^a-z0-9_-]/gi, "_");
+  triggerDownload(blob, `pm5-${safe}-${new Date().toISOString().slice(0,10)}.csv`);
 }
 
 // =====================================================================
@@ -8998,6 +9094,13 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("clearPlanBtn").addEventListener("click", clearPlanFromForm);
   document.getElementById("cancelBuilderBtn").addEventListener("click", closeBuilder);
   document.getElementById("closeSummaryBtn").addEventListener("click", closeSummary);
+  document.getElementById("summaryExportCsvBtn").addEventListener("click", () => {
+    // Summary modal can show either a history entry (when opened
+    // from the history list) or the live session. Either way,
+    // `state.localPlan` + `state.planResults` are in sync with what's
+    // displayed — pass null to use those.
+    exportSessionCsv(null);
+  });
   document.getElementById("timeCapEnabled").addEventListener("change", (e) => {
     document.getElementById("timeCapInput").disabled = !e.target.checked;
   });
@@ -9007,6 +9110,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("historyBtn").addEventListener("click", openHistory);
   document.getElementById("closeHistoryBtn").addEventListener("click", closeHistory);
   document.getElementById("historyExportBtn").addEventListener("click", exportHistoryJson);
+  document.getElementById("historyExportCsvBtn").addEventListener("click", exportHistoryCsv);
 
   // Home menu cards — each one routes to its own sub-flow.
   document.querySelectorAll(".menu-card[data-menu]").forEach(card => {

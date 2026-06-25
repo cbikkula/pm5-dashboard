@@ -1924,6 +1924,89 @@
     margin-left: 6px;
     vertical-align: middle;
   }
+  /* Session notes editor inside the Summary modal */
+  .session-notes {
+    background: var(--bg-base);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .session-notes .sn-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .session-notes .sn-title {
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+  }
+  .session-notes .sn-rating {
+    color: var(--text-muted);
+    font-size: 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .session-notes .sn-rating select {
+    background: var(--bg-panel);
+    color: var(--text);
+    border: 1px solid var(--border-bright);
+    border-radius: 6px;
+    padding: 3px 6px;
+    font: inherit;
+  }
+  .session-notes .sn-rating-hint { color: var(--text-dim); font-size: 11px; }
+  .session-notes textarea,
+  .session-notes .sn-tags-row input {
+    background: var(--bg-panel);
+    color: var(--text);
+    border: 1px solid var(--border-bright);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    width: 100%;
+    resize: vertical;
+  }
+  .session-notes textarea:focus,
+  .session-notes .sn-tags-row input:focus { border-color: var(--accent); }
+  .session-notes .sn-tags-row {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 10px;
+    align-items: center;
+  }
+  .session-notes .sn-tags-label {
+    color: var(--text-dim); font-size: 11px;
+    letter-spacing: 1.5px; font-weight: 700;
+  }
+  .session-notes .sn-save-row {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .session-notes .sn-save-row button {
+    background: transparent;
+    color: var(--accent-3);
+    border: 1px solid var(--accent-3);
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-family: inherit; font-size: 12px;
+    font-weight: 700; letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .session-notes .sn-save-row button:hover {
+    background: var(--accent-3); color: var(--bg-base);
+  }
+  .session-notes .sn-saved {
+    color: var(--accent-3); font-size: 11px;
+    opacity: 0; transition: opacity 200ms;
+  }
+  .session-notes .sn-saved.shown { opacity: 1; }
   .demo-banner .db-text { flex: 1; }
   .demo-banner .db-exit {
     background: transparent;
@@ -2774,6 +2857,34 @@
     </div>
     <div class="summary-table-wrap">
       <table class="summary" id="summaryTable"></table>
+    </div>
+    <div class="session-notes" id="sessionNotes" style="display:none;">
+      <div class="sn-header">
+        <span class="sn-title">SESSION NOTES</span>
+        <label class="sn-rating">
+          Rating
+          <select id="sessionRating">
+            <option value="">—</option>
+            <option value="1">1</option><option value="2">2</option>
+            <option value="3">3</option><option value="4">4</option>
+            <option value="5">5</option><option value="6">6</option>
+            <option value="7">7</option><option value="8">8</option>
+            <option value="9">9</option><option value="10">10</option>
+          </select>
+          <span class="sn-rating-hint">/10</span>
+        </label>
+      </div>
+      <textarea id="sessionNotesText" rows="2"
+                placeholder="How did it feel? Sleep, conditions, what worked, what didn't…"></textarea>
+      <div class="sn-tags-row">
+        <span class="sn-tags-label">TAGS</span>
+        <input type="text" id="sessionTags"
+               placeholder="test, steady-state, technical, recovery">
+      </div>
+      <div class="sn-save-row">
+        <button id="sessionNotesSaveBtn">Save notes</button>
+        <span class="sn-saved" id="sessionNotesSavedHint"></span>
+      </div>
     </div>
     <div class="modal-buttons">
       <button id="summaryExportCsvBtn" class="left">Export CSV</button>
@@ -7265,6 +7376,23 @@ function openSummary() {
     (p && p.title) ? p.title : "Workout summary";
   document.getElementById("summarySubtitle").textContent = (p && p.description) ? p.description : "";
 
+  // Session-notes editor — only meaningful when viewing a saved entry.
+  // state.summaryHistoryEntryId is set by renderHistoryList when the
+  // user opens summary from history; null means "live in-progress".
+  const notesPanel = document.getElementById("sessionNotes");
+  const entry = state.summaryHistoryEntryId
+    ? state.history.find(h => h.id === state.summaryHistoryEntryId)
+    : null;
+  if (entry) {
+    notesPanel.style.display = "";
+    document.getElementById("sessionRating").value     = entry.rating || "";
+    document.getElementById("sessionNotesText").value  = entry.notes  || "";
+    document.getElementById("sessionTags").value       = (entry.tags || []).join(", ");
+    document.getElementById("sessionNotesSavedHint").classList.remove("shown");
+  } else {
+    notesPanel.style.display = "none";
+  }
+
   // Column picker
   const picker = document.getElementById("colPicker");
   // Clear existing checkboxes (keep title)
@@ -8668,12 +8796,14 @@ function renderHistoryList() {
       const savedResults = state.planResults;
       state.localPlan = e.plan;
       state.planResults = e.results || [];
+      state.summaryHistoryEntryId = e.id;
       closeHistory();
       openSummary();
       const sm = document.getElementById("summaryModal");
       const onClose = () => {
         state.localPlan = savedPlan;
         state.planResults = savedResults;
+        state.summaryHistoryEntryId = null;
         sm.removeEventListener("transitionend", onClose);
       };
       // Restore on next close click — wire a one-shot handler on the close button.
@@ -8681,6 +8811,7 @@ function renderHistoryList() {
       const oneShot = () => {
         state.localPlan = savedPlan;
         state.planResults = savedResults;
+        state.summaryHistoryEntryId = null;
         renderWorkoutPanel();
         closeBtn.removeEventListener("click", oneShot);
       };
@@ -9100,6 +9231,22 @@ document.addEventListener("DOMContentLoaded", () => {
     // `state.localPlan` + `state.planResults` are in sync with what's
     // displayed — pass null to use those.
     exportSessionCsv(null);
+  });
+  document.getElementById("sessionNotesSaveBtn").addEventListener("click", () => {
+    const id = state.summaryHistoryEntryId;
+    if (!id) return;
+    const entry = state.history.find(h => h.id === id);
+    if (!entry) return;
+    entry.notes  = document.getElementById("sessionNotesText").value.trim();
+    const rRaw   = document.getElementById("sessionRating").value;
+    entry.rating = rRaw ? parseInt(rRaw, 10) : null;
+    entry.tags   = document.getElementById("sessionTags").value
+                    .split(",").map(t => t.trim()).filter(Boolean);
+    saveHistory();
+    const hint = document.getElementById("sessionNotesSavedHint");
+    hint.textContent = "Saved ✓";
+    hint.classList.add("shown");
+    setTimeout(() => hint.classList.remove("shown"), 1500);
   });
   document.getElementById("timeCapEnabled").addEventListener("change", (e) => {
     document.getElementById("timeCapInput").disabled = !e.target.checked;

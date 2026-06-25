@@ -1911,6 +1911,19 @@
     50%      { opacity: 1; }
   }
   .demo-banner.hidden { display: none; }
+  .recovered-tag {
+    display: inline-block;
+    background: rgba(255, 204, 85, 0.15);
+    border: 1px solid rgba(255, 204, 85, 0.55);
+    color: #ffcc55;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
   .demo-banner .db-text { flex: 1; }
   .demo-banner .db-exit {
     background: transparent;
@@ -4425,6 +4438,7 @@ async function connectBle() {
     state.connected = true;
     state.connecting = false;
     setStatus("connected-ble", `Connected to ${device.name || "PM5"}`);
+    startRecoveryAutosave();
     const note = failures.length
       ? ` (some channels unavailable: ${failures.length})` : "";
     setToast(`Connected to ${device.name || "PM5"} over Bluetooth${note}`, "ok");
@@ -4455,6 +4469,10 @@ async function disconnectBle() {
   state.connected = false;
   state.bleServer = null;
   setStatus("disconnected", "Not connected");
+  stopRecoveryAutosave();
+  // Clean disconnect clears the recovery snapshot — we don't want to
+  // offer recovery for a session the user explicitly ended.
+  clearRecoverySnapshot();
   render();
 }
 
@@ -5349,6 +5367,110 @@ function resetAutoLogTracker() {
   state.autoLoggedSession = null;
 }
 
+// =====================================================================
+// AUTO-SAVE RECOVERY
+//
+// Browsers crash. Laptops sleep mid-row. To avoid losing an
+// in-progress session, every 5 s we snapshot the cumulative totals
+// to localStorage. On the next page load, if a snapshot exists with
+// non-trivial progress AND wasn't cleared cleanly, we offer to
+// recover it as a history entry. Demo Mode does NOT auto-save.
+// =====================================================================
+const RECOVERY_SAVE_MS = 5000;
+const RECOVERY_MIN_DIST = 200;     // only offer recovery if ≥200 m logged
+const RECOVERY_TTL_MS  = 24 * 3600 * 1000;
+let _recoveryInterval = null;
+
+function recoveryKey(uid) { return `pm5_recover_${uid || state.user.id}`; }
+
+function startRecoveryAutosave() {
+  if (_recoveryInterval) return;
+  _recoveryInterval = setInterval(saveRecoverySnapshot, RECOVERY_SAVE_MS);
+}
+function stopRecoveryAutosave() {
+  if (_recoveryInterval) {
+    clearInterval(_recoveryInterval);
+    _recoveryInterval = null;
+  }
+}
+function saveRecoverySnapshot() {
+  if (demoActive()) return;
+  const dist = state.distanceM || 0;
+  const elapsed = state.elapsedTimeS || 0;
+  if (dist < RECOVERY_MIN_DIST) return;
+  try {
+    localStorage.setItem(recoveryKey(), JSON.stringify({
+      savedAt:  Date.now(),
+      distance: dist,
+      elapsed,
+      strokes:  state.strokeCount || 0,
+      watts:    state.watts || null,
+      paceS:    state.paceS || null,
+      plan:     state.localPlan
+                  ? JSON.parse(JSON.stringify(state.localPlan)) : null,
+      planResults: JSON.parse(JSON.stringify(state.planResults || [])),
+      planCurrentIdx: state.planCurrentIdx || 0,
+    }));
+  } catch (e) { /* localStorage full or denied — silent */ }
+}
+function clearRecoverySnapshot() {
+  try { localStorage.removeItem(recoveryKey()); }
+  catch (e) {}
+}
+
+// Called from loadAllUserState. Returns true if a recoverable
+// snapshot was found and the user accepted recovery.
+function checkRecoverySnapshot() {
+  let raw;
+  try { raw = localStorage.getItem(recoveryKey()); }
+  catch (e) { return false; }
+  if (!raw) return false;
+  let snap;
+  try { snap = JSON.parse(raw); }
+  catch (e) { clearRecoverySnapshot(); return false; }
+  if (!snap || !snap.savedAt) { clearRecoverySnapshot(); return false; }
+  // Expired snapshots don't get offered — likely a long-ago crash
+  // the user has already moved past.
+  if (Date.now() - snap.savedAt > RECOVERY_TTL_MS) {
+    clearRecoverySnapshot();
+    return false;
+  }
+  const km = (snap.distance / 1000).toFixed(2);
+  const ago = Math.round((Date.now() - snap.savedAt) / 60000);
+  const agoLabel = ago < 60 ? `${ago} min` : `${Math.round(ago / 60)} h`;
+  const wantsRecover = confirm(
+    `Looks like your last session was interrupted.\n\n` +
+    `Recover ${km} km · ${fmtTime(snap.elapsed)} ` +
+    `(saved ${agoLabel} ago) as a history entry?`
+  );
+  if (!wantsRecover) {
+    clearRecoverySnapshot();
+    return false;
+  }
+  // Build a recovered history entry — tagged so it's obvious in the
+  // history list.
+  const entry = {
+    id: uid(),
+    date: new Date(snap.savedAt).toISOString(),
+    title: (snap.plan && snap.plan.title) || "Recovered session",
+    description: (snap.plan && snap.plan.description) || "",
+    plan: snap.plan,
+    results: snap.planResults || [],
+    totals: {
+      elapsedS:  snap.elapsed,
+      distanceM: snap.distance,
+      avgWatts:  snap.watts,
+      avgPaceS:  snap.paceS,
+    },
+    recovered: true,
+  };
+  state.history.unshift(entry);
+  saveHistory();
+  clearRecoverySnapshot();
+  setToast(`Recovered "${entry.title}" (${km} km).`, "ok");
+  return true;
+}
+
 function logCurrentWorkout({ silent = false } = {}) {
   // Demo Mode never writes to history — fake workouts must not leak
   // into the user's real session log.
@@ -5390,6 +5512,10 @@ function logCurrentWorkout({ silent = false } = {}) {
     distance: state.distanceM || 0,
     elapsed: state.elapsedTimeS || 0,
   };
+  // Successful log → the in-flight snapshot has been fully captured,
+  // so drop it. (A new snapshot will be written on the next tick if
+  // they keep rowing.)
+  clearRecoverySnapshot();
   // Bump the public cross-user counter (best-effort, non-blocking).
   bumpGlobalCounter();
   if (!silent) setToast(`Saved "${entry.title}" to history`, "ok");
@@ -7107,6 +7233,9 @@ function loadAllUserState() {
   state.planResults = [];
   resetHrTracking();
   resetAutoLogTracker();
+  // Crash recovery — runs after history is loaded so the recovered
+  // entry can be unshifted onto state.history.
+  setTimeout(checkRecoverySnapshot, 200);
 }
 
 // =====================================================================
@@ -8514,9 +8643,12 @@ function renderHistoryList() {
     const time = e.totals?.elapsedS ? fmtTime(e.totals.elapsedS) : "—";
     const pace = e.totals?.avgPaceS ? fmtPace(e.totals.avgPaceS) : "—";
     const watts = e.totals?.avgWatts ? Math.round(e.totals.avgWatts) + " W" : "—";
+    const recoveredTag = e.recovered
+      ? `<span class="recovered-tag" title="Recovered after an interrupted session">RECOVERED</span>`
+      : "";
     row.innerHTML = `
       <div>
-        <div class="ttl">${e.title}</div>
+        <div class="ttl">${e.title} ${recoveredTag}</div>
         <div class="date">${dateStr}</div>
       </div>
       <div><div class="stat-label">Time</div><div class="stat-value">${time}</div></div>

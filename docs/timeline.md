@@ -67,6 +67,15 @@ v1.2     Demo Mode shipped. First placed on the home menu as a
          to five cards that all serve daily workflow. A useful
          reminder that "what features should ship" and "where they
          should live" are different decisions.
+
+v1.2.2   Home menu restructured. Five small utility cards now form
+         a single tight row beneath the wide Just Row banner —
+         Workouts, History, Performance (new), Focus, Settings.
+         The Performance card is the home for L13 (the marquee
+         long-term roadmap feature). Until the page itself ships,
+         tapping the card opens a "Coming Soon" modal that previews
+         the eight planned sections including the highlighted
+         "Insights" — "the section users will actually read."
 ```
 
 The repo's git history (from when I finally initialized it) lives at [`https://github.com/cbikkula/pm5-dashboard/commits/main`](https://github.com/cbikkula/pm5-dashboard/commits/main).

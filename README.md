@@ -194,20 +194,27 @@ pm5-dashboard/
 
 ---
 
-## What's next
+## Coming soon
 
-Top of the list (in priority order):
+The roadmap is tracked in [`docs/feature-backlog.md`](docs/feature-backlog.md) so nothing gets forgotten. **24 short-cycle items** (one focused session each) plus **12 long-term items** (multi-session or with external dependencies). A few highlights:
 
-1. **Multi-coach mode** — Firebase Auth + Firestore so coaches can share lineups with their athletes (Phase 2 schema and security rules are already in the codebase, dormant behind a placeholder config).
-2. **Session replay** — scrub through a finished workout and watch each stroke's force curve evolve.
-3. **Multi-erg sync** — for winter team training: 8 ergs paired to one coach dashboard for crew synchronization analysis. Genuinely useful in a way nothing else on the market is.
-4. **AI technique analysis** — peak-force timing patterns, drive-length decay over a piece, "you tend to shorten the drive after stroke 200" callouts.
-5. **Race prediction** — extrapolate current pace + HR drift to a finish-line projection.
-6. **Garmin / Apple Health integration** — pull HR from Garmin / Apple Watch instead of (or alongside) a chest strap.
-7. **CSV export** — for athletes who keep their own training logs.
-8. **Wear OS companion** — heart-rate complication that mirrors the dashboard's current zone.
-9. **Session sharing** — signed read-only URLs so a coach can review a session their athlete just finished.
-10. **Trusted Web Activity build for the Play Store** — wrap the PWA as a real `.apk` via `bubblewrap`. ~10 minutes; $25 one-time for Play Store distribution.
+**Short-cycle (next):**
+- PR tracking — auto-detect 500m / 1k / 2k / 5k / 6k / 10k PRs, badge on history rows
+- Live PR pace during benchmark tests — *"Ahead by 2.8 sec"* delta vs your best
+- Target zones — pre-workout split / watts / rate / HR ranges with green/yellow/red status
+- Fatigue analysis — first-25% vs last-25% breakdown after a session
+- Technique insight cards — rule-based callouts: *"Peak force moved later — connection at the catch slowed"*
+- Fullscreen race mode — distraction-free for test pieces
+- Session replay — stroke-by-stroke scrubber
+- GitHub Actions CI — automated checks on every commit
+
+**Long-term roadmap:**
+- **Multi-coach Firebase mode** — invite links, role enforcement, audit log, real-time presence (Phase 2 scaffolding already shipped behind a placeholder config)
+- **Multi-erg synchronization** — winter team training: 8 ergs paired to one coach screen via WebRTC for crew rhythm analysis. Genuinely useful in a way nothing else on the market is.
+- **AI technique analysis** — peak-timing trends, fatigue patterns across many sessions
+- **Garmin / Apple Health HR integration**, **Wear OS companion**, **session-sharing URLs**, **TWA build for Play Store**
+
+The cadence is roughly *one short-cycle item every 2–4 days*. See the backlog file for the full list, status, and notes.
 
 ---
 

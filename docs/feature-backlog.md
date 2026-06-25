@@ -37,6 +37,25 @@ To pull the next item: open a chat with me and say `do backlog #N`. I'll build i
 | 29 |        | Session history filters                | Date range, distance, PR-only, has-HR, has-force-curve |
 | 30 |        | Export raw JSON                        | Single-session JSON with full metadata + force curves |
 
+## Long-term roadmap
+
+Bigger items that don't fit in a single session — multi-session features, external dependencies, or things that need design work first. Listed separately so they don't get lost while the short-cycle backlog drives daily work.
+
+| #   | Status | Feature                                | Notes |
+|----:|:---:|----------------------------------------|-------|
+| L1  |        | Multi-coach Firebase mode              | Phase 2 Steps 4–7: invite links, role enforcement, audit log, real-time presence. Foundation already shipped behind placeholder config. |
+| L2  |        | Multi-erg synchronization              | Winter training: 8 ergs paired to one coach screen with WebRTC peer-to-peer sync. Crew rhythm + drive timing alignment. |
+| L3  |        | AI technique analysis                  | Peak-timing trends across many sessions, fatigue patterns, "you tend to shorten the drive after stroke 200" callouts. |
+| L4  |        | Race prediction                        | Extrapolate current pace + HR drift to a finish-line projection. |
+| L5  |        | Garmin / Apple Health HR integration   | Pull HR from a watch instead of (or alongside) a chest strap. |
+| L6  |        | Wear OS companion                      | Heart-rate complication that mirrors the dashboard's current zone. |
+| L7  |        | Session sharing                        | Signed read-only URLs so a coach can review an athlete's finished session. |
+| L8  |        | TWA build for Play Store               | Wrap the PWA as an APK via `bubblewrap`. $25 one-time for Play Store; sideload free. |
+| L9  |        | Crew compatibility analysis            | Given a roster, suggest lineup combinations that minimize timing variance. |
+| L10 |        | Stroke matching                        | Compare current stroke against best session / target / another athlete. |
+| L11 |        | Rigging database                       | Per-shell config: pin span, oarlock height, foot height, drag factor target. |
+| L12 |        | Live coach broadcast                   | Coach pushes rate / target / message overlays to athletes mid-session. |
+
 ## How to pull one
 
 Just message me with `do backlog #N` (e.g. *"do backlog #7"*). I'll:

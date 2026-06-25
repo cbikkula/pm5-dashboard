@@ -30,7 +30,11 @@
 | **45 live metrics** | Stroke rate, pace, watts, distance, peak force, avg force, work/stroke, drive length, drive ratio, slip (catch/release), peak force timing, meters/stroke, drag factor, calories, splits, and 18 HR-specific metrics (current zone, % max, % HRR, time-in-zone, drift, decoupling, recovery deltas, TRIMP load). |
 | **Tier-based layouts + 6 focus presets** | Cards size themselves by importance tier (primary / secondary / passive). Six curated presets — Balanced, Technical, Power, Heart Rate, Endurance, Race — rewrite the entire screen in one tap. Race mode pins **split** as a 168 px primary; Heart Rate mode swaps the force curve out for HR-zone-driven metrics. Each preset enforces **locked metrics** that can't be removed without breaking the mode. |
 | **Workout builder + benchmark tests** | Build interval workouts (1 min · 500 m · 1k · 2k · 5k · 6k · 10k · 30 min · 1 hour · half & full marathon). One-tap tests for the standard distances pre-fill the right interval structure (e.g. 2k → 8×250 m, no rest). Plans sync across devices. |
-| **PWA + Drive sync** | Installable on Android (and desktop) with an offline-capable service worker. Google Drive `appdata` scope syncs your workout history, saved plans, layout, and HR prefs across every device you sign into. |
+| **Demo Mode** *(v1.2)* | Don't have a PM5? Open Settings → DEMO MODE → **Start Demo Mode** and the dashboard runs against synthetic stroke data — force curve, pace, watts, HR all move realistically. Drive sync auto-pauses so demo workouts never leak into your real history. Lets coaches and visitors explore every screen before practice. |
+| **Auto-save recovery** *(v1.2)* | In-flight session totals snapshot to localStorage every 5 seconds. If the browser crashes or the tab is killed mid-row, the next page load prompts to recover the session as a `RECOVERED`-tagged history entry. |
+| **CSV / JSON export** *(v1.2)* | Whole-history CSV dump or per-session interval CSV from the Summary modal. Export the raw JSON for downstream analysis in Python or Excel. |
+| **Session notes, rating, tags** *(v1.2)* | Every saved workout gets a notes editor — 1–10 rating, free-text notes, comma-separated tags (e.g. `test, steady-state, technical`). Saved with the rest of Drive-synced state so context follows you across devices. |
+| **PWA + Drive sync** | Installable on Android (and desktop) with an offline-capable service worker. Google Drive `appdata` scope syncs your workout history, saved plans, layout, HR prefs, **and session notes** across every device you sign into. |
 | **Cross-user counter** | A global workout counter ticks every time anyone, anywhere, logs a session. |
 
 ---
@@ -73,14 +77,20 @@
 
 ![Benchmarks section in Settings](docs/screenshots/benchmarks.png)
 
+### Demo Mode *(v1.2)* — explore without a PM5
+
+> Also inside Settings. Runs the full dashboard against synthetic stroke data so coaches and visitors can explore every screen before pairing real hardware. Drive sync pauses while active so demo workouts never leak into your real history.
+
+![Demo Mode section in Settings](docs/screenshots/demo-mode-settings.png)
+
 ---
 
 ## By the numbers
 
 |                                  |               |
 |----------------------------------|---------------|
-| Lines of code                    | **8,837**     |
-| Shipped bundle                   | **332 KB**    |
+| Lines of code                    | **9,660**     |
+| Shipped bundle                   | **360 KB**    |
 | Live metrics                     | **45**        |
 | Of those, heart-rate metrics     | **18**        |
 | Focus presets                    | **6**         |
@@ -89,6 +99,9 @@
 | Updates per stroke               | every PM5 BLE notification (~20 Hz peak) |
 | Render time (mid-tier hardware)  | < 10 ms       |
 | Offline-capable                  | yes (after first load) |
+| Crash-resistant                  | yes (auto-save recovery every 5 s) |
+| Tagged releases                  | **3** (v1.0.0, v1.1.0, v1.2.0/v1.2.1) |
+| Total commits to date            | see [activity](https://github.com/cbikkula/pm5-dashboard/commits/main) |
 | External backend                 | **none**      |
 
 ---

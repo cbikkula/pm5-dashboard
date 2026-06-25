@@ -1,5 +1,9 @@
 # FAQ
 
+## Can I try it without a PM5?
+
+Yes — open the live site and go to **Settings → DEMO MODE → Start Demo Mode**. The dashboard runs against synthetic stroke data (force curve animating, pace varying around a target, HR drifting upward) so you can explore every screen and preset before pairing real hardware. Drive sync auto-pauses while demo is running so the fake workouts never reach your real history. *Useful if you're a coach previewing the app before practice, or a first-time visitor curious what it actually does.*
+
 ## Does this work on Mac?
 
 Yes. Chrome and Edge on macOS both implement Web Bluetooth — connection, force curves, Drive sync, PWA install all work identically to Windows. Tested on macOS Sequoia.

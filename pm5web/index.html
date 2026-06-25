@@ -2007,6 +2007,33 @@
     opacity: 0; transition: opacity 200ms;
   }
   .session-notes .sn-saved.shown { opacity: 1; }
+
+  /* Release notes modal */
+  .release-notes-list {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .release-notes-list li {
+    background: var(--bg-base);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.5;
+    position: relative;
+    padding-left: 28px;
+  }
+  .release-notes-list li::before {
+    content: "✦";
+    position: absolute;
+    left: 12px;
+    color: var(--accent-3);
+  }
   .demo-banner .db-text { flex: 1; }
   .demo-banner .db-exit {
     background: transparent;
@@ -2463,6 +2490,21 @@
 </div>
 
 <!-- (Benchmarks modal removed — moved into Settings → BENCHMARKS section.) -->
+
+<!-- Release notes — fires once when the app version bumps. -->
+<div class="modal-overlay" id="releaseNotesModal">
+  <div class="modal" style="width: 540px;">
+    <div class="row" style="justify-content: space-between; align-items: baseline;">
+      <h2 id="releaseNotesTitle">WHAT'S NEW</h2>
+      <span class="h-sub" style="margin:0;" id="releaseNotesDate"></span>
+    </div>
+    <div class="h-sub" id="releaseNotesHeadline"></div>
+    <ul class="release-notes-list" id="releaseNotesList"></ul>
+    <div class="modal-buttons">
+      <button class="accent" id="releaseNotesOkBtn">Got it</button>
+    </div>
+  </div>
+</div>
 
 <!-- Focus presets modal — swap the on-screen metric mix in one tap. -->
 <div class="modal-overlay" id="focusModal">
@@ -3145,6 +3187,45 @@ service cloud.firestore {
 // step-by-step. Until this is set, the dashboard runs in local-only
 // mode (workouts saved per-browser, no cross-device sync).
 const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.googleusercontent.com";
+
+// Current app version. Bumped when a noteworthy change ships, so the
+// release-notes modal can fire on the first load after an update.
+// Released versions are listed in RELEASE_NOTES below — keep these
+// in sync with CHANGELOG.md in the repo.
+const APP_VERSION = "1.2.0";
+
+const RELEASE_NOTES = {
+  "1.2.0": {
+    date: "June 2026",
+    headline: "Demo Mode + auto-save + CSV export",
+    items: [
+      "Try Demo Mode — explore the full dashboard without a PM5.",
+      "Auto-save recovery — interrupted sessions can be recovered on next load.",
+      "CSV export of your full history and per-session intervals.",
+      "Session notes, rating, and tags on saved workouts.",
+      "Friendlier error messages, with iOS-specific guidance.",
+    ],
+  },
+  "1.1.0": {
+    date: "June 2026",
+    headline: "Repo polish",
+    items: [
+      "Public GitHub repo with full docs, screenshots, and reflection.",
+      "Tagged v1.0.0 + v1.1.0 releases.",
+    ],
+  },
+  "1.0.0": {
+    date: "June 2026",
+    headline: "Public release",
+    items: [
+      "PWA install + offline shell.",
+      "Six focus presets with tier-based card sizing.",
+      "Force-curve overlays — best stroke + session average ghosts.",
+      "Benchmark tests + workout builder.",
+      "Drive sync of history / plans / layout / prefs.",
+    ],
+  },
+};
 
 // =====================================================================
 // Constants — Concept2 PM5 BLE GATT UUIDs
@@ -9460,7 +9541,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     "workoutsModal",
                     "focusModal","lineupModal","athleteModal",
                     "shellModal","teamModal","oarSetModal","squadModal",
-                    "clubChooserModal","clubCreateModal","clubJoinModal"]) {
+                    "clubChooserModal","clubCreateModal","clubJoinModal",
+                    "releaseNotesModal"]) {
     const overlay = document.getElementById(id);
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) overlay.classList.remove("open");
@@ -9483,7 +9565,71 @@ document.addEventListener("DOMContentLoaded", () => {
   render();
   // Render loop for resize-driven canvas
   window.addEventListener("resize", render);
+  // Release notes — fires once on the first load after a version
+  // bump. Skipped on the very first install (so brand-new users
+  // don't see "what's new" before they've seen what's there).
+  maybeShowReleaseNotes();
 });
+
+// Release-notes plumbing — see RELEASE_NOTES constant at the top of
+// the script. Tracks the last APP_VERSION the user saw in
+// localStorage; if it doesn't match the current version, shows the
+// modal listing notes for every version they've missed.
+const RELEASE_NOTES_KEY = "pm5_last_seen_version";
+
+function maybeShowReleaseNotes() {
+  let lastSeen;
+  try { lastSeen = localStorage.getItem(RELEASE_NOTES_KEY); }
+  catch (e) { return; }
+  if (!lastSeen) {
+    // First-ever install — mark as seen but don't show. Users
+    // shouldn't be greeted with "what's new" on day zero.
+    try { localStorage.setItem(RELEASE_NOTES_KEY, APP_VERSION); }
+    catch (e) {}
+    return;
+  }
+  if (lastSeen === APP_VERSION) return;
+  // Build a combined list of every release between lastSeen and
+  // APP_VERSION, in newest-first order.
+  const versions = Object.keys(RELEASE_NOTES).sort(compareSemver).reverse();
+  const idxLast = versions.indexOf(lastSeen);
+  const newOnes = idxLast >= 0 ? versions.slice(0, idxLast) : versions.slice(0, 1);
+  if (!newOnes.length) {
+    try { localStorage.setItem(RELEASE_NOTES_KEY, APP_VERSION); }
+    catch (e) {}
+    return;
+  }
+  // Render: most recent version on top, older versions below.
+  const list = document.getElementById("releaseNotesList");
+  list.innerHTML = "";
+  const top = RELEASE_NOTES[newOnes[0]];
+  document.getElementById("releaseNotesTitle").textContent = `NEW IN ${newOnes[0]}`;
+  document.getElementById("releaseNotesDate").textContent  = top.date || "";
+  document.getElementById("releaseNotesHeadline").textContent = top.headline || "";
+  for (const v of newOnes) {
+    for (const it of (RELEASE_NOTES[v]?.items || [])) {
+      const li = document.createElement("li");
+      li.textContent = it;
+      list.appendChild(li);
+    }
+  }
+  document.getElementById("releaseNotesModal").classList.add("open");
+  document.getElementById("releaseNotesOkBtn").onclick = () => {
+    document.getElementById("releaseNotesModal").classList.remove("open");
+    try { localStorage.setItem(RELEASE_NOTES_KEY, APP_VERSION); }
+    catch (e) {}
+  };
+}
+
+// Lex-sort tolerant of arbitrary semver — assumes 3-part numeric.
+function compareSemver(a, b) {
+  const pa = a.split(".").map(n => parseInt(n, 10) || 0);
+  const pb = b.split(".").map(n => parseInt(n, 10) || 0);
+  for (let i = 0; i < 3; i++) {
+    if (pa[i] !== pb[i]) return pa[i] - pb[i];
+  }
+  return 0;
+}
 </script>
 </body>
 </html>

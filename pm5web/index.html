@@ -1932,6 +1932,201 @@
     50%      { opacity: 1; }
   }
   .demo-banner.hidden { display: none; }
+  /* =====================================================================
+     PERFORMANCE VIEW — Phase 1 page shell
+     ===================================================================== */
+  #performanceView.active {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .perf-header {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .perf-title h1 {
+    margin: 0;
+    color: var(--text);
+    font-size: 22px;
+    letter-spacing: 2px;
+  }
+  .perf-tagline {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  .perf-tagline em { color: var(--accent-3); font-style: normal; }
+
+  .perf-tabs {
+    display: inline-flex;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+    gap: 2px;
+    align-self: flex-start;
+    flex-wrap: wrap;
+  }
+  .perf-tab {
+    background: transparent;
+    border: 0;
+    padding: 8px 16px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-weight: 700;
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .perf-tab:hover { color: var(--text); }
+  .perf-tab.active {
+    background: var(--accent);
+    color: var(--bg-base);
+  }
+
+  .perf-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .perf-pane {
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .perf-pane.active { display: flex; }
+
+  /* Empty / coming-soon callouts inside panes */
+  .perf-empty-block {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 36px 28px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+  .perf-empty-block .pe-icon { font-size: 44px; line-height: 1; margin-bottom: 10px; }
+  .perf-empty-block .pe-title { color: var(--text); font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .perf-empty-block .pe-body { font-size: 13px; line-height: 1.6; }
+
+  .perf-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .perf-coming-soon {
+    background: linear-gradient(90deg,
+                  rgba(76, 194, 255, 0.08), rgba(86, 249, 179, 0.04));
+    border: 1px dashed var(--accent);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  .perf-coming-soon b { color: var(--accent); }
+  .perf-coming-soon code {
+    background: var(--bg-base);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 11.5px;
+  }
+
+  .perf-section-headline {
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .perf-section-body {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* Insight-card preview swatches */
+  .perf-insight-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .insight-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-left-width: 4px;
+    border-radius: 10px;
+    padding: 12px 16px;
+  }
+  .insight-card .ic-badge {
+    color: var(--text-dim);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+  }
+  .insight-card .ic-title {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .insight-card .ic-body {
+    color: var(--text-muted);
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+  .insight-card.type-positive { border-left-color: var(--accent-3); }
+  .insight-card.type-positive .ic-badge { color: var(--accent-3); }
+  .insight-card.type-warn     { border-left-color: #ffcc55; }
+  .insight-card.type-warn .ic-badge     { color: #ffcc55; }
+  .insight-card.type-tech     { border-left-color: var(--accent); }
+  .insight-card.type-tech .ic-badge     { color: var(--accent); }
+  .insight-card.type-fitness  { border-left-color: #ff6b6b; }
+  .insight-card.type-fitness .ic-badge  { color: #ff6b6b; }
+  .insight-card.type-rec      { border-left-color: var(--accent-2); }
+  .insight-card.type-rec .ic-badge      { color: var(--accent-2); }
+
+  /* Spec preview cards in non-Overview panes */
+  .perf-spec-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .ps-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .ps-card .ps-title {
+    color: var(--accent);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+  }
+  .ps-card .ps-body {
+    color: var(--text-muted);
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+  .ps-card .ps-body b { color: var(--text); }
+  .ps-card .ps-body code {
+    background: var(--bg-base);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 11.5px;
+  }
+
   /* Performance preview modal — list of upcoming sections */
   .perf-preview {
     display: flex;
@@ -2170,7 +2365,6 @@
         <div class="card-sub" id="cardHistorySub">Past sessions and summaries</div>
       </button>
       <button class="menu-card" data-menu="performance">
-        <span class="card-soon">SOON</span>
         <div class="card-icon">📈</div>
         <div class="card-name">Performance</div>
         <div class="card-sub">Trends, fatigue, insights</div>
@@ -2301,6 +2495,196 @@
   <div class="bottom-strip" data-area="bottom"></div>
 
   </div><!-- /monitorView -->
+
+  <!-- ============================================================= -->
+  <!-- PERFORMANCE VIEW — Phase 1: page shell, tab nav, empty states. -->
+  <!--                                                                -->
+  <!-- Each tab's spec is documented inline in the body so the page   -->
+  <!-- isn't just empty boxes — visitors and reviewers can see the    -->
+  <!-- whole vision today, and future phases replace the spec text    -->
+  <!-- with real working content one tab at a time.                   -->
+  <!-- ============================================================= -->
+  <div id="performanceView" class="view">
+    <div class="perf-header">
+      <div class="perf-title">
+        <h1>📈 PERFORMANCE</h1>
+        <div class="perf-tagline">What does all this data <em>actually</em> mean?</div>
+      </div>
+      <div class="perf-tabs">
+        <button class="perf-tab" data-perf-tab="overview">Overview</button>
+        <button class="perf-tab" data-perf-tab="insights">Insights</button>
+        <button class="perf-tab" data-perf-tab="technique">Technique</button>
+        <button class="perf-tab" data-perf-tab="fitness">Fitness</button>
+        <button class="perf-tab" data-perf-tab="goals">Goals</button>
+        <button class="perf-tab" data-perf-tab="compare">Compare</button>
+      </div>
+    </div>
+
+    <div class="perf-content">
+
+      <!-- OVERVIEW TAB ----------------------------------------------- -->
+      <div class="perf-pane" data-perf-pane="overview">
+        <div class="perf-empty-block" id="perfOverviewEmpty" style="display:none;">
+          <div class="pe-icon">📊</div>
+          <div class="pe-title">No performance data yet</div>
+          <div class="pe-body">
+            Complete a workout and log it, or jump into
+            <b>Settings → DEMO MODE → Start Demo Mode</b> to preview this page.
+          </div>
+        </div>
+        <div class="perf-cards" id="perfOverviewCards"></div>
+        <div class="perf-coming-soon">
+          <b>Phase 2 (next backlog pull):</b> live 7-day / 30-day rollups, best-recent-session card, and trend direction from your saved history.
+        </div>
+      </div>
+
+      <!-- INSIGHTS TAB ----------------------------------------------- -->
+      <div class="perf-pane" data-perf-pane="insights">
+        <div class="perf-section-headline">
+          The section you'll actually read.
+        </div>
+        <div class="perf-section-body">
+          Rule-based observations after every workout — no AI required.
+          Plain English, evidence-backed, never dense:
+        </div>
+        <div class="perf-insight-preview">
+          <div class="insight-card type-positive">
+            <div class="ic-badge">✓ POSITIVE</div>
+            <div class="ic-title">Best drive length in 3 weeks.</div>
+            <div class="ic-body">Your average drive length was 1.52 m, 4.1% higher than your recent average.</div>
+          </div>
+          <div class="insight-card type-warn">
+            <div class="ic-badge">⚠ WARNING</div>
+            <div class="ic-title">Late-piece fade detected.</div>
+            <div class="ic-body">Your average watts dropped 8.4% in the final quarter.</div>
+          </div>
+          <div class="insight-card type-tech">
+            <div class="ic-badge">🛠 TECHNIQUE</div>
+            <div class="ic-title">Peak force moved later.</div>
+            <div class="ic-body">Peak force position shifted from 38% to 46% of the drive by the end of the session.</div>
+          </div>
+          <div class="insight-card type-fitness">
+            <div class="ic-badge">❤ FITNESS</div>
+            <div class="ic-title">Lower heart rate for same pace.</div>
+            <div class="ic-body">Compared with similar sessions, your HR was 6 bpm lower at the same split.</div>
+          </div>
+          <div class="insight-card type-rec">
+            <div class="ic-badge">🎯 RECOMMENDATION</div>
+            <div class="ic-title">Recommended next focus.</div>
+            <div class="ic-body">Steady-state session at 18–20 spm while keeping drive length above 1.48 m.</div>
+          </div>
+        </div>
+        <div class="perf-coming-soon">
+          <b>Phase 3 (backlog pull #16 — Technique insight cards):</b> rule-based engine wired to your actual workouts. Starts with 5 triggers (drive-length drop, watts fade, HR drift, rate-without-power, peak-timing shift) and expands from there.
+        </div>
+      </div>
+
+      <!-- TECHNIQUE TAB ---------------------------------------------- -->
+      <div class="perf-pane" data-perf-pane="technique">
+        <div class="perf-section-headline">Rowing mechanics across sessions.</div>
+        <div class="perf-spec-grid">
+          <div class="ps-card">
+            <div class="ps-title">A. Force-curve comparison</div>
+            <div class="ps-body">Toggle between Average / Best / First 25% / Last 25% / Selected. See peak force, peak timing, drive length, slip (catch + release), drive ratio side-by-side.</div>
+          </div>
+          <div class="ps-card">
+            <div class="ps-title">B. Technique trend cards</div>
+            <div class="ps-body">Drive length over time (<i>1.51 m, ↑ 3.2% vs recent average</i>). Peak timing trend (<i>41%, stable</i>). Slip trend (<i>15°, ↓ improved by 2°</i>).</div>
+          </div>
+          <div class="ps-card">
+            <div class="ps-title">C. Stroke consistency</div>
+            <div class="ps-body">Coefficient-of-variation score per metric: split, watts, drive length, peak timing, and an overall consistency rollup.</div>
+          </div>
+          <div class="ps-card">
+            <div class="ps-title">D. Technique diagnosis</div>
+            <div class="ps-body">Rule-based root-cause labels: <i>"Shortening drive — length dropped 6.1%, watts dropped 7.8%, rate stable."</i> Identifies whether the issue is power, length, timing, or consistency.</div>
+          </div>
+        </div>
+        <div class="perf-coming-soon">
+          <b>Phase 4:</b> needs per-stroke history persistence (depends on backlog item #26 — versioned workout format). Force-curve overlay engine from v1.0 ports cleanly.
+        </div>
+      </div>
+
+      <!-- FITNESS TAB ------------------------------------------------ -->
+      <div class="perf-pane" data-perf-pane="fitness">
+        <div class="perf-section-headline">Endurance, heart rate, and load.</div>
+        <div class="perf-spec-grid">
+          <div class="ps-card">
+            <div class="ps-title">A. Heart-rate zones</div>
+            <div class="ps-body">Time in zone (Z1–Z5) bar chart. Existing zone tracking from v1.0 feeds in directly.</div>
+          </div>
+          <div class="ps-card">
+            <div class="ps-title">B. Training load</div>
+            <div class="ps-body">Today / last 7 days / last 30 days TRIMP rollup. Banister-style, already computed live; just needs persistence + aggregation.</div>
+          </div>
+          <div class="ps-card">
+            <div class="ps-title">C. HR drift</div>
+            <div class="ps-body">First-half watts/HR vs second-half watts/HR ratio. Surfaces aerobic drift even when split looks identical.</div>
+          </div>
+          <div class="ps-card">
+            <div class="ps-title">D. Similar-session fitness trend</div>
+            <div class="ps-body">Only compares like-to-like: 30-min steady state vs other 30-min steady states; 2k tests vs other 2k tests. Never compares sprint to steady-state.</div>
+          </div>
+        </div>
+        <div class="perf-coming-soon">
+          <b>Phase 5:</b> mostly assembly of existing HR metrics (already tracked: zones, drift, decoupling, recovery deltas, TRIMP).
+        </div>
+      </div>
+
+      <!-- GOALS TAB -------------------------------------------------- -->
+      <div class="perf-pane" data-perf-pane="goals">
+        <div class="perf-section-headline">Track what you're working toward.</div>
+        <div class="perf-spec-grid">
+          <div class="ps-card">
+            <div class="ps-title">Goal types</div>
+            <div class="ps-body">Distance PR · Time PR · Weekly metres · Monthly metres · Training consistency · Technique goal.</div>
+          </div>
+          <div class="ps-card">
+            <div class="ps-title">Example goals</div>
+            <div class="ps-body">
+              <b>Sub-7 2k</b> — current 7:08.4, target 6:59.9, progress 73%.<br>
+              <b>Hold 1.50 m drive length</b> — current 1.46 m, target 1.50 m, progress 62%.<br>
+              <b>Weekly metres</b> — current 42,850 m, target 60,000 m, progress 71%.
+            </div>
+          </div>
+          <div class="ps-card">
+            <div class="ps-title">Progress calculation</div>
+            <div class="ps-body">
+              Time goals: <code>(start − current) / (start − target)</code>.<br>
+              Higher-is-better: <code>(current − start) / (target − start)</code>.<br>
+              Clamped 0–1.
+            </div>
+          </div>
+          <div class="ps-card">
+            <div class="ps-title">Why this matters</div>
+            <div class="ps-body">Athletes see progress <i>before</i> hitting the final goal — partial wins keep training sticky.</div>
+          </div>
+        </div>
+        <div class="perf-coming-soon">
+          <b>Phase 6:</b> CRUD UI + progress bars. Goals persist with the rest of <code>userPrefs</code> so they sync to Drive automatically.
+        </div>
+      </div>
+
+      <!-- COMPARE TAB ------------------------------------------------ -->
+      <div class="perf-pane" data-perf-pane="compare">
+        <div class="perf-section-headline">Two sessions, side by side.</div>
+        <div class="perf-spec-grid">
+          <div class="ps-card">
+            <div class="ps-title">Difference table</div>
+            <div class="ps-body">Avg split, watts, rate, HR, drive length, HR drift — all delta-labelled. <i>"+1.3 sec faster · +8 W · drift improved 2.3%."</i></div>
+          </div>
+          <div class="ps-card">
+            <div class="ps-title">Graph overlays</div>
+            <div class="ps-body">Split, watts, HR, drive length, peak-force timing — all overlaid with both sessions. Normalised by percentage complete so workouts of slightly different length still compare.</div>
+          </div>
+        </div>
+        <div class="perf-coming-soon">
+          <b>Phase 7 (backlog pull #23 — Compare sessions):</b> overlay rendering + diff logic.
+        </div>
+      </div>
+
+    </div>
+  </div>
 
   <!-- ============================================================= -->
   <!-- CLUBS VIEW — single-coach club organizer (Phase 1).           -->
@@ -3500,6 +3884,10 @@ const state = {
   // ID of the lineup currently being edited in the builder, or null
   // when building a new one.
   editingLineupId: null,
+
+  // Performance view (v1.3 Phase 1) — tab state. Phases 2–7 will
+  // grow this with goals, comparisons, cached aggregates, etc.
+  performance: { activeTab: "overview" },
 
   // Firebase Phase 2 — only meaningful when FIREBASE_ENABLED.
   //   user      — currently-signed-in Firebase user, or null
@@ -8115,21 +8503,24 @@ function showView(name) {
   const home = document.getElementById("homeView");
   const monitor = document.getElementById("monitorView");
   const clubs = document.getElementById("clubsView");
+  const perf  = document.getElementById("performanceView");
   const back = document.getElementById("backBtn");
   const connect = document.getElementById("connectBtn");
   const conn = document.getElementById("connStatus");
   const hdrActions = document.getElementById("hdrActions");
-  if (home)    home.classList.toggle("active", name === "home");
+  if (home)    home.classList.toggle("active",    name === "home");
   if (monitor) monitor.classList.toggle("active", name === "monitor");
-  if (clubs)   clubs.classList.toggle("active", name === "clubs");
-  const showBack = name === "monitor" || name === "clubs";
+  if (clubs)   clubs.classList.toggle("active",   name === "clubs");
+  if (perf)    perf.classList.toggle("active",    name === "performance");
+  const showBack = name === "monitor" || name === "clubs" || name === "performance";
   if (back)       back.style.display       = showBack ? "" : "none";
   if (connect)    connect.style.display    = name === "monitor" ? "" : "none";
   if (conn)       conn.style.display       = name === "monitor" ? "" : "none";
   if (hdrActions) hdrActions.style.display = name === "monitor" ? "" : "none";
-  if (name === "home")       renderHomeView();
-  else if (name === "clubs") renderClubsView();
-  else                       render();
+  if (name === "home")              renderHomeView();
+  else if (name === "clubs")        renderClubsView();
+  else if (name === "performance")  renderPerformanceView();
+  else                              render();
 }
 
 function renderHomeView() {
@@ -8443,14 +8834,33 @@ function openClubs() {
 }
 function closeClubs() { showView("home"); }
 
-// Performance page — coming soon teaser. Tapping the home-menu card
-// opens a modal showing what the future Performance page will contain
-// (see backlog item L13 for the full spec).
-function openPerformanceSoon() {
-  document.getElementById("performanceSoonModal").classList.add("open");
+// Performance page — Phase 1: real navigable view with six tabs.
+// Tabs: Overview, Insights, Technique, Fitness, Goals, Compare.
+// Phase 1 ships the shell + spec previews per tab; Phases 2–7 fill in
+// the working content one tab at a time (see CHANGELOG + backlog L13).
+function openPerformance() {
+  showView("performance");
 }
-function closePerformanceSoon() {
-  document.getElementById("performanceSoonModal").classList.remove("open");
+function setPerformanceTab(tabId) {
+  if (!state.performance) state.performance = { activeTab: "overview" };
+  state.performance.activeTab = tabId;
+  document.querySelectorAll("#performanceView .perf-tab").forEach(t => {
+    t.classList.toggle("active", t.dataset.perfTab === tabId);
+  });
+  document.querySelectorAll("#performanceView .perf-pane").forEach(p => {
+    p.classList.toggle("active", p.dataset.perfPane === tabId);
+  });
+}
+function renderPerformanceView() {
+  if (!state.performance) state.performance = { activeTab: "overview" };
+  setPerformanceTab(state.performance.activeTab);
+  // Overview pane: show empty-state OR the Phase-2 "coming soon" preview
+  // depending on whether any history exists yet. Real card population
+  // lands when Phase 2 ships.
+  const emptyEl  = document.getElementById("perfOverviewEmpty");
+  const cardsEl  = document.getElementById("perfOverviewCards");
+  if (emptyEl) emptyEl.style.display = state.history.length ? "none" : "";
+  if (cardsEl) cardsEl.innerHTML = "";
 }
 
 function clubIsEmpty() {
@@ -9506,7 +9916,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if      (m === "row")          startJustRow();
       else if (m === "workouts")     openWorkouts();
       else if (m === "history")      openHistory();
-      else if (m === "performance")  openPerformanceSoon();
+      else if (m === "performance")  openPerformance();
       else if (m === "focus")        openFocus();
       else if (m === "clubs")        openClubs();
       else if (m === "settings")     openSettings();
@@ -9538,7 +9948,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Focus modal — preset picker, "Done" closes.
   document.getElementById("closeFocusBtn").addEventListener("click", closeFocus);
-  document.getElementById("closePerformanceSoonBtn").addEventListener("click", closePerformanceSoon);
+  // Performance view tab clicks. The teaser modal (performanceSoonModal)
+  // is now dead code — the card opens the real view via showView().
+  document.querySelectorAll("#performanceView .perf-tab").forEach(t => {
+    t.addEventListener("click", () => setPerformanceTab(t.dataset.perfTab));
+  });
+  // closePerformanceSoonBtn still exists in the dead teaser modal HTML
+  // but isn't reachable from the UI — leaving the listener stub here
+  // just so a stray reload doesn't error.
+  const oldTeaserBtn = document.getElementById("closePerformanceSoonBtn");
+  if (oldTeaserBtn) oldTeaserBtn.addEventListener("click", () => {
+    document.getElementById("performanceSoonModal").classList.remove("open");
+  });
 
   // -----------------------------------------------------------------
   // Clubs view — header edits, tabs, all CRUD buttons

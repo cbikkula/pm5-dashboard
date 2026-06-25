@@ -57,6 +57,16 @@ v1.0     Public release.
 v1.0+    Phase 2 Firebase scaffolding shipped behind a placeholder
          config — Auth, Firestore, security rules, real-time
          listeners, sync chip UI. Dormant until config is filled in.
+
+v1.2     Demo Mode shipped. First placed on the home menu as a
+         dedicated card ("🎮 Try Demo"). It worked, but the home menu
+         started feeling crowded — Just Row, Workouts, History, and
+         Focus are all things you do regularly; Demo is something
+         you try once and never again. Moved it into
+         Settings → DEMO MODE in v1.2.1 so the home menu went back
+         to five cards that all serve daily workflow. A useful
+         reminder that "what features should ship" and "where they
+         should live" are different decisions.
 ```
 
 The repo's git history (from when I finally initialized it) lives at [`https://github.com/cbikkula/pm5-dashboard/commits/main`](https://github.com/cbikkula/pm5-dashboard/commits/main).

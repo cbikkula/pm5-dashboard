@@ -2110,11 +2110,10 @@
         <div class="card-name">History</div>
         <div class="card-sub" id="cardHistorySub">Past sessions and summaries</div>
       </button>
-      <button class="menu-card" data-menu="demo">
-        <div class="card-icon">🎮</div>
-        <div class="card-name">Try Demo</div>
-        <div class="card-sub">No PM5? Run with simulated data.</div>
-      </button>
+      <!-- Demo Mode moved into Settings → DEMO MODE section. The
+           home-menu card felt out of place next to the "real" tools
+           (Workouts, History, Focus). Settings is where you go to
+           explore behaviour — that's where it belongs. -->
       <!-- Benchmarks moved into Settings → BENCHMARKS section. -->
       <button class="menu-card" data-menu="focus">
         <div class="card-icon">🎯</div>
@@ -2462,6 +2461,18 @@
           Hit <b>TEST</b> on any row to start that workout. Saved with the rest of Settings.
         </div>
         <div class="bench-grid" id="benchGrid"></div>
+      </div>
+      <div class="settings-section">
+        <div class="section-title">DEMO MODE</div>
+        <div class="hint-block" style="margin-bottom: 10px;">
+          No PM5 nearby? Run the dashboard against simulated stroke
+          data — force curve, pace, watts, HR all move realistically.
+          Drive sync pauses so demo workouts don't leak into your
+          history.
+        </div>
+        <button id="settingsDemoBtn" class="accent" type="button">
+          🎮 Start Demo Mode
+        </button>
       </div>
     </div>
     <div class="modal-buttons">
@@ -3192,9 +3203,17 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.2.0";
+const APP_VERSION = "1.2.1";
 
 const RELEASE_NOTES = {
+  "1.2.1": {
+    date: "June 2026",
+    headline: "Demo Mode lives in Settings now",
+    items: [
+      "Moved \"Try Demo\" out of the home menu into Settings → DEMO MODE.",
+      "The home menu was getting crowded with mixed-purpose cards; Demo Mode is a discovery tool, not a daily workflow, so Settings is a better home for it.",
+    ],
+  },
   "1.2.0": {
     date: "June 2026",
     headline: "Demo Mode + auto-save + CSV export",
@@ -9347,7 +9366,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if      (m === "row")        startJustRow();
       else if (m === "workouts")   openWorkouts();
       else if (m === "history")    openHistory();
-      else if (m === "demo")       enterDemoMode();
       else if (m === "focus")      openFocus();
       else if (m === "clubs")      openClubs();
       else if (m === "settings")   openSettings();
@@ -9517,6 +9535,13 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("cancelSettingsBtn").addEventListener("click", closeSettings);
   document.getElementById("saveLayoutBtn").addEventListener("click", applySettingsFromDialog);
   document.getElementById("resetLayoutBtn").addEventListener("click", resetLayoutToDefault);
+  // Settings → DEMO MODE — entry point now lives here instead of on
+  // the home menu. Closing Settings first so the demo banner has the
+  // full screen.
+  document.getElementById("settingsDemoBtn").addEventListener("click", () => {
+    closeSettings();
+    enterDemoMode();
+  });
   // "+ Add card" buttons for each area in the Settings dialog.
   document.querySelectorAll(".add-slot-btn").forEach(btn => {
     btn.addEventListener("click", () => addSettingsSlot(btn.dataset.addArea));

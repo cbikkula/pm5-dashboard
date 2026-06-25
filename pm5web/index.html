@@ -1879,6 +1879,52 @@
     grid-column: 1 / -1;
   }
   .compat-banner.shown { display: block; }
+
+  /* Demo-mode banner — shown at the very top while simulated BLE
+     data is being fed in. The "EXIT DEMO" button mirrors what the
+     menu card does in reverse. */
+  .demo-banner {
+    display: none;
+    background: linear-gradient(90deg,
+                  rgba(255,143,60,0.18),
+                  rgba(255,143,60,0.06));
+    border: 1px solid var(--accent-2);
+    color: var(--accent-2);
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .demo-banner .db-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 6px var(--accent-2);
+    animation: db-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes db-pulse {
+    0%, 100% { opacity: 0.4; }
+    50%      { opacity: 1; }
+  }
+  .demo-banner.hidden { display: none; }
+  .demo-banner .db-text { flex: 1; }
+  .demo-banner .db-exit {
+    background: transparent;
+    border: 1px solid var(--accent-2);
+    color: var(--accent-2);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font: inherit;
+    cursor: pointer;
+  }
+  .demo-banner .db-exit:hover {
+    background: var(--accent-2);
+    color: var(--bg-base);
+  }
 </style>
 </head>
 <body>
@@ -1909,6 +1955,11 @@
   </header>
 
   <div class="compat-banner" id="compatBanner"></div>
+  <div class="demo-banner hidden" id="demoBanner">
+    <span class="db-dot"></span>
+    <span class="db-text">DEMO MODE · simulated PM5 data · drive sync paused</span>
+    <button class="db-exit" id="demoExitBtn" type="button">EXIT DEMO</button>
+  </div>
 
   <!-- ============================================================= -->
   <!-- HOME VIEW — launcher with cards for each major area.          -->
@@ -1935,6 +1986,11 @@
         <div class="card-icon">📊</div>
         <div class="card-name">History</div>
         <div class="card-sub" id="cardHistorySub">Past sessions and summaries</div>
+      </button>
+      <button class="menu-card" data-menu="demo">
+        <div class="card-icon">🎮</div>
+        <div class="card-name">Try Demo</div>
+        <div class="card-sub">No PM5? Run with simulated data.</div>
       </button>
       <!-- Benchmarks moved into Settings → BENCHMARKS section. -->
       <button class="menu-card" data-menu="focus">
@@ -5294,6 +5350,12 @@ function resetAutoLogTracker() {
 }
 
 function logCurrentWorkout({ silent = false } = {}) {
+  // Demo Mode never writes to history — fake workouts must not leak
+  // into the user's real session log.
+  if (demoActive()) {
+    if (!silent) setToast("Demo Mode active — workouts aren't saved.", "warn");
+    return null;
+  }
   // Capture a workout into history. If the user has a programmed plan
   // with intervals, save its plan + per-interval results. Otherwise
   // capture the totals from a "just rowing" session.
@@ -6853,6 +6915,150 @@ function startJustRow() {
   render();
 }
 
+// =====================================================================
+// DEMO MODE — simulated PM5 data
+// =====================================================================
+//
+// Lets anyone explore the dashboard without an erg paired. Fakes the
+// same shape of data the live BLE parsers would produce, so EVERY
+// downstream consumer (renderer, force-curve overlays, focus presets,
+// HR tracker) sees realistic input.
+//
+// Drive sync is paused while demo is active so the user's real
+// history isn't polluted with synthetic workouts.
+
+const DEMO_TICK_MS = 500;     // fake "stroke notification" cadence
+const DEMO_BASELINE_RATE = 24; // strokes per minute
+const DEMO_HR_MIN = 142, DEMO_HR_MAX = 168;
+
+function demoActive() { return state.demoMode && state.demoMode.active; }
+
+function enterDemoMode() {
+  if (demoActive()) { showView("monitor"); return; }
+  state.demoMode = {
+    active: true,
+    startTimeMs: Date.now(),
+    distance: 0,
+    elapsed: 0,
+    strokeCount: 0,
+    intervalId: null,
+    // Per-session "athlete fingerprint" so each demo run feels a
+    // little different — random target pace + drift profile.
+    targetPaceS:    105 + Math.random() * 12,   // 1:45 – 1:57 / 500m
+    peakForceBase:  140 + Math.random() * 40,   // ~140–180 lbf
+    driftPerStroke: 0.02 + Math.random() * 0.03, // tiny HR drift
+  };
+  // Borrow Just-Row's session reset so overlays / autolog re-arm.
+  state.localPlan = null;
+  state.planCurrentIdx = 0;
+  state.planResults = [];
+  state.distanceM = 0;
+  state.elapsedTimeS = 0;
+  state.strokeCount = 0;
+  state.forceCurve = [];
+  state.previousForceCurve = [];
+  state.liveForceCurve = [];
+  resetAutoLogTracker();
+  resetHrTracking();
+  resetForceCurveOverlays();
+  // Fake the "connected" state so the monitor header reads right.
+  state.connected = true;
+  setStatus("connected-ble", "Demo PM5 · simulated");
+  showDemoBanner(true);
+  showView("monitor");
+  // Fire the first tick immediately so the screen isn't empty.
+  demoTick();
+  state.demoMode.intervalId = setInterval(demoTick, DEMO_TICK_MS);
+}
+
+function exitDemoMode() {
+  if (!state.demoMode) return;
+  if (state.demoMode.intervalId) clearInterval(state.demoMode.intervalId);
+  state.demoMode = null;
+  state.connected = false;
+  setStatus("disconnected", "Not connected");
+  showDemoBanner(false);
+  // Clear the synthetic session so the user doesn't accidentally log
+  // demo data as a real workout.
+  state.distanceM = 0;
+  state.elapsedTimeS = 0;
+  state.strokeCount = 0;
+  state.forceCurve = [];
+  state.previousForceCurve = [];
+  state.liveForceCurve = [];
+  resetForceCurveOverlays();
+  showView("home");
+  render();
+}
+
+function showDemoBanner(on) {
+  const el = document.getElementById("demoBanner");
+  if (!el) return;
+  el.classList.toggle("hidden", !on);
+}
+
+// Generate one stroke's worth of force-curve samples. Asymmetric
+// bell — peak just past the middle, slight stroke-to-stroke
+// variation so the overlay buffers update believably.
+function demoForceCurve(peakLbf, len) {
+  const out = new Array(len);
+  const peakAt = 0.45 + (Math.random() - 0.5) * 0.08;  // ~0.41–0.49
+  for (let i = 0; i < len; i++) {
+    const t = i / (len - 1);
+    let f;
+    if (t < peakAt) f = Math.sin((t / peakAt) * Math.PI / 2);
+    else            f = Math.sin(((1 - t) / (1 - peakAt)) * Math.PI / 2);
+    // Tiny noise on every sample to avoid pixel-perfect curves.
+    out[i] = Math.max(0, peakLbf * f + (Math.random() - 0.5) * 4);
+  }
+  return out;
+}
+
+function demoTick() {
+  const d = state.demoMode;
+  if (!d) return;
+  // Advance the simulated stroke.
+  d.strokeCount++;
+  d.elapsed += DEMO_TICK_MS / 1000;
+  // Pace varies slightly around the target.
+  const paceS = d.targetPaceS + (Math.random() - 0.5) * 4 +
+                Math.sin(d.elapsed / 90) * 1.2;   // gentle pacing wave
+  const metersThisStroke = (DEMO_TICK_MS / 1000) * (500 / paceS);
+  d.distance += metersThisStroke;
+  // Force-curve packet (simulated multi-sample completion).
+  const peak = d.peakForceBase + (Math.random() - 0.5) * 12;
+  const curve = demoForceCurve(peak, 28 + Math.floor(Math.random() * 8));
+  commitCompletedStroke(curve);
+  state.previousForceCurve = state.forceCurve;
+  state.forceCurve = curve.slice();
+  state.liveForceCurve = curve.slice();
+  // Update primary state directly (bypassing the BLE parsers — same
+  // result, no fake bytes to parse).
+  state.distanceM    = Math.round(d.distance);
+  state.elapsedTimeS = d.elapsed;
+  state.strokeCount  = d.strokeCount;
+  state.paceS        = paceS;
+  state.strokeRate   = DEMO_BASELINE_RATE + Math.round(Math.sin(d.elapsed / 35) * 3);
+  state.driveLengthM = 1.32 + (Math.random() - 0.5) * 0.08;
+  state.driveTimeS   = 0.78 + (Math.random() - 0.5) * 0.08;
+  state.recoveryTimeS = 1.45 + (Math.random() - 0.5) * 0.10;
+  state.peakForceLbs = peak;
+  state.avgForceLbs  = peak * 0.62;
+  state.workPerStrokeJ = 380 + (Math.random() - 0.5) * 40;
+  state.dragFactor = 132;
+  // HR drifts upward slowly so the HR-zone metrics light up.
+  const baseHr = DEMO_HR_MIN +
+                 Math.min(DEMO_HR_MAX - DEMO_HR_MIN,
+                          d.strokeCount * d.driftPerStroke);
+  state.heartRate = Math.round(baseHr + (Math.random() - 0.5) * 4);
+  if (state.heartRate >= 30 && state.heartRate <= 240) {
+    updateHrTracking(state.heartRate);
+  }
+  // Force a render — normally this fires from BLE events; here we
+  // drive it from the tick directly.
+  render();
+}
+
 function planActiveKey(userId) { return `pm5_plan_${userId || state.user.id}`; }
 
 function persistPlan() {
@@ -7353,6 +7559,9 @@ async function syncHistoryFromDrive() {
 
 async function syncHistoryToDrive() {
   if (!state.googleAccessToken) return;
+  // Demo Mode pauses Drive sync — fake workouts must never leak into
+  // the user's real Drive document.
+  if (demoActive()) return;
   const body = JSON.stringify({
     version: 1,
     user: { id: state.user.id, email: state.user.email },
@@ -8623,6 +8832,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if      (m === "row")        startJustRow();
       else if (m === "workouts")   openWorkouts();
       else if (m === "history")    openHistory();
+      else if (m === "demo")       enterDemoMode();
       else if (m === "focus")      openFocus();
       else if (m === "clubs")      openClubs();
       else if (m === "settings")   openSettings();
@@ -8631,7 +8841,15 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("resumePlanBtn").addEventListener("click", () => {
     showView("monitor");
   });
-  document.getElementById("backBtn").addEventListener("click", () => showView("home"));
+  document.getElementById("backBtn").addEventListener("click", () => {
+    // If demo's running, "Back" cleanly exits it (clears intervals,
+    // resets fake session state) instead of leaving a ticker alive.
+    if (demoActive()) exitDemoMode();
+    else              showView("home");
+  });
+  // Demo-banner exit button — same teardown path as Back-from-monitor.
+  const demoExitBtn = document.getElementById("demoExitBtn");
+  if (demoExitBtn) demoExitBtn.addEventListener("click", exitDemoMode);
 
   // Workouts modal — saved-plans list, "+ New plan" button, back.
   document.getElementById("closeWorkoutsBtn").addEventListener("click", closeWorkouts);

@@ -196,16 +196,21 @@
     flex: 1;
     min-height: 0;
     display: grid;
-    /* Fixed 3 columns on desktop so the menu reads as proper rows
-       instead of one long strip. With 7 cards we end up with rows
-       of 3 + 3 + 1 (Settings on its own at the bottom). */
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
+    /* 5 columns on desktop — one row for each utility card (Workouts,
+       History, Performance, Focus, Settings) under the wide Just Row
+       banner. Cards are deliberately compact at this width since
+       there's a row of them; the banner above carries the visual
+       weight. */
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
     align-content: start;
     overflow-y: auto;
     padding: 4px;
   }
-  /* Collapse on narrow viewports so cards stay readable on phones. */
+  /* Collapse progressively on narrower viewports. */
+  @media (max-width: 1100px) {
+    .home-menu { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
   @media (max-width: 720px) {
     .home-menu { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
@@ -216,33 +221,48 @@
     background: var(--bg-panel);
     border: 1px solid var(--border);
     border-radius: 14px;
-    padding: 22px 22px;
+    padding: 16px 16px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     font-family: inherit;
     color: var(--text);
     text-align: left;
     cursor: pointer;
-    min-height: 160px;
+    min-height: 140px;
     transition: border-color 100ms, transform 80ms, background 100ms;
+    position: relative;
   }
   .menu-card:hover {
     border-color: var(--accent);
     transform: translateY(-1px);
   }
   .menu-card:active { transform: translateY(0); }
-  .menu-card .card-icon { font-size: 36px; line-height: 1; }
+  .menu-card .card-icon { font-size: 30px; line-height: 1; }
   .menu-card .card-name {
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 700;
     margin-top: auto;
     letter-spacing: 0.5px;
   }
   .menu-card .card-sub {
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 12px;
     line-height: 1.4;
+  }
+  /* "Coming Soon" pill, top-right corner. Used on the Performance
+     card until L13 ships. */
+  .menu-card .card-soon {
+    position: absolute;
+    top: 10px; right: 12px;
+    background: rgba(255, 143, 60, 0.18);
+    border: 1px solid var(--accent-2);
+    color: var(--accent-2);
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 1px;
   }
   .menu-card.primary {
     background: linear-gradient(135deg, var(--accent), var(--accent-3));
@@ -253,10 +273,11 @@
     color: rgba(11, 13, 18, 0.7);
   }
   /* Just Row is the primary CTA. Span it across the full grid as a
-     wide banner so the remaining six cards form a clean 2×3 below. */
+     wide banner so the five small utility cards form a single row
+     beneath it (Workouts · History · Performance · Focus · Settings). */
   .menu-card[data-menu="row"] {
     grid-column: 1 / -1;
-    min-height: 120px;
+    min-height: 110px;
     flex-direction: row;
     align-items: center;
     gap: 22px;
@@ -1911,6 +1932,44 @@
     50%      { opacity: 1; }
   }
   .demo-banner.hidden { display: none; }
+  /* Performance preview modal — list of upcoming sections */
+  .perf-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    padding-right: 4px;
+  }
+  .perf-section {
+    background: var(--bg-base);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .perf-section-title {
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+  }
+  .perf-section-body {
+    color: var(--text-muted);
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+  .perf-section.perf-highlight {
+    border-color: var(--accent-3);
+    background: linear-gradient(135deg,
+                  rgba(86, 249, 179, 0.08),
+                  rgba(76, 194, 255, 0.04));
+  }
+  .perf-section.perf-highlight .perf-section-title { color: var(--accent-3); }
+  .perf-section.perf-highlight .perf-section-body { color: var(--text); }
+
   .recovered-tag {
     display: inline-block;
     background: rgba(255, 204, 85, 0.15);
@@ -2109,6 +2168,12 @@
         <div class="card-icon">📊</div>
         <div class="card-name">History</div>
         <div class="card-sub" id="cardHistorySub">Past sessions and summaries</div>
+      </button>
+      <button class="menu-card" data-menu="performance">
+        <span class="card-soon">SOON</span>
+        <div class="card-icon">📈</div>
+        <div class="card-name">Performance</div>
+        <div class="card-sub">Trends, fatigue, insights</div>
       </button>
       <!-- Demo Mode moved into Settings → DEMO MODE section. The
            home-menu card felt out of place next to the "real" tools
@@ -2501,6 +2566,71 @@
 </div>
 
 <!-- (Benchmarks modal removed — moved into Settings → BENCHMARKS section.) -->
+
+<!-- Performance page — coming soon preview. Tapping the card on the
+     home menu opens this until L13 ships. -->
+<div class="modal-overlay" id="performanceSoonModal">
+  <div class="modal" style="width: 640px; max-height: 88vh;">
+    <div class="row" style="justify-content: space-between; align-items: baseline;">
+      <h2>📈 PERFORMANCE</h2>
+      <span class="h-sub" style="margin:0;">Coming soon</span>
+    </div>
+    <div class="h-sub">
+      A whole new section answering one question: <b>what does all this data actually mean?</b>
+      Not another grid of tiny charts — a curated view where every section answers
+      <i>"am I getting faster · fitter · more consistent · where did I fade · how does this
+      compare to last month · what should I work on next?"</i>
+    </div>
+
+    <div class="perf-preview">
+      <div class="perf-section">
+        <div class="perf-section-title">🏆 PERSONAL RECORDS</div>
+        <div class="perf-section-body">Front-and-centre, not buried in Settings. <i>500m 1:27 · 2k 7:01 · 6k 22:58 · 30 min 8,221 m.</i></div>
+      </div>
+      <div class="perf-section">
+        <div class="perf-section-title">📊 TRAINING OVERVIEW</div>
+        <div class="perf-section-body">Last 30 days: total metres, workouts, hours, average split, average HR, training load.</div>
+      </div>
+      <div class="perf-section">
+        <div class="perf-section-title">📉 PERFORMANCE TRENDS</div>
+        <div class="perf-section-body">Sparkline per metric showing direction over time — split, watts, HR, drive length, peak force.</div>
+      </div>
+      <div class="perf-section">
+        <div class="perf-section-title">⏱ BENCHMARK PROGRESS</div>
+        <div class="perf-section-body">Per-distance timeline: <i>7:18 → 7:12 → 7:08 → 7:04</i>.</div>
+      </div>
+      <div class="perf-section">
+        <div class="perf-section-title">🛠 TECHNIQUE TRENDS</div>
+        <div class="perf-section-body">Average drive length over time, peak-force timing over time. Reveals shifts only visible across sessions.</div>
+      </div>
+      <div class="perf-section">
+        <div class="perf-section-title">📉 FATIGUE TRENDS</div>
+        <div class="perf-section-body">Monthly fade % comparison — <i>"Last month 3.2%, this month 1.7%"</i>.</div>
+      </div>
+      <div class="perf-section">
+        <div class="perf-section-title">❤ HR DISTRIBUTION + TRAINING LOAD</div>
+        <div class="perf-section-body">Weekly zone breakdown + Banister-style load rollup.</div>
+      </div>
+      <div class="perf-section perf-highlight">
+        <div class="perf-section-title">✦ INSIGHTS</div>
+        <div class="perf-section-body">
+          <b>The section users will actually read.</b> 4–8 rule-based observations after every workout:
+          <i>"Longest drive length in 3 weeks · Lowest HR for this pace · Stroke consistency improved 6% · Drive shortened after minute 24 · Peak force shifted later in the final quarter."</i>
+        </div>
+      </div>
+    </div>
+
+    <div class="h-sub" style="margin-top: 12px;">
+      Roadmap details + status live in
+      <a href="https://github.com/cbikkula/pm5-dashboard/blob/main/docs/feature-backlog.md"
+         target="_blank" style="color: var(--accent);">docs/feature-backlog.md (item L13)</a>.
+    </div>
+
+    <div class="modal-buttons">
+      <button class="accent" id="closePerformanceSoonBtn">Close</button>
+    </div>
+  </div>
+</div>
 
 <!-- Release notes — fires once when the app version bumps. -->
 <div class="modal-overlay" id="releaseNotesModal">
@@ -8313,6 +8443,16 @@ function openClubs() {
 }
 function closeClubs() { showView("home"); }
 
+// Performance page — coming soon teaser. Tapping the home-menu card
+// opens a modal showing what the future Performance page will contain
+// (see backlog item L13 for the full spec).
+function openPerformanceSoon() {
+  document.getElementById("performanceSoonModal").classList.add("open");
+}
+function closePerformanceSoon() {
+  document.getElementById("performanceSoonModal").classList.remove("open");
+}
+
 function clubIsEmpty() {
   const c = state.club || {};
   if ((c.name || "").trim()) return false;
@@ -9363,12 +9503,13 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".menu-card[data-menu]").forEach(card => {
     card.addEventListener("click", () => {
       const m = card.dataset.menu;
-      if      (m === "row")        startJustRow();
-      else if (m === "workouts")   openWorkouts();
-      else if (m === "history")    openHistory();
-      else if (m === "focus")      openFocus();
-      else if (m === "clubs")      openClubs();
-      else if (m === "settings")   openSettings();
+      if      (m === "row")          startJustRow();
+      else if (m === "workouts")     openWorkouts();
+      else if (m === "history")      openHistory();
+      else if (m === "performance")  openPerformanceSoon();
+      else if (m === "focus")        openFocus();
+      else if (m === "clubs")        openClubs();
+      else if (m === "settings")     openSettings();
     });
   });
   document.getElementById("resumePlanBtn").addEventListener("click", () => {
@@ -9397,6 +9538,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Focus modal — preset picker, "Done" closes.
   document.getElementById("closeFocusBtn").addEventListener("click", closeFocus);
+  document.getElementById("closePerformanceSoonBtn").addEventListener("click", closePerformanceSoon);
 
   // -----------------------------------------------------------------
   // Clubs view — header edits, tabs, all CRUD buttons
@@ -9567,7 +9709,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     "focusModal","lineupModal","athleteModal",
                     "shellModal","teamModal","oarSetModal","squadModal",
                     "clubChooserModal","clubCreateModal","clubJoinModal",
-                    "releaseNotesModal"]) {
+                    "releaseNotesModal","performanceSoonModal"]) {
     const overlay = document.getElementById(id);
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) overlay.classList.remove("open");

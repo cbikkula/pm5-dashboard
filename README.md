@@ -83,6 +83,12 @@
 
 ![Demo Mode section in Settings](docs/screenshots/demo-mode-settings.png)
 
+### Performance *(v1.2.2, teaser only — page itself is L13 on the roadmap)*
+
+> The marquee long-term feature: a curated section answering *"what does all this data actually mean?"* — trends, fatigue, technique, **insights**. Tapping the home-menu **Performance** card opens this preview modal until the real page ships.
+
+![Performance teaser modal](docs/screenshots/performance-soon.png)
+
 ---
 
 ## By the numbers

@@ -10,6 +10,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Session replay
 - AI technique analysis (peak-timing trends)
 
+## [v1.4.0] — June 2026 — PR tracking + live PR pace
+
+Backlog items #7 (PR tracking) and #8 (live PR pace), implemented together since they share the same data plumbing.
+
+### Added
+- **Automatic PR detection.** Every benchmark **Test** session is checked against your existing PRs when it's logged. New/improved PRs are recorded with full provenance (which session set it, the date, the distance/time/pace) and surfaced with a 🏆 **PR** badge on the history row. Detection is conservative: only sessions launched as a Test count (a casual 2 km row never silently overwrites your 2k PR), and the workout has to actually reach the benchmark target.
+- **Exact PR computation.** PRs are stitched from per-interval results — for a 2k Test (8×250 m) the recorded time is the true time at 2000 m, with per-interval linear interpolation only *within* the boundary interval. This closed a negative-split edge case where a sprint finish could over-credit a PR via naïve whole-session pro-rating. Pro-rating is the fallback when interval data is unavailable.
+- **Live PR pace.** During a benchmark Test, a **PR Δ** metric shows seconds-per-500 ahead (−, green) or behind (+, red) your existing PR pace, plus **Proj. Finish** / **Proj. Distance** projecting your result at current pace. Both auto-hide unless a relevant PR exists. Hidden for half/full-marathon tests where the test distance intentionally overshoots the benchmark.
+- **PR columns in CSV export** — `bench_key`, `pr_keys`, `pr_achievement` appended to the history CSV (additive; existing columns unmoved).
+
+### Fixed (found by an adversarial self-review of this feature)
+- **Drive sync race:** setting a PR previously fired two unserialised Drive PATCHes (one from the prefs write, one from the history write), and if the earlier-built body landed last the new session could vanish from the cloud copy. Collapsed to a single PATCH that carries both the new history entry and the new PR.
+- **Two-device PR race:** a Drive pull previously replaced your whole benchmarks object wholesale, wiping a PR set offline on another device. Now merges per-key, keeping the better value (faster time / farther distance) and its provenance.
+- **Theme contrast:** the PR badge colour is hard-coded mint instead of the theme accent, so it stays legible across all eight themes.
+- **Boundary tolerance:** a 1-minute test that stops at 59.6 s, or a 2k at 1998 m, now still credits the PR (small epsilon) rather than rejecting a clean effort on BLE-timing rounding.
+
 ## [v1.3.0] — June 2026 — Performance view, Phase 1 (page shell)
 
 ### Added

@@ -12,8 +12,8 @@ To pull the next item: open a chat with me and say `do backlog #N`. I'll build i
 | 4  | ✅ done v1.2.0 | Session notes / rating / tags          | Inside Summary modal |
 | 5  | ✅ done v1.2.0 | Better error messages                  | iOS-specific banner, Drive failures surfaced |
 | 6  | ✅ done v1.2.0 | Release-notes modal                    | "What's new" after a version bump |
-| 7  |        | PR tracking                            | Auto-detect 500m/1k/2k/5k/6k/10k PRs, badge on history row. *Feeds L13 — Benchmark Progress + Personal Records sections.* |
-| 8  |        | Live PR pace                           | During benchmark tests, show "Ahead by 2.8 sec" delta |
+| 7  | ✅ done v1.4.0 | PR tracking                            | Auto-detect PRs from benchmark Test sessions, 🏆 badge on history row, full provenance. *Feeds L13 — Benchmark Progress + Personal Records sections.* |
+| 8  | ✅ done v1.4.0 | Live PR pace                           | PR Δ + Proj. Finish metrics during benchmark tests, green/red vs PR pace |
 | 9  |        | Target zones                           | Pre-workout target ranges + green/yellow/red while rowing |
 | 10 |        | Local-only privacy mode                | Settings toggle: disable Drive sync, global counter, sign-in |
 | 11 |        | Connection health panel                | Mini-widget: PM5, HR, Drive sync, last packet, dropped packets |

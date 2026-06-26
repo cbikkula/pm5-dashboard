@@ -2,6 +2,14 @@
 
 Open bugs, browser quirks, and limitations I haven't fixed yet. PRs welcome (see [`CONTRIBUTING.md`](../CONTRIBUTING.md)).
 
+## Workout title is not HTML-escaped in the history list
+
+The history list interpolates the workout title straight into `innerHTML`, so a title containing markup (e.g. `<img onerror=…>`) would execute when the list renders. This is **self-XSS only** — it's a single-user local app, the only way to inject is to type the payload into your own workout title, and there's no cross-user surface except your own Drive sync. Predates the PR feature; flagged during the v1.4.0 review. **Fix planned:** build history rows with `createElement` + `textContent` instead of template-string `innerHTML`.
+
+## PR badge click opens the session summary
+
+The 🏆 PR badge sits inside the history-row click target, so tapping it opens the session summary (same as clicking the row) rather than showing the PR detail. The detail is in the badge's hover tooltip, which doesn't exist on touch devices. Low-impact UX nit; the summary opening is harmless. **Fix idea:** stop propagation on the badge and surface the PR detail in the summary modal so touch users can see it.
+
 ## Bluetooth reconnect
 
 After the PM5 sleeps (a few minutes of inactivity), Chrome's Web Bluetooth connection sometimes goes stale. Pulling a stroke wakes the erg, but the dashboard doesn't always notice — distance and elapsed stay stuck. **Workaround:** click **Disconnect** then **Connect** again, or refresh the page.

@@ -2178,6 +2178,26 @@
     margin-left: 6px;
     vertical-align: middle;
   }
+  /* PR badge on history rows — mint-green pill listing the benchmark
+     keys a session set. Geometry mirrors .recovered-tag for visual
+     consistency. Colour is hard-coded (not themed via --accent-3) to
+     match the pattern .recovered-tag uses — otherwise themes that
+     remap --accent-3 (Crimson, Light, etc.) produce a discordant
+     text-on-mint pill. */
+  .pr-tag {
+    display: inline-block;
+    background: rgba(86, 249, 179, 0.15);
+    border: 1px solid rgba(86, 249, 179, 0.55);
+    color: #56f9b3;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-left: 6px;
+    vertical-align: middle;
+    cursor: help;
+  }
   /* Session notes editor inside the Summary modal */
   .session-notes {
     background: var(--bg-base);
@@ -3717,9 +3737,18 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.2.1";
+const APP_VERSION = "1.4.0";
 
 const RELEASE_NOTES = {
+  "1.4.0": {
+    date: "June 2026",
+    headline: "PR tracking + live PR pace",
+    items: [
+      "Automatic PR detection — every benchmark Test session is checked against your existing PRs. New PRs are recorded with full provenance (date, source session) and surfaced with a 🏆 PR badge on the history row.",
+      "Live PR pace — during a benchmark Test, two new metrics show seconds-per-500 ahead/behind your existing PR pace AND your projected finish at current pace. Tinted green when ahead, red when behind.",
+      "Just rowing a 2k doesn't quietly overwrite your 2k PR — credit is conservative: only sessions launched as a Test count, and the workout has to actually reach the benchmark target.",
+    ],
+  },
   "1.2.1": {
     date: "June 2026",
     headline: "Demo Mode lives in Settings now",
@@ -3950,6 +3979,10 @@ const state = {
     // Benchmarks (personal records). Times stored in seconds; distance
     // PRs stored in metres. Keys match the BENCHMARKS catalogue below.
     benchmarks: {},
+    // Provenance for each PR — { sessionId, dateISO, distanceM,
+    // elapsedS, paceS }. Populated by applyPrUpdates when a session
+    // sets or improves a PR. Survives Drive sync (whole-object dump).
+    benchmarkMeta: {},
   },
 
   // Tracks whether the current session has already been auto-logged
@@ -4397,6 +4430,34 @@ const METRICS = {
                 get: () => fmtPace(state.splitAvgPaceS) },
   splitWatts: { label: "Split Watts", unit: "watts",
                 get: () => fmtInt(state.splitAvgPowerW) },
+
+  // ---- Live PR pace --------------------------------------------
+  // Only visible while doing a benchmark Test workout whose PR is
+  // already set. Shows seconds-per-500 ahead of (−) or behind (+)
+  // the user's existing PR pace. Tinted green/red/amber.
+  prDelta:    { label: "PR Δ",        unit: "vs PR pace",
+                get: () => fmtPrDelta(currentPrDelta()),
+                getColor: () => prDeltaColor(),
+                visible: () => currentPrDelta() != null },
+  // Projected finish — two flavours because the dimension depends on
+  // the active benchmark's kind: time-target tests project a TIME,
+  // distance-target tests project a DISTANCE. Splitting them lets
+  // each carry the right label + unit and keeps fillCardSlot's static
+  // metadata model intact (no dynamic labels required).
+  prFinishTime: { label: "Proj. Finish", unit: "at current pace",
+                  get: () => {
+                    const v = currentPrProjectedFinish();
+                    return v == null ? "—" : fmtTime(v);
+                  },
+                  visible: () => activeBenchmarkKind() === "time"
+                              && currentPrProjectedFinish() != null },
+  prFinishDist: { label: "Proj. Distance", unit: "at current pace",
+                  get: () => {
+                    const v = currentPrProjectedFinish();
+                    return v == null ? "—" : Math.round(v).toLocaleString() + " m";
+                  },
+                  visible: () => activeBenchmarkKind() === "distance"
+                              && currentPrProjectedFinish() != null },
 
   // ---- Heart-rate metrics --------------------------------------
   hrCurrent:   { label: "HR",          unit: "bpm",
@@ -6195,6 +6256,14 @@ function checkRecoverySnapshot() {
     },
     recovered: true,
   };
+  // Recovered sessions can still set a PR if the benchmark target
+  // was reached before the crash. evaluatePrsForSession tolerates
+  // the slightly-thinner totals shape (no strokes / no avgHr).
+  const prResult = evaluatePrsForSession(entry);
+  if (prResult && prResult.keys && prResult.keys.length) {
+    entry.pr = prResult;
+    applyPrUpdates(entry, prResult);
+  }
   state.history.unshift(entry);
   saveHistory();
   clearRecoverySnapshot();
@@ -6234,6 +6303,19 @@ function logCurrentWorkout({ silent = false } = {}) {
     results: JSON.parse(JSON.stringify(state.planResults || [])),
     totals,
   };
+  // PR detection — runs BEFORE the unshift so the evaluator only sees
+  // the prior history when comparing. Only credits when the plan has
+  // a benchKey (i.e. came from a real benchmark test). If a PR was
+  // set, attach the result to the entry and persist the new PR onto
+  // userPrefs (which syncs to Drive). Toast unless silent.
+  const prResult = evaluatePrsForSession(entry);
+  if (prResult && prResult.keys && prResult.keys.length) {
+    entry.pr = prResult;
+    applyPrUpdates(entry, prResult);
+    if (!silent) {
+      setToast("🏆 New PR — " + formatPrSetMessage(prResult), "ok");
+    }
+  }
   state.history.unshift(entry);
   saveHistory();
   // Once we save, mark the current session as logged so the workout-
@@ -8407,7 +8489,16 @@ async function syncHistoryFromDrive() {
   }
   // User preferences (Max/Resting HR) sync the same way as layout.
   if (data.userPrefs && typeof data.userPrefs === "object") {
+    // Stash the local benchmarks BEFORE the shallow Object.assign so
+    // we can do a per-key best-of-both merge afterwards. A bare
+    // Object.assign replaces the whole `benchmarks` sub-object —
+    // which loses local PRs that were set while offline / between
+    // sync rounds. Same story for benchmarkMeta, which we keep in
+    // lockstep with whichever value wins per key.
+    const localBenchmarks    = Object.assign({}, state.userPrefs.benchmarks || {});
+    const localBenchmarkMeta = Object.assign({}, state.userPrefs.benchmarkMeta || {});
     Object.assign(state.userPrefs, data.userPrefs);
+    mergeBenchmarksInPlace(localBenchmarks, localBenchmarkMeta);
     try { localStorage.setItem(userPrefsKey(), JSON.stringify(state.userPrefs)); }
     catch (e) {}
   }
@@ -8773,6 +8864,12 @@ function startBenchmarkTest(benchKey) {
                    : ""),
     timeCapS: null,
     intervals,
+    // Tag this plan with its benchmark key so the PR detector and
+    // the live "vs PR pace" metric can identify it reliably even
+    // if the user edits the title in the builder later. Flows into
+    // history (entry.plan.benchKey) via the deep-clone in
+    // logCurrentWorkout, so the source of every PR is auditable.
+    benchKey: b.key,
   };
   state.localPlan = plan;
   state.planCurrentIdx = 0;
@@ -8814,6 +8911,407 @@ function readBenchmarksFromForm() {
       : parseDistInput(raw);
     state.userPrefs.benchmarks[key] = parsed && parsed > 0 ? parsed : null;
   });
+}
+
+// =====================================================================
+// PR TRACKING + LIVE PR PACE — backlog items #7 + #8
+// =====================================================================
+//
+// PR detection runs inside logCurrentWorkout and checkRecoverySnapshot
+// — both right before the new entry is unshifted onto state.history.
+// It's conservative on purpose:
+//
+//   • only credits PRs when entry.plan.benchKey is set (i.e. the
+//     session came from a benchmark Test workflow). A normal "Just
+//     rowing" session that happens to be 2 km long does NOT silently
+//     overwrite the user's 2k PR — they have to mean it.
+//   • for distance-target benchmarks (1 min / 30 min / 60 min) the
+//     achievement is metres at the target time. We require
+//     totals.elapsedS >= target time so partial sessions don't claim
+//     a PR.
+//   • for time-target benchmarks (500m / 1k / 2k / 5k / 6k / 10k /
+//     halfMarathon / fullMarathon) the achievement is seconds at the
+//     target distance. We require totals.distanceM >= target.
+//   • when the rowed total overshoots the benchmark target (the
+//     halfMarathon test deliberately covers ~22 km vs the 21.097 km
+//     benchmark) we prefer the exact stitched-from-intervals time at
+//     the target. If interval data isn't available we pro-rate
+//     linearly: pessimistic on positive splits (fair under-claim) and
+//     optimistic on negative splits (a sprint finish can over-claim a
+//     PR). The interval path fires for every benchmark Test workout
+//     since the intervals are designed to total the target.
+//
+// The result, a {keys, achievement, delta} object, is attached to the
+// history entry as entry.pr AND applied to state.userPrefs.benchmarks
+// + state.userPrefs.benchmarkMeta (provenance: which session set it,
+// when, at what distance/time). All of this rides Drive sync for free
+// because state.userPrefs is dumped whole-object.
+
+// Per-benchmark target distances (for time-target PRs) and target
+// times (for distance-target PRs). For marathon / half-marathon we
+// use the actual race distances even though the test workouts
+// deliberately overshoot — see comment above.
+const BENCH_TARGET_DIST = {
+  "500m":        500,
+  "1k":         1000,
+  "2k":         2000,
+  "5k":         5000,
+  "6k":         6000,
+  "10k":       10000,
+  "halfMarathon": 21097,
+  "fullMarathon": 42195,
+};
+const BENCH_TARGET_TIME = {
+  "1min":   60,
+  "30min": 1800,
+  "60min": 3600,
+};
+
+// Tolerances applied to the boundary check so a BLE frame landing
+// at 59.9 s on a 60-second 1-min test (or 1998 m on a 2k) doesn't
+// silently reject a clean PR.
+const PR_TIME_EPSILON_S = 0.5;
+const PR_DIST_EPSILON_M = 2.0;
+
+// Compute the exact achievement against a benchmark by stitching
+// per-interval results when present. For a 2k test (8×250 m intervals)
+// this returns the sum of the first eight intervals' elapsed time —
+// the actual at-2000m time with no pro-rate fudge. Falls through to
+// the caller's pro-rate path for sessions with no interval results
+// or whose interval shape doesn't sum to the target.
+function exactAchievementFromIntervals(entry, bench) {
+  const intervals = (entry && entry.results) || [];
+  if (!intervals.length) return null;
+  if (bench.kind === "time") {
+    // Time-target benchmark: find the cumulative interval boundary
+    // at-or-past the target distance, then linear-interp within that
+    // interval (small interp inside one interval is accurate; the
+    // problem case is interp across many intervals at different paces).
+    const target = BENCH_TARGET_DIST[bench.key];
+    if (!target) return null;
+    let cumDist = 0, cumTime = 0;
+    for (const r of intervals) {
+      const d = r.distanceM || 0;
+      const t = r.elapsedS  || 0;
+      if (d <= 0 || t <= 0) return null;
+      if (cumDist + d >= target) {
+        const remain = target - cumDist;
+        return cumTime + t * (remain / d);
+      }
+      cumDist += d;
+      cumTime += t;
+    }
+    // Intervals didn't sum to the target.
+    return null;
+  } else {
+    // Distance-target benchmark: cumulative time crosses the target.
+    const target = BENCH_TARGET_TIME[bench.key];
+    if (!target) return null;
+    let cumDist = 0, cumTime = 0;
+    for (const r of intervals) {
+      const d = r.distanceM || 0;
+      const t = r.elapsedS  || 0;
+      if (d <= 0 || t <= 0) return null;
+      if (cumTime + t >= target) {
+        const remain = target - cumTime;
+        return cumDist + d * (remain / t);
+      }
+      cumDist += d;
+      cumTime += t;
+    }
+    return null;
+  }
+}
+
+// Compute the achievement value (seconds for time-target benchmarks,
+// metres for distance-target benchmarks) of a session entry against
+// a specific benchmark. Returns null if the session is too short
+// to claim that benchmark.
+//
+// Precedence:
+//   1. If per-interval results exist and cleanly sum past the
+//      benchmark target, use the exact stitched value (linear interp
+//      WITHIN one interval — accurate at any pacing strategy).
+//   2. Otherwise pro-rate the totals linearly to the target. This
+//      assumes uniform pace across the rowed distance: slightly
+//      pessimistic on positive splits, slightly optimistic on
+//      negative splits. The path matters only when (1) doesn't fire,
+//      and (1) fires for every benchmark Test workout because the
+//      intervals are designed to total the target.
+function benchmarkAchievement(entry, benchKey) {
+  const bench = BENCHMARKS.find(b => b.key === benchKey);
+  if (!bench) return null;
+  const T = (entry && entry.totals) || {};
+  const dist = T.distanceM || 0;
+  const time = T.elapsedS  || 0;
+  // Try exact interval-stitched value first.
+  const stitched = exactAchievementFromIntervals(entry, bench);
+  if (stitched != null) return stitched;
+  // Fall back to pro-rated totals.
+  if (bench.kind === "time") {
+    // PR = seconds taken to cover the target distance
+    const targetDist = BENCH_TARGET_DIST[benchKey];
+    if (!targetDist) return null;
+    if (dist < targetDist - PR_DIST_EPSILON_M || time <= 0) return null;
+    return time * (targetDist / dist);
+  } else {
+    // PR = metres rowed in the target time
+    const targetTime = BENCH_TARGET_TIME[benchKey];
+    if (!targetTime) return null;
+    if (time < targetTime - PR_TIME_EPSILON_S || dist <= 0) return null;
+    return dist * (targetTime / time);
+  }
+}
+
+// Compare a freshly-built history entry against existing PRs and
+// return the keys it sets/improves, the new achievement value, and
+// the delta from the previous PR. Empty result means no PR change.
+function evaluatePrsForSession(entry) {
+  const out = { keys: [], achievement: {}, delta: {} };
+  // Conservative gate: only benchmark-test sessions can set PRs.
+  const benchKey = entry && entry.plan && entry.plan.benchKey;
+  if (!benchKey) return out;
+  const bench = BENCHMARKS.find(b => b.key === benchKey);
+  if (!bench) return out;
+  const achievement = benchmarkAchievement(entry, benchKey);
+  if (achievement == null) return out;
+  const existing = state.userPrefs && state.userPrefs.benchmarks
+                   ? state.userPrefs.benchmarks[benchKey]
+                   : null;
+  // For time benchmarks, lower is better; for distance benchmarks,
+  // higher is better.
+  const improved = bench.kind === "time"
+    ? (existing == null || existing <= 0 || achievement < existing)
+    : (existing == null || existing <= 0 || achievement > existing);
+  if (!improved) return out;
+  out.keys.push(benchKey);
+  out.achievement[benchKey] = achievement;
+  if (existing != null && existing > 0) {
+    out.delta[benchKey] = achievement - existing;
+  }
+  return out;
+}
+
+// Persist the PR result onto state.userPrefs and tell Drive to sync.
+// applyPrUpdates is always called immediately before saveHistory()
+// (in both logCurrentWorkout and checkRecoverySnapshot). saveHistory
+// already fires a syncHistoryToDrive(), so we explicitly tell
+// persistUserPrefs NOT to fire its own concurrent PATCH — otherwise
+// two near-simultaneous unserialised PATCHes race on the same Drive
+// file. The first body (built synchronously) lacks the just-unshifted
+// history entry, so if it lands last the new entry vanishes from
+// Drive even though it's safely in localStorage.
+function applyPrUpdates(entry, prResult) {
+  if (!prResult || !prResult.keys || !prResult.keys.length) return;
+  if (!state.userPrefs.benchmarks)    state.userPrefs.benchmarks    = {};
+  if (!state.userPrefs.benchmarkMeta) state.userPrefs.benchmarkMeta = {};
+  for (const key of prResult.keys) {
+    state.userPrefs.benchmarks[key]    = prResult.achievement[key];
+    state.userPrefs.benchmarkMeta[key] = {
+      sessionId:  entry.id,
+      dateISO:    entry.date,
+      distanceM:  (entry.totals && entry.totals.distanceM) || 0,
+      elapsedS:   (entry.totals && entry.totals.elapsedS)  || 0,
+      paceS:      (entry.totals && entry.totals.avgPaceS)  || null,
+    };
+  }
+  // localStorage write only — the caller's saveHistory() handles Drive.
+  try { localStorage.setItem(userPrefsKey(), JSON.stringify(state.userPrefs)); }
+  catch (e) {}
+}
+
+// Best-of-both merge applied after a Drive pull replaces the
+// userPrefs sub-objects wholesale. For each benchmark key we pick
+// the better of the local + remote values (lower for time-target
+// benchmarks, higher for distance-target). benchmarkMeta is kept in
+// lockstep with whichever value won. Inputs are pre-pull snapshots
+// of state.userPrefs.{benchmarks,benchmarkMeta}; state.userPrefs has
+// already been overwritten with the Drive copy by the caller.
+function mergeBenchmarksInPlace(localBenchmarks, localBenchmarkMeta) {
+  if (!state.userPrefs.benchmarks)    state.userPrefs.benchmarks    = {};
+  if (!state.userPrefs.benchmarkMeta) state.userPrefs.benchmarkMeta = {};
+  const remoteBenchmarks    = state.userPrefs.benchmarks;
+  const remoteBenchmarkMeta = state.userPrefs.benchmarkMeta;
+  const allKeys = new Set([
+    ...Object.keys(localBenchmarks  || {}),
+    ...Object.keys(remoteBenchmarks || {}),
+  ]);
+  for (const key of allKeys) {
+    const bench  = BENCHMARKS.find(b => b.key === key);
+    const lv     = localBenchmarks[key];
+    const rv     = remoteBenchmarks[key];
+    const lOk    = lv != null && lv > 0;
+    const rOk    = rv != null && rv > 0;
+    if (!lOk && !rOk) { continue; }
+    if (!lOk) { /* keep remote (already in place) */ continue; }
+    if (!rOk) {
+      state.userPrefs.benchmarks[key]    = lv;
+      state.userPrefs.benchmarkMeta[key] = localBenchmarkMeta[key] || null;
+      continue;
+    }
+    // Both sides have a number — pick the better.
+    // Unknown bench kind (catalogue change between versions): prefer
+    // the local copy. Better than silently overwriting it.
+    const localWins = !bench
+      ? true
+      : (bench.kind === "time" ? lv < rv : lv > rv);
+    if (localWins) {
+      state.userPrefs.benchmarks[key]    = lv;
+      state.userPrefs.benchmarkMeta[key] = localBenchmarkMeta[key]  || null;
+    } else {
+      state.userPrefs.benchmarks[key]    = rv;
+      state.userPrefs.benchmarkMeta[key] = remoteBenchmarkMeta[key] || null;
+    }
+  }
+}
+
+// Friendly text used in PR-set toasts and in the history badge title.
+function formatPrSetMessage(prResult) {
+  if (!prResult.keys.length) return "";
+  const lines = prResult.keys.map(key => {
+    const bench = BENCHMARKS.find(b => b.key === key);
+    const v     = prResult.achievement[key];
+    const d     = prResult.delta[key];
+    const label = bench ? bench.label.replace(/\s*\(.*\)\s*$/, "") : key;
+    let valueStr;
+    if (bench && bench.kind === "time") {
+      valueStr = fmtTime(v);
+    } else {
+      valueStr = Math.round(v).toLocaleString() + " m";
+    }
+    let deltaStr = "";
+    if (d != null) {
+      if (bench && bench.kind === "time") {
+        // d < 0 means faster (improvement)
+        deltaStr = d < 0
+          ? ` (${Math.abs(d).toFixed(1)} s faster)`
+          : ` (${d.toFixed(1)} s slower)`;
+      } else {
+        // d > 0 means farther (improvement)
+        deltaStr = d > 0
+          ? ` (+${Math.round(d)} m)`
+          : ` (${Math.round(d)} m)`;
+      }
+    } else {
+      deltaStr = " (first time)";
+    }
+    return `${label}: ${valueStr}${deltaStr}`;
+  });
+  return lines.join(" · ");
+}
+
+// Bench-kind of the currently-active benchmark Test, or null. Used
+// by the prFinishTime / prFinishDist METRIC predicates so each one
+// only shows for the dimension it can render correctly.
+function activeBenchmarkKind() {
+  const plan = state.localPlan;
+  if (!plan || !plan.benchKey) return null;
+  if (PR_DELTA_HIDDEN_BENCHMARKS.has(plan.benchKey)) return null;
+  const bench = BENCHMARKS.find(b => b.key === plan.benchKey);
+  return bench ? bench.kind : null;
+}
+
+// Benchmarks whose live "PR Δ" indicator would mislead because the
+// test workout's total distance/time disagrees with the benchmark's
+// canonical target. halfMarathon's test covers ~22 km vs the 21.097
+// km benchmark — the live delta would be measured against a target
+// the rower will pass before the workout ends. The PR detector
+// handles the discrepancy correctly via pro-rating; the LIVE card
+// just gets confusing, so we hide it for these.
+const PR_DELTA_HIDDEN_BENCHMARKS = new Set(["halfMarathon", "fullMarathon"]);
+
+// Cache the most recent finite prDelta so a momentary state.paceS
+// drop-to-null (PM5 between strokes near stoppage, recovery phase,
+// end-of-piece coast) doesn't toggle the metric slot's display:none
+// every render tick. Without this the card vanishes and neighbours
+// reflow upward — visible jitter. We hold the last value for
+// PR_DELTA_STICKY_MS after the source goes away. The cache key is
+// (plan.benchKey) so swapping benchmarks instantly resets.
+const PR_DELTA_STICKY_MS = 2000;
+let _prDeltaCache = { key: null, value: null, at: 0 };
+
+// Live PR pace — backlog item #8. Computes the delta in seconds per
+// 500 m between the user's current pace (state.paceS) and the pace
+// their existing PR represents for whatever benchmark test they're
+// currently doing. Positive delta = slower than PR pace. Returns
+// null when no PR exists, no benchmark test is active, the live
+// pace hasn't arrived yet, or the benchmark is in the hidden set.
+function currentPrDelta() {
+  const plan = state.localPlan;
+  if (!plan || !plan.benchKey) { _prDeltaCache = { key: null, value: null, at: 0 }; return null; }
+  const key = plan.benchKey;
+  if (_prDeltaCache.key !== key) _prDeltaCache = { key, value: null, at: 0 };
+  if (PR_DELTA_HIDDEN_BENCHMARKS.has(key)) return null;
+  const bench = BENCHMARKS.find(b => b.key === key);
+  if (!bench) return null;
+  const pr = state.userPrefs && state.userPrefs.benchmarks
+             ? state.userPrefs.benchmarks[key] : null;
+  if (pr == null || pr <= 0) return null;
+  const fresh = (state.paceS != null && state.paceS > 0);
+  if (!fresh) {
+    // Use the cached value for a short window so the card doesn't
+    // flicker on a one-frame paceS drop.
+    if (_prDeltaCache.value != null &&
+        (Date.now() - _prDeltaCache.at) < PR_DELTA_STICKY_MS) {
+      return _prDeltaCache.value;
+    }
+    return null;
+  }
+  let prPaceS;
+  if (bench.kind === "time") {
+    // PR is total seconds for the target distance.
+    const targetDist = BENCH_TARGET_DIST[key];
+    if (!targetDist) return null;
+    prPaceS = pr / targetDist * 500;
+  } else {
+    // PR is metres rowed in the target time.
+    const targetTime = BENCH_TARGET_TIME[key];
+    if (!targetTime) return null;
+    prPaceS = targetTime / pr * 500;
+  }
+  const delta = state.paceS - prPaceS;
+  _prDeltaCache = { key, value: delta, at: Date.now() };
+  return delta;
+}
+
+function fmtPrDelta(delta) {
+  if (delta == null) return "—";
+  const abs = Math.abs(delta);
+  if (abs < 0.1) return "ON PR";
+  const sign = delta < 0 ? "−" : "+";
+  return sign + abs.toFixed(1) + "s";
+}
+
+// Green when ahead of PR pace (negative delta), red when behind,
+// amber when within 0.5 s.
+function prDeltaColor() {
+  const d = currentPrDelta();
+  if (d == null) return "";
+  if (d < -0.5) return "#56f9b3";
+  if (d >  0.5) return "#ff6b6b";
+  return "#ffcc55";
+}
+
+// Projected finish — extrapolate current pace through the whole
+// benchmark target. Rendered as its own card via METRICS.prFinishTime
+// (time-target benchmarks) or METRICS.prFinishDist (distance-target)
+// when the user adds either to their layout. Returns time-in-seconds
+// for time benchmarks and metres for distance benchmarks; the
+// consuming METRIC entry handles dimension-correct formatting.
+function currentPrProjectedFinish() {
+  const plan = state.localPlan;
+  if (!plan || !plan.benchKey || state.paceS == null || state.paceS <= 0) return null;
+  const bench = BENCHMARKS.find(b => b.key === plan.benchKey);
+  if (!bench) return null;
+  if (bench.kind === "time") {
+    const target = BENCH_TARGET_DIST[plan.benchKey];
+    if (!target) return null;
+    return state.paceS * target / 500;
+  } else {
+    const target = BENCH_TARGET_TIME[plan.benchKey];
+    if (!target) return null;
+    return 500 * target / state.paceS;
+  }
 }
 
 // ----- Clubs (coming-soon) modal --------------------------------
@@ -9426,9 +9924,14 @@ function renderHistoryList() {
     const recoveredTag = e.recovered
       ? `<span class="recovered-tag" title="Recovered after an interrupted session">RECOVERED</span>`
       : "";
+    // PR badge — mint-green pill listing the benchmark keys this
+    // session set. Tooltip is the full "key: time (delta)" line.
+    const prTag = (e.pr && e.pr.keys && e.pr.keys.length)
+      ? `<span class="pr-tag" title="${formatPrSetMessage(e.pr).replace(/"/g, "&quot;")}">🏆 PR</span>`
+      : "";
     row.innerHTML = `
       <div>
-        <div class="ttl">${e.title} ${recoveredTag}</div>
+        <div class="ttl">${e.title} ${prTag}${recoveredTag}</div>
         <div class="date">${dateStr}</div>
       </div>
       <div><div class="stat-label">Time</div><div class="stat-value">${time}</div></div>
@@ -9724,11 +10227,26 @@ function triggerDownload(blob, name) {
 
 function exportHistoryCsv() {
   const rows = [];
+  // bench_key + pr_keys + pr_achievement appended at the end so any
+  // existing column-index parsers keep working — additive only.
   rows.push(csvRow([
     "date","title","description","distance_m","elapsed_s","avg_pace_s_per_500m",
     "avg_watts","interval_count","recovered",
+    "bench_key","pr_keys","pr_achievement",
   ]));
   for (const e of state.history) {
+    const benchKey = (e.plan && e.plan.benchKey) || "";
+    const prKeys   = (e.pr && e.pr.keys) ? e.pr.keys.join("|") : "";
+    let prAch     = "";
+    if (e.pr && e.pr.achievement && e.pr.keys && e.pr.keys.length) {
+      const firstKey = e.pr.keys[0];
+      const v = e.pr.achievement[firstKey];
+      if (v != null) {
+        const bench = BENCHMARKS.find(b => b.key === firstKey);
+        if (bench && bench.kind === "time") prAch = v.toFixed(2);
+        else                                prAch = Math.round(v).toString();
+      }
+    }
     rows.push(csvRow([
       e.date,
       e.title || "",
@@ -9739,6 +10257,9 @@ function exportHistoryCsv() {
       e.totals?.avgWatts ? Math.round(e.totals.avgWatts) : "",
       (e.results || []).length,
       e.recovered ? "1" : "",
+      benchKey,
+      prKeys,
+      prAch,
     ]));
   }
   const blob = new Blob([rows.join("")], { type: "text/csv" });

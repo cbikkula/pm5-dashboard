@@ -10,6 +10,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Session replay
 - AI technique analysis (peak-timing trends)
 
+## [v1.5.0] — June 2026 — Live monitor tools
+
+Backlog items #9, #11, #14, #20 — a batch of features that live on the monitor screen while you row.
+
+### Added
+- **Target Zones (#9)** — set a target range for split, stroke rate, HR, power, drive length, or drag in Settings. The matching live card tints **green** inside the zone, **amber** just outside, **red** far out. Toggleable; split entered as `mm:ss`.
+- **Fullscreen Race Mode (#20)** — a distraction-free screen (⛶ in the header, or it tracks browser fullscreen). Giant split up top; rate, power, distance-remaining as a second row; distance, elapsed, HR, PR Δ below; projected finish at the bottom. Esc or ✕ to exit.
+- **Stroke Bookmarks (#14)** — mark a moment mid-piece with the 🔖 button or the **M** key. Each bookmark snapshots distance, time, pace, rate, HR, drive length. They show in the session summary and persist with the workout in history + JSON export.
+- **Connection Health panel (#11)** — a 📶 dropdown showing PM5 / stroke-data / force-curve / HR liveness (live/stale/off dots), last-packet age, rolling packet rate, and Drive-sync state. Quick way to tell whether weird data is the row or the Bluetooth link.
+
 ## [v1.4.0] — June 2026 — PR tracking + live PR pace
 
 Backlog items #7 (PR tracking) and #8 (live PR pace), implemented together since they share the same data plumbing.

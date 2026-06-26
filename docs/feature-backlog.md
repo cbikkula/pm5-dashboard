@@ -14,18 +14,18 @@ To pull the next item: open a chat with me and say `do backlog #N`. I'll build i
 | 6  | ✅ done v1.2.0 | Release-notes modal                    | "What's new" after a version bump |
 | 7  | ✅ done v1.4.0 | PR tracking                            | Auto-detect PRs from benchmark Test sessions, 🏆 badge on history row, full provenance. *Feeds L13 — Benchmark Progress + Personal Records sections.* |
 | 8  | ✅ done v1.4.0 | Live PR pace                           | PR Δ + Proj. Finish metrics during benchmark tests, green/red vs PR pace |
-| 9  |        | Target zones                           | Pre-workout target ranges + green/yellow/red while rowing |
+| 9  | ✅ done v1.5.0 | Target zones                           | Pre-workout target ranges + green/yellow/red while rowing |
 | 10 |        | Local-only privacy mode                | Settings toggle: disable Drive sync, global counter, sign-in |
-| 11 |        | Connection health panel                | Mini-widget: PM5, HR, Drive sync, last packet, dropped packets |
+| 11 | ✅ done v1.5.0 | Connection health panel                | Mini-widget: PM5, HR, Drive sync, last packet, dropped packets |
 | 12 |        | Versioned workout format               | `schemaVersion` + `appVersion` on every saved session |
 | 13 |        | Data quality flags                     | "Data quality: 93% · 7 dropped packets" — flag suspect spikes |
-| 14 |        | Stroke bookmarks                       | Mark moments mid-piece with `M` keyboard shortcut |
+| 14 | ✅ done v1.5.0 | Stroke bookmarks                       | Mark moments mid-piece with `M` keyboard shortcut |
 | 15 |        | Fatigue analysis                       | First 25% vs last 25% breakdown after a session. *Feeds L13 — Fatigue Trends section.* |
 | 16 |        | Technique insight cards                | Rule-based callouts: "Peak force moved later", etc. *Feeds L13 — Insights + Technique Trends sections.* |
 | 17 |        | Import sessions                        | Paste JSON or upload CSV from another device |
 | 18 |        | Smarter workout builder                | Repeat-group blocks (3× [8 min / 2 min rest]) |
 | 19 |        | First-time setup wizard                | Athlete/coach mode, max HR, resting HR, units, default layout |
-| 20 |        | Fullscreen race mode                   | Distraction-free: split + rate + dist remaining + PR delta |
+| 20 | ✅ done v1.5.0 | Fullscreen race mode                   | Distraction-free: split + rate + dist remaining + PR delta |
 | 21 |        | Session replay                         | Stroke-by-stroke scrubber. Needs per-stroke history persistence. |
 | 22 |        | Telemetry view                         | Multi-chart post-workout analysis page. *Feeds L13 — Performance Trends section.* |
 | 23 |        | Compare sessions                       | Side-by-side: pick two from history. *Feeds L13 — Compare Sessions button.* |

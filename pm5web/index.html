@@ -2198,6 +2198,102 @@
     vertical-align: middle;
     cursor: help;
   }
+
+  /* ============ Batch v1.5.0: live monitor tools ============ */
+
+  /* Target-zone tinting on metric cards (#9). A left border + faint
+     wash, kept off the value colour so it doesn't fight getColor. */
+  .card.tz-in   { border-left: 3px solid #56f9b3;
+                  box-shadow: inset 2px 0 0 rgba(86,249,179,0.15); }
+  .card.tz-near { border-left: 3px solid #ffcc55;
+                  box-shadow: inset 2px 0 0 rgba(255,204,85,0.15); }
+  .card.tz-out  { border-left: 3px solid #ff6b6b;
+                  box-shadow: inset 2px 0 0 rgba(255,107,107,0.15); }
+
+  /* Target-zone settings grid */
+  .tz-toggle { display:flex; align-items:center; gap:8px;
+               font-size:13px; color:var(--text); margin-bottom:10px;
+               cursor:pointer; }
+  .tz-toggle input { width:16px; height:16px; accent-color:var(--accent); }
+  .tz-grid { display:flex; flex-direction:column; gap:8px; }
+  .tz-row { display:grid; grid-template-columns: 1.4fr 1fr 1fr 56px;
+            gap:8px; align-items:center; }
+  .tz-row .tz-label { color:var(--text); font-size:13px; font-weight:600; }
+  .tz-row input { background:var(--bg-base); color:var(--text);
+                  border:1px solid var(--border-bright); border-radius:8px;
+                  padding:6px 9px; font-family:inherit; font-size:13px;
+                  outline:none; width:100%; }
+  .tz-row input:focus { border-color:var(--accent); }
+  .tz-row .tz-unit { color:var(--text-dim); font-size:11px;
+                     letter-spacing:1px; }
+
+  /* Connection health dropdown (#11) */
+  .conn-health-panel {
+    position:absolute; top:54px; right:120px; z-index:60;
+    background:var(--bg-panel); border:1px solid var(--border-bright);
+    border-radius:12px; padding:14px 16px; min-width:240px;
+    box-shadow:0 8px 28px rgba(0,0,0,0.5); font-size:13px;
+  }
+  .conn-health-panel .chp-title { color:var(--text-dim); font-size:11px;
+    letter-spacing:1.5px; font-weight:700; margin-bottom:8px; }
+  .chp-row { display:flex; justify-content:space-between; align-items:center;
+             gap:14px; padding:4px 0; color:var(--text-muted); }
+  .chp-row .chp-k { color:var(--text); }
+  .chp-dot { width:8px; height:8px; border-radius:50%; display:inline-block;
+             margin-left:6px; vertical-align:middle; }
+  .chp-dot.ok   { background:var(--accent-3); box-shadow:0 0 6px var(--accent-3); }
+  .chp-dot.warn { background:#ffcc55; }
+  .chp-dot.off  { background:var(--text-dim); }
+
+  /* Bookmark flash (#14) */
+  .bookmark-flash {
+    position:fixed; top:70px; left:50%; transform:translateX(-50%);
+    background:rgba(76,194,255,0.16); border:1px solid var(--accent);
+    color:var(--accent); border-radius:10px; padding:8px 16px;
+    font-size:13px; font-weight:600; z-index:200; pointer-events:none;
+    opacity:0; transition:opacity 160ms;
+  }
+  .bookmark-flash.show { opacity:1; }
+
+  /* Fullscreen race mode (#20) */
+  .race-overlay {
+    position:fixed; inset:0; z-index:300; background:var(--bg-base);
+    display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:3vh; padding:4vh 4vw;
+  }
+  .race-overlay .race-exit {
+    position:absolute; top:20px; right:24px; width:44px; height:44px;
+    border-radius:50%; background:transparent; border:1px solid var(--border-bright);
+    color:var(--text-muted); font-size:18px; cursor:pointer;
+  }
+  .race-overlay .race-exit:hover { color:var(--text); border-color:var(--accent); }
+  .race-primary { text-align:center; }
+  .race-primary .race-label { color:var(--text-dim); font-size:2vh;
+    letter-spacing:3px; font-weight:700; }
+  .race-primary .race-value { color:var(--accent); font-weight:800;
+    font-size:24vh; line-height:0.95; letter-spacing:-0.5vh; }
+  .race-secondary, .race-tertiary { display:flex; gap:6vw; flex-wrap:wrap;
+    justify-content:center; }
+  .race-cell { text-align:center; }
+  .race-cell-label { color:var(--text-dim); font-size:1.6vh;
+    letter-spacing:2px; font-weight:700; }
+  .race-secondary .race-cell-value { color:var(--text); font-weight:700;
+    font-size:8vh; line-height:1; }
+  .race-tertiary .race-cell-value { color:var(--text-muted); font-weight:700;
+    font-size:5vh; line-height:1; }
+  .race-proj { color:var(--text-muted); font-size:2vh; min-height:2vh; }
+
+  /* Summary bookmarks list (#14) */
+  .summary-bookmarks { background:var(--bg-base); border:1px solid var(--border);
+    border-radius:10px; padding:10px 14px; margin-top:10px;
+    max-height:160px; overflow-y:auto; }
+  .summary-bookmarks .sb-title { color:var(--text-dim); font-size:11px;
+    letter-spacing:1.5px; font-weight:700; margin-bottom:6px; }
+  .summary-bookmarks .sb-row { display:flex; gap:10px; align-items:center;
+    color:var(--text-muted); font-size:12.5px; padding:2px 0; }
+  .summary-bookmarks .sb-i { color:var(--accent); font-weight:700;
+    min-width:18px; }
+
   /* Session notes editor inside the Summary modal */
   .session-notes {
     background: var(--bg-base);
@@ -2342,11 +2438,16 @@
     <div class="hdr-actions" id="hdrActions" style="display:none;">
       <button id="hdrProgramBtn">Program</button>
       <button id="hdrLogBtn">Log</button>
+      <button id="hdrMarkBtn" title="Bookmark this stroke (M)">🔖</button>
       <button id="hdrHistoryBtn">History</button>
       <button id="hdrSummaryBtn" disabled>Summary</button>
+      <button id="hdrHealthBtn" title="Connection health">📶</button>
+      <button id="hdrRaceBtn" title="Fullscreen race mode">⛶</button>
       <button id="hdrFocusBtn" title="Switch focus (which metrics show)">🎯</button>
       <button id="hdrSettingsBtn" title="Customize layout">⚙</button>
     </div>
+    <!-- Connection health dropdown panel -->
+    <div class="conn-health-panel" id="connHealthPanel" style="display:none;"></div>
     <div class="account-chip" id="accountChip" title="Account"></div>
     <div class="account-menu" id="accountMenu" style="display:none;"></div>
   </header>
@@ -2515,6 +2616,53 @@
   <div class="bottom-strip" data-area="bottom"></div>
 
   </div><!-- /monitorView -->
+
+  <!-- Bookmark confirmation flash (backlog #14) -->
+  <div class="bookmark-flash" id="bookmarkFlash"></div>
+
+  <!-- Fullscreen race mode overlay (backlog #20). Distraction-free,
+       reads live state every render tick. Tap anywhere to reveal the
+       exit control. -->
+  <div class="race-overlay" id="raceOverlay" style="display:none;">
+    <button class="race-exit" id="raceExitBtn" title="Exit race mode">✕</button>
+    <div class="race-primary">
+      <div class="race-label">SPLIT / 500m</div>
+      <div class="race-value" id="raceSplit">—</div>
+    </div>
+    <div class="race-secondary">
+      <div class="race-cell">
+        <div class="race-cell-label">RATE</div>
+        <div class="race-cell-value" id="raceRate">—</div>
+      </div>
+      <div class="race-cell">
+        <div class="race-cell-label">POWER</div>
+        <div class="race-cell-value" id="raceWatts">—</div>
+      </div>
+      <div class="race-cell" id="raceRemainCell">
+        <div class="race-cell-label" id="raceRemainLabel">REMAINING</div>
+        <div class="race-cell-value" id="raceRemain">—</div>
+      </div>
+    </div>
+    <div class="race-tertiary">
+      <div class="race-cell">
+        <div class="race-cell-label">DISTANCE</div>
+        <div class="race-cell-value" id="raceDist">—</div>
+      </div>
+      <div class="race-cell">
+        <div class="race-cell-label">ELAPSED</div>
+        <div class="race-cell-value" id="raceElapsed">—</div>
+      </div>
+      <div class="race-cell" id="raceHrCell">
+        <div class="race-cell-label">HR</div>
+        <div class="race-cell-value" id="raceHr">—</div>
+      </div>
+      <div class="race-cell" id="racePrCell" style="display:none;">
+        <div class="race-cell-label" id="racePrLabel">PR Δ</div>
+        <div class="race-cell-value" id="racePr">—</div>
+      </div>
+    </div>
+    <div class="race-proj" id="raceProj"></div>
+  </div>
 
   <!-- ============================================================= -->
   <!-- PERFORMANCE VIEW — Phase 1: page shell, tab nav, empty states. -->
@@ -2930,6 +3078,21 @@
           Hit <b>TEST</b> on any row to start that workout. Saved with the rest of Settings.
         </div>
         <div class="bench-grid" id="benchGrid"></div>
+      </div>
+      <div class="settings-section">
+        <div class="section-title">TARGET ZONES</div>
+        <div class="hint-block" style="margin-bottom: 8px;">
+          Set a target range and the matching live card tints
+          <span style="color:#56f9b3;">green</span> inside,
+          <span style="color:#ffcc55;">amber</span> just outside, and
+          <span style="color:#ff6b6b;">red</span> far out. Leave a row
+          blank to ignore it. Split as <code>mm:ss</code>.
+        </div>
+        <label class="tz-toggle">
+          <input type="checkbox" id="prefTargetEnabled">
+          <span>Highlight cards against target zones</span>
+        </label>
+        <div class="tz-grid" id="targetZoneGrid"></div>
       </div>
       <div class="settings-section">
         <div class="section-title">DEMO MODE</div>
@@ -3445,6 +3608,7 @@
     <div class="summary-table-wrap">
       <table class="summary" id="summaryTable"></table>
     </div>
+    <div class="summary-bookmarks" id="summaryBookmarks" style="display:none;"></div>
     <div class="session-notes" id="sessionNotes" style="display:none;">
       <div class="sn-header">
         <span class="sn-title">SESSION NOTES</span>
@@ -3737,9 +3901,19 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.4.0";
+const APP_VERSION = "1.5.0";
 
 const RELEASE_NOTES = {
+  "1.5.0": {
+    date: "June 2026",
+    headline: "Live monitor tools",
+    items: [
+      "Target Zones — set a target range for split / rate / HR / power / drive length / drag in Settings, and the matching live card tints green/amber/red.",
+      "Fullscreen Race Mode — a distraction-free big-numbers screen (⛶ in the header): giant split, rate, power, distance remaining, projected finish, PR delta, HR.",
+      "Stroke Bookmarks — mark a moment mid-piece with the 🔖 button or the M key; bookmarks show in the session summary and ride your history.",
+      "Connection Health panel (📶) — PM5 / stroke / force / HR liveness, last-packet age, packet rate, and Drive-sync status at a glance.",
+    ],
+  },
   "1.4.0": {
     date: "June 2026",
     headline: "PR tracking + live PR pace",
@@ -3983,6 +4157,15 @@ const state = {
     // elapsedS, paceS }. Populated by applyPrUpdates when a session
     // sets or improves a PR. Survives Drive sync (whole-object dump).
     benchmarkMeta: {},
+    // Target zones (backlog #9). Each is { min, max } in the metric's
+    // native unit (split seconds/500m, rate spm, HR bpm, watts, drive
+    // length m, drag factor) or null when unset. When `targetEnabled`
+    // is true, cards for these metrics tint green/amber/red live.
+    targetZones: {
+      splitS: null, rate: null, hr: null, watts: null,
+      driveLen: null, drag: null,
+    },
+    targetEnabled: false,
   },
 
   // Tracks whether the current session has already been auto-logged
@@ -3991,6 +4174,27 @@ const state = {
   // workout-end. Cleared whenever distance/elapsed reset (new session
   // begins on the erg) or the user explicitly starts a new row.
   autoLoggedSession: null,
+
+  // ---- Connection health (backlog #11) ----------------------------
+  // lastPacketAt: epoch ms of the most recent BLE notification.
+  // packetTimes:  ring of recent packet timestamps for a rolling rate.
+  // charSeen:     which characteristics have delivered at least one
+  //               packet this session (so the health panel can show
+  //               GS / stroke / force / HR liveness independently).
+  conn: {
+    lastPacketAt: 0,
+    packetTimes: [],
+    charSeen: { gs: 0, stroke: 0, force: 0, hr: 0 },
+  },
+
+  // ---- Stroke bookmarks (backlog #14) -----------------------------
+  // Marks the rower drops mid-piece (button or "M" key). Each holds a
+  // snapshot of the moment. Flushed into the history entry on log,
+  // cleared on new session.
+  bookmarks: [],
+
+  // ---- Fullscreen race mode (backlog #20) -------------------------
+  raceMode: false,
   // Saved plan library — programmed workouts the user has built and
   // can re-use. Distinct from history (which is completed sessions).
   savedPlans: [],
@@ -5269,11 +5473,29 @@ async function disconnectBle() {
 }
 
 // Notification handlers
-function onGS(d) { const r = parseGeneralStatus(d); if (r) applyGS(r); }
-function onGS1(d) { const r = parseGeneralStatus1(d); if (r) applyGS1(r); }
-function onGS2(d) { const r = parseGeneralStatus2(d); if (r) applyGS2(r); }
-function onStroke(d) { const r = parseStrokeData(d); if (r) applyStrokeData(r); advancePlanTracker(); }
-function onForce(d) { applyForceCurvePacket(d); }
+function onGS(d) { const r = parseGeneralStatus(d); if (r) applyGS(r); noteConnPacket("gs"); }
+function onGS1(d) { const r = parseGeneralStatus1(d); if (r) applyGS1(r); noteConnPacket("gs"); }
+function onGS2(d) { const r = parseGeneralStatus2(d); if (r) applyGS2(r); noteConnPacket("gs"); }
+function onStroke(d) { const r = parseStrokeData(d); if (r) applyStrokeData(r); advancePlanTracker(); noteConnPacket("stroke"); }
+function onForce(d) { applyForceCurvePacket(d); noteConnPacket("force"); }
+
+// ---- Connection health tracking (backlog #11) -------------------
+function noteConnPacket(kind) {
+  const now = Date.now();
+  state.conn.lastPacketAt = now;
+  state.conn.packetTimes.push(now);
+  const cutoff = now - 3000;
+  while (state.conn.packetTimes.length && state.conn.packetTimes[0] < cutoff) {
+    state.conn.packetTimes.shift();
+  }
+  if (kind && state.conn.charSeen[kind] != null) state.conn.charSeen[kind] = now;
+  // HR liveness is inferred from a valid heart-rate reading rather
+  // than a dedicated characteristic (the PM5 relays strap HR via GS2).
+  if (state.heartRate >= 30 && state.heartRate <= 240) state.conn.charSeen.hr = now;
+}
+function resetConnHealth() {
+  state.conn = { lastPacketAt: 0, packetTimes: [], charSeen: { gs:0, stroke:0, force:0, hr:0 } };
+}
 
 // =====================================================================
 // Rendering
@@ -5288,6 +5510,8 @@ function render() {
     renderCards();
     renderWorkoutPanel();
     renderForceCurve();
+    if (state.raceMode) renderRaceOverlay();
+    renderConnHealth();
   });
 }
 
@@ -5512,6 +5736,49 @@ function fillCardSlot(slot, metricId) {
     slot.classList.remove("metric-distance");
     if (valEl) valEl.style.fontSize = "";
   }
+  // Target-zone tint (#9) — left-border green/amber/red.
+  slot.classList.remove("tz-in", "tz-near", "tz-out");
+  const zoneKey = TARGET_METRIC_ZONE[metricId];
+  if (zoneKey) {
+    const st = targetZoneStatus(zoneKey, targetLiveValue(zoneKey));
+    if (st) slot.classList.add("tz-" + st);
+  }
+}
+
+// ---- Target zones (#9) ------------------------------------------
+// Map metric ids to a target-zone key. Several metrics share a zone
+// (pace / avg split both compare to the split target).
+const TARGET_METRIC_ZONE = {
+  pace: "splitS", splitPace: "splitS", avgSplit: "splitS", avgPace: "splitS",
+  strokeRate: "rate",
+  heartRate: "hr", hrCurrent: "hr",
+  watts: "watts", avgWatts: "watts", splitWatts: "watts",
+  driveLen: "driveLen",
+  drag: "drag",
+};
+function targetLiveValue(zoneKey) {
+  switch (zoneKey) {
+    case "splitS":   return state.paceS;
+    case "rate":     return state.strokeRate;
+    case "hr":       return state.heartRate;
+    case "watts":    return currentWattsFromPace();
+    case "driveLen": return state.driveLengthM;
+    case "drag":     return state.dragFactor;
+    default:         return null;
+  }
+}
+// Returns "in" | "near" | "out" | null. Direction-agnostic: works for
+// split (lower=faster) since it's a pure numeric range check.
+function targetZoneStatus(zoneKey, value) {
+  if (!state.userPrefs || !state.userPrefs.targetEnabled) return null;
+  const z = state.userPrefs.targetZones && state.userPrefs.targetZones[zoneKey];
+  if (!z || z.min == null || z.max == null) return null;
+  if (value == null || isNaN(value) || value <= 0) return null;
+  const lo = Math.min(z.min, z.max), hi = Math.max(z.min, z.max);
+  if (value >= lo && value <= hi) return "in";
+  const margin = Math.max((hi - lo) * 0.2, 0.001);
+  if (value >= lo - margin && value <= hi + margin) return "near";
+  return "out";
 }
 
 function renderWorkoutPanel() {
@@ -6303,6 +6570,10 @@ function logCurrentWorkout({ silent = false } = {}) {
     results: JSON.parse(JSON.stringify(state.planResults || [])),
     totals,
   };
+  // Stroke bookmarks (#14) — attach if any were dropped this session.
+  if (state.bookmarks && state.bookmarks.length) {
+    entry.bookmarks = JSON.parse(JSON.stringify(state.bookmarks));
+  }
   // PR detection — runs BEFORE the unshift so the evaluator only sees
   // the prior history when comparing. Only credits when the plan has
   // a benchKey (i.e. came from a real benchmark test). If a PR was
@@ -7849,9 +8120,166 @@ function startJustRow() {
   resetAutoLogTracker();
   resetHrTracking();
   resetForceCurveOverlays();
+  state.bookmarks = [];
+  resetConnHealth();
   persistPlan();
   showView("monitor");
   render();
+}
+
+// =====================================================================
+// Batch v1.5.0 — Stroke bookmarks (#14), race mode (#20),
+// connection-health panel (#11). Target-zone settings live with the
+// other settings functions further down.
+// =====================================================================
+
+// ---- Stroke bookmarks (#14) -------------------------------------
+function addBookmark() {
+  if (state.view !== "monitor") return;
+  if (!state.connected && !demoActive()) {
+    setToast("Connect (or start Demo) before bookmarking.", "warn");
+    return;
+  }
+  const bm = {
+    strokeIndex: state.strokeCount || 0,
+    elapsedS:    state.elapsedTimeS || 0,
+    distanceM:   state.distanceM || 0,
+    paceS:       state.paceS || null,
+    watts:       currentWattsFromPace() || null,
+    strokeRate:  state.strokeRate || null,
+    heartRate:   state.heartRate || null,
+    driveLengthM: state.driveLengthM || null,
+  };
+  state.bookmarks.push(bm);
+  flashBookmark(`🔖 Marked · ${Math.round(bm.distanceM)} m · ${fmtTime(bm.elapsedS)} (${state.bookmarks.length})`);
+}
+function flashBookmark(text) {
+  const el = document.getElementById("bookmarkFlash");
+  if (!el) return;
+  el.textContent = text;
+  el.classList.add("show");
+  clearTimeout(flashBookmark._t);
+  flashBookmark._t = setTimeout(() => el.classList.remove("show"), 1400);
+}
+
+// ---- Fullscreen race mode (#20) ---------------------------------
+function enterRaceMode() {
+  if (state.view !== "monitor") {
+    setToast("Race mode is available while rowing.", "warn");
+    return;
+  }
+  state.raceMode = true;
+  const ov = document.getElementById("raceOverlay");
+  ov.style.display = "";
+  // Best-effort fullscreen — ignore if the browser blocks it.
+  try {
+    const el = document.documentElement;
+    if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+  } catch (e) {}
+  renderRaceOverlay();
+}
+function exitRaceMode() {
+  state.raceMode = false;
+  const ov = document.getElementById("raceOverlay");
+  if (ov) ov.style.display = "none";
+  try {
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+  } catch (e) {}
+}
+function renderRaceOverlay() {
+  if (!state.raceMode) return;
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  set("raceSplit",   fmtPace(state.paceS));
+  set("raceRate",    state.strokeRate ? String(state.strokeRate) : "—");
+  set("raceWatts",   fmtInt(currentWattsFromPace()) + " W");
+  set("raceDist",    Math.round(state.distanceM || 0).toLocaleString() + " m");
+  set("raceElapsed", fmtTime(state.elapsedTimeS));
+  // HR cell hides without a strap.
+  const hrCell = document.getElementById("raceHrCell");
+  if (state.heartRate >= 30 && state.heartRate <= 240) {
+    if (hrCell) hrCell.style.display = "";
+    set("raceHr", String(state.heartRate));
+  } else if (hrCell) {
+    hrCell.style.display = "none";
+  }
+  // Remaining (distance or time) from the active target.
+  const t = programmedTarget();
+  const remainCell = document.getElementById("raceRemainCell");
+  if (t && t.dist) {
+    if (remainCell) remainCell.style.display = "";
+    set("raceRemainLabel", "REMAINING");
+    set("raceRemain", Math.max(0, Math.round(t.dist - (state.distanceM || 0))).toLocaleString() + " m");
+  } else if (t && t.time) {
+    if (remainCell) remainCell.style.display = "";
+    set("raceRemainLabel", "REMAINING");
+    set("raceRemain", fmtTime(Math.max(0, t.time - (state.elapsedTimeS || 0))));
+  } else if (remainCell) {
+    remainCell.style.display = "none";
+  }
+  // PR delta cell (reuses the live-PR-pace engine).
+  const prCell = document.getElementById("racePrCell");
+  const d = currentPrDelta();
+  if (d != null) {
+    if (prCell) prCell.style.display = "";
+    set("racePr", fmtPrDelta(d));
+    const pe = document.getElementById("racePr");
+    if (pe) pe.style.color = prDeltaColor();
+  } else if (prCell) {
+    prCell.style.display = "none";
+  }
+  // Projection line.
+  const proj = currentPrProjectedFinish();
+  if (proj != null) {
+    const kind = activeBenchmarkKind();
+    set("raceProj", "Projected: " +
+      (kind === "distance" ? Math.round(proj).toLocaleString() + " m"
+                           : fmtTime(proj)) + " at current pace");
+  } else {
+    set("raceProj", "");
+  }
+}
+
+// ---- Connection health panel (#11) ------------------------------
+function toggleConnHealth(force) {
+  const p = document.getElementById("connHealthPanel");
+  if (!p) return;
+  const show = force != null ? force : (p.style.display === "none");
+  p.style.display = show ? "" : "none";
+  if (show) renderConnHealth();
+}
+function renderConnHealth() {
+  const p = document.getElementById("connHealthPanel");
+  if (!p || p.style.display === "none") return;
+  const now = Date.now();
+  const ageMs = state.conn.lastPacketAt ? now - state.conn.lastPacketAt : null;
+  const rate = state.conn.packetTimes.length / 3; // pkts/sec over 3s window
+  const dot = (seenAt) => {
+    if (!seenAt) return '<span class="chp-dot off"></span>';
+    return (now - seenAt < 2500)
+      ? '<span class="chp-dot ok"></span>'
+      : '<span class="chp-dot warn"></span>';
+  };
+  const driveState = !googleEnabled() ? "off (no account)"
+    : (state.user.signedIn ? (demoActive() ? "paused (demo)" : "active") : "local only");
+  p.innerHTML = `
+    <div class="chp-title">CONNECTION HEALTH</div>
+    <div class="chp-row"><span class="chp-k">PM5${dot(state.conn.charSeen.gs)}</span>
+      <span>${state.connected || demoActive() ? "connected" : "—"}</span></div>
+    <div class="chp-row"><span class="chp-k">Stroke data${dot(state.conn.charSeen.stroke)}</span>
+      <span>${state.conn.charSeen.stroke ? "live" : "—"}</span></div>
+    <div class="chp-row"><span class="chp-k">Force curve${dot(state.conn.charSeen.force)}</span>
+      <span>${state.conn.charSeen.force ? "live" : "—"}</span></div>
+    <div class="chp-row"><span class="chp-k">Heart rate${dot(state.conn.charSeen.hr)}</span>
+      <span>${state.conn.charSeen.hr ? state.heartRate + " bpm" : "no strap"}</span></div>
+    <div class="chp-row"><span class="chp-k">Last packet</span>
+      <span>${ageMs == null ? "—" : (ageMs < 1500 ? "just now" : (ageMs/1000).toFixed(1) + "s ago")}</span></div>
+    <div class="chp-row"><span class="chp-k">Packet rate</span>
+      <span>${rate ? rate.toFixed(1) + "/s" : "—"}</span></div>
+    <div class="chp-row"><span class="chp-k">Drive sync</span>
+      <span>${driveState}</span></div>
+  `;
 }
 
 // =====================================================================
@@ -7900,6 +8328,8 @@ function enterDemoMode() {
   resetAutoLogTracker();
   resetHrTracking();
   resetForceCurveOverlays();
+  state.bookmarks = [];
+  resetConnHealth();
   // Fake the "connected" state so the monitor header reads right.
   state.connected = true;
   setStatus("connected-ble", "Demo PM5 · simulated");
@@ -8091,6 +8521,26 @@ function openSummary() {
     document.getElementById("sessionNotesSavedHint").classList.remove("shown");
   } else {
     notesPanel.style.display = "none";
+  }
+
+  // Stroke bookmarks (#14) — show from the saved entry, or the live
+  // session if it has any marks dropped this row.
+  const bmEl = document.getElementById("summaryBookmarks");
+  const bms = entry ? entry.bookmarks : (state.bookmarks && state.bookmarks.length ? state.bookmarks : null);
+  if (bmEl) {
+    if (bms && bms.length) {
+      bmEl.style.display = "";
+      bmEl.innerHTML = `<div class="sb-title">🔖 BOOKMARKS (${bms.length})</div>` +
+        bms.map((b, i) =>
+          `<div class="sb-row"><span class="sb-i">${i + 1}</span>` +
+          `<span>${Math.round(b.distanceM || 0).toLocaleString()} m · ${fmtTime(b.elapsedS || 0)}` +
+          `${b.paceS ? " · " + fmtPace(b.paceS) : ""}` +
+          `${b.strokeRate ? " · " + b.strokeRate + " spm" : ""}` +
+          `${b.heartRate ? " · " + b.heartRate + " bpm" : ""}</span></div>`
+        ).join("");
+    } else {
+      bmEl.style.display = "none";
+    }
   }
 
   // Column picker
@@ -8878,6 +9328,9 @@ function startBenchmarkTest(benchKey) {
   state.planResults = [];
   resetAutoLogTracker();
   resetHrTracking();
+  resetForceCurveOverlays();
+  state.bookmarks = [];
+  resetConnHealth();
   persistPlan();
   // Settings is where the Test button lives now — close it (discard
   // any pending layout/theme edits) and head to the monitor.
@@ -10008,7 +10461,66 @@ function openSettings() {
   document.getElementById("prefFcAvg").checked  = fco.avg  !== false;
   // Benchmarks form (moved out of its own modal into Settings).
   buildBenchmarksForm();
+  // Target zones (#9).
+  document.getElementById("prefTargetEnabled").checked = !!state.userPrefs.targetEnabled;
+  buildTargetZoneForm();
   document.getElementById("settingsModal").classList.add("open");
+}
+
+// ---- Target-zone settings form (#9) -----------------------------
+const TARGET_ZONE_ROWS = [
+  { key: "splitS",   label: "Split / 500m", kind: "split", unit: "mm:ss" },
+  { key: "rate",     label: "Stroke rate",  kind: "num",   unit: "spm" },
+  { key: "hr",       label: "Heart rate",   kind: "num",   unit: "bpm" },
+  { key: "watts",    label: "Power",        kind: "num",   unit: "watts" },
+  { key: "driveLen", label: "Drive length", kind: "num",   unit: "m" },
+  { key: "drag",     label: "Drag factor",  kind: "num",   unit: "" },
+];
+function buildTargetZoneForm() {
+  const grid = document.getElementById("targetZoneGrid");
+  if (!grid) return;
+  grid.innerHTML = "";
+  const tz = state.userPrefs.targetZones || {};
+  for (const row of TARGET_ZONE_ROWS) {
+    const z = tz[row.key];
+    const fmt = (v) => v == null ? "" : (row.kind === "split" ? fmtPlainPace(v) : String(v));
+    const el = document.createElement("div");
+    el.className = "tz-row";
+    el.innerHTML = `
+      <span class="tz-label">${row.label}</span>
+      <input type="text" data-tz-key="${row.key}" data-tz-bound="min"
+             placeholder="min" value="${fmt(z && z.min)}">
+      <input type="text" data-tz-key="${row.key}" data-tz-bound="max"
+             placeholder="max" value="${fmt(z && z.max)}">
+      <span class="tz-unit">${row.unit}</span>
+    `;
+    grid.appendChild(el);
+  }
+}
+// Plain "m:ss.s" without the leading-zero pad fmtPace adds, for inputs.
+function fmtPlainPace(s) {
+  if (s == null) return "";
+  const m = Math.floor(s / 60);
+  const sec = s - m * 60;
+  return `${m}:${sec.toFixed(1).padStart(4, "0")}`;
+}
+function readTargetZonesFromForm() {
+  if (!state.userPrefs.targetZones) state.userPrefs.targetZones = {};
+  for (const row of TARGET_ZONE_ROWS) {
+    const minEl = document.querySelector(`#targetZoneGrid [data-tz-key="${row.key}"][data-tz-bound="min"]`);
+    const maxEl = document.querySelector(`#targetZoneGrid [data-tz-key="${row.key}"][data-tz-bound="max"]`);
+    const parse = (raw) => {
+      raw = (raw || "").trim();
+      if (!raw) return null;
+      const v = row.kind === "split" ? parseTimeInput(raw) : parseFloat(raw);
+      return (v != null && !isNaN(v) && v > 0) ? v : null;
+    };
+    const mn = parse(minEl && minEl.value);
+    const mx = parse(maxEl && maxEl.value);
+    state.userPrefs.targetZones[row.key] = (mn == null && mx == null)
+      ? null : { min: mn, max: mx };
+  }
+  state.userPrefs.targetEnabled = !!document.getElementById("prefTargetEnabled").checked;
 }
 
 function renderThemePicker() {
@@ -10174,6 +10686,8 @@ function applySettingsFromDialog() {
   // Benchmarks (moved into Settings). Always read — it's cheap and
   // lets us bypass per-field change detection.
   readBenchmarksFromForm();
+  // Target zones (#9).
+  readTargetZonesFromForm();
   prefsChanged = true;
   if (prefsChanged) persistUserPrefs();
   closeSettings();
@@ -10604,6 +11118,38 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("hdrSummaryBtn").addEventListener("click", openSummary);
   document.getElementById("hdrFocusBtn").addEventListener("click", openFocus);
   document.getElementById("hdrSettingsBtn").addEventListener("click", openSettings);
+  // Batch v1.5.0 header buttons.
+  document.getElementById("hdrMarkBtn").addEventListener("click", addBookmark);
+  document.getElementById("hdrRaceBtn").addEventListener("click", enterRaceMode);
+  document.getElementById("hdrHealthBtn").addEventListener("click", (e) => {
+    e.stopPropagation(); toggleConnHealth();
+  });
+  document.getElementById("raceExitBtn").addEventListener("click", exitRaceMode);
+  // "M" bookmarks a stroke while in the monitor view (ignore when
+  // typing in an input/textarea). Escape exits race mode.
+  document.addEventListener("keydown", (e) => {
+    const tag = (e.target && e.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if ((e.key === "m" || e.key === "M") && state.view === "monitor" && !state.raceMode) {
+      addBookmark();
+    } else if (e.key === "Escape" && state.raceMode) {
+      exitRaceMode();
+    }
+  });
+  // Close the health panel on outside click.
+  document.addEventListener("click", (e) => {
+    const panel = document.getElementById("connHealthPanel");
+    const btn = document.getElementById("hdrHealthBtn");
+    if (panel && panel.style.display !== "none" &&
+        !panel.contains(e.target) && e.target !== btn) {
+      panel.style.display = "none";
+    }
+  });
+  // If the user leaves browser fullscreen (Esc / F11), keep race-mode
+  // state in sync so the overlay closes too.
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement && state.raceMode) exitRaceMode();
+  });
 
   // Force-curve "Reset best" — clears the best & average ghost
   // overlays without ending the session. Useful for "I just warmed

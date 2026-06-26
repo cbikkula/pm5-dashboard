@@ -10,6 +10,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Session replay
 - AI technique analysis (peak-timing trends)
 
+## [v1.6.0] — June 2026 — Session analysis
+
+Backlog #13, #15, #16, L4 — turning the raw session into meaning. All implemented as pure functions (`computeFatigue`, `computeDataQuality`, `computeInsights`, `analyzeSession`) so the Performance page (L13) can reuse them. 14/14 analysis unit tests pass.
+
+### Added
+- **Fatigue analysis (#15)** — first-quarter vs last-quarter fade across split, power, drive length, and HR drift, rolled into a 0–100 fatigue index with a plain-English headline (*"Drive length dropped 6.1% in the final quarter."*). Shows in the session summary.
+- **Technique insights (#16)** — rule-based observation cards after a workout: drive shortening, rate-rose-power-didn't, aerobic drift, even-effort praise, "stronger than your recent average," plus a recommended next focus. Colour-coded by type (positive / warn / technique / fitness / recommendation).
+- **Data quality score (#13)** — flags implausible stroke rates, dropped HR mid-session, intervals with no distance, and watts spikes (>2× median). Honest about granularity — interval-level, since per-stroke data isn't persisted.
+- **Smarter race prediction (L4)** — fullscreen race mode projects your finish from the observed pace trend across completed intervals (damped extrapolation), not just constant current pace.
+
 ## [v1.5.0] — June 2026 — Live monitor tools
 
 Backlog items #9, #11, #14, #20 — a batch of features that live on the monitor screen while you row.

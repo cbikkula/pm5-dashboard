@@ -2283,6 +2283,41 @@
     font-size:5vh; line-height:1; }
   .race-proj { color:var(--text-muted); font-size:2vh; min-height:2vh; }
 
+  /* Session analysis in Summary modal (#13/#15/#16) */
+  .summary-analysis { margin-top:12px; display:flex; flex-direction:column; gap:10px; }
+  .sa-row { display:flex; gap:10px; }
+  .sa-stat { flex:1; background:var(--bg-base); border:1px solid var(--border);
+    border-radius:10px; padding:12px 14px; text-align:center; }
+  .sa-stat-n { font-size:30px; font-weight:800; color:var(--text); line-height:1; }
+  .sa-stat-n span { font-size:14px; color:var(--text-dim); font-weight:600; }
+  .sa-stat-l { font-size:10px; letter-spacing:1.5px; color:var(--text-dim);
+    font-weight:700; margin-top:4px; }
+  .sa-stat.sa-ok   { border-color:rgba(86,249,179,0.45); }
+  .sa-stat.sa-ok   .sa-stat-n { color:#56f9b3; }
+  .sa-stat.sa-warn { border-color:rgba(255,204,85,0.45); }
+  .sa-stat.sa-warn .sa-stat-n { color:#ffcc55; }
+  .sa-stat.sa-bad  { border-color:rgba(255,107,107,0.45); }
+  .sa-stat.sa-bad  .sa-stat-n { color:#ff6b6b; }
+  .sa-fatigue { background:var(--bg-base); border:1px solid var(--border);
+    border-radius:10px; padding:10px 14px; color:var(--text-muted);
+    font-size:13px; line-height:1.6; }
+  .sa-fatigue b { color:var(--text); }
+  .sa-quality { display:flex; flex-direction:column; gap:4px; }
+  .sa-qissue { color:#ffcc55; font-size:12.5px; background:rgba(255,204,85,0.08);
+    border:1px solid rgba(255,204,85,0.3); border-radius:8px; padding:6px 12px; }
+  .sa-insights { display:flex; flex-direction:column; gap:8px; }
+  .sa-card { background:var(--bg-panel); border:1px solid var(--border);
+    border-left-width:4px; border-radius:10px; padding:10px 14px; }
+  .sa-card-badge { font-size:10px; font-weight:700; letter-spacing:1.5px;
+    color:var(--text-dim); margin-bottom:3px; }
+  .sa-card-title { color:var(--text); font-weight:700; font-size:13.5px; margin-bottom:3px; }
+  .sa-card-body { color:var(--text-muted); font-size:12.5px; line-height:1.55; }
+  .sa-card.sa-positive { border-left-color:#56f9b3; } .sa-card.sa-positive .sa-card-badge { color:#56f9b3; }
+  .sa-card.sa-warn     { border-left-color:#ffcc55; } .sa-card.sa-warn .sa-card-badge { color:#ffcc55; }
+  .sa-card.sa-tech     { border-left-color:var(--accent); } .sa-card.sa-tech .sa-card-badge { color:var(--accent); }
+  .sa-card.sa-fitness  { border-left-color:#ff6b6b; } .sa-card.sa-fitness .sa-card-badge { color:#ff6b6b; }
+  .sa-card.sa-rec      { border-left-color:var(--accent-2); } .sa-card.sa-rec .sa-card-badge { color:var(--accent-2); }
+
   /* Summary bookmarks list (#14) */
   .summary-bookmarks { background:var(--bg-base); border:1px solid var(--border);
     border-radius:10px; padding:10px 14px; margin-top:10px;
@@ -3608,6 +3643,7 @@
     <div class="summary-table-wrap">
       <table class="summary" id="summaryTable"></table>
     </div>
+    <div class="summary-analysis" id="summaryAnalysis" style="display:none;"></div>
     <div class="summary-bookmarks" id="summaryBookmarks" style="display:none;"></div>
     <div class="session-notes" id="sessionNotes" style="display:none;">
       <div class="sn-header">
@@ -3901,9 +3937,19 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.5.0";
+const APP_VERSION = "1.6.0";
 
 const RELEASE_NOTES = {
+  "1.6.0": {
+    date: "June 2026",
+    headline: "Session analysis",
+    items: [
+      "Fatigue index — the summary now shows how much you faded (first quarter vs last): split, power, drive length, and HR drift, with a plain-English headline like \"Drive length dropped 6% in the final quarter.\"",
+      "Technique insights — automatic, rule-based observations after a workout (drive shortening, rate-without-power, aerobic drift, even-effort praise) plus a recommended next focus.",
+      "Data quality score — flags implausible stroke rates, dropped HR, missing distance, and watts spikes so you know whether a weird reading was real or a Bluetooth blip.",
+      "Smarter race prediction — fullscreen race mode now projects your finish from your observed pace trend, not just constant pace.",
+    ],
+  },
   "1.5.0": {
     date: "June 2026",
     headline: "Live monitor tools",
@@ -8229,15 +8275,25 @@ function renderRaceOverlay() {
   } else if (prCell) {
     prCell.style.display = "none";
   }
-  // Projection line.
-  const proj = currentPrProjectedFinish();
-  if (proj != null) {
-    const kind = activeBenchmarkKind();
-    set("raceProj", "Projected: " +
-      (kind === "distance" ? Math.round(proj).toLocaleString() + " m"
-                           : fmtTime(proj)) + " at current pace");
+  // Projection line — trend-aware race prediction (L4), falling back
+  // to the naive constant-pace projection.
+  const plan = state.localPlan;
+  const bench = plan && plan.benchKey ? BENCHMARKS.find(b => b.key === plan.benchKey) : null;
+  const pred = racePrediction();
+  if (pred != null && bench) {
+    set("raceProj", "Predicted finish: " +
+      (bench.kind === "distance" ? Math.round(pred).toLocaleString() + " m"
+                                 : fmtTime(pred)) + " (pace-trend)");
   } else {
-    set("raceProj", "");
+    const proj = currentPrProjectedFinish();
+    if (proj != null) {
+      const kind = activeBenchmarkKind();
+      set("raceProj", "Projected: " +
+        (kind === "distance" ? Math.round(proj).toLocaleString() + " m"
+                             : fmtTime(proj)) + " at current pace");
+    } else {
+      set("raceProj", "");
+    }
   }
 }
 
@@ -8522,6 +8578,20 @@ function openSummary() {
   } else {
     notesPanel.style.display = "none";
   }
+
+  // Session analysis (#13/#15/#16) — fatigue, data quality, insights.
+  // Build a synthetic entry for the live session if not viewing a
+  // saved one, so analysis works mid/post-row before logging.
+  const analysisEntry = entry || {
+    id: "__live__",
+    plan: state.localPlan,
+    results: state.planResults || [],
+    totals: {
+      distanceM: state.distanceM || 0, elapsedS: state.elapsedTimeS || 0,
+      avgWatts: state.watts || null, avgPaceS: workoutAvgPace(),
+    },
+  };
+  renderSummaryAnalysis(analysisEntry);
 
   // Stroke bookmarks (#14) — show from the saved entry, or the live
   // session if it has any marks dropped this row.
@@ -9766,6 +9836,322 @@ function currentPrProjectedFinish() {
     return 500 * target / state.paceS;
   }
 }
+
+// =====================================================================
+// SESSION ANALYSIS — backlog #13 (data quality), #15 (fatigue),
+// #16 (technique insights). Pure functions over a history entry, so
+// they're reusable by the Summary modal today and the Performance
+// page (L13) later. All tolerate the coarse per-interval results we
+// persist (one row per interval), and degrade gracefully for plain
+// "Just rowing" sessions with no interval breakdown.
+// =====================================================================
+
+// Average the numeric fields of the first-quarter and last-quarter
+// interval rows. Returns null when there aren't enough intervals to
+// split meaningfully (need at least 4 so each quarter has ≥1 row).
+function quartileAverages(results) {
+  const rows = (results || []).filter(r => r && (r.distanceM > 0 || r.elapsedS > 0));
+  if (rows.length < 4) return null;
+  const q = Math.max(1, Math.floor(rows.length / 4));
+  const first = rows.slice(0, q);
+  const last  = rows.slice(rows.length - q);
+  const avg = (arr, key) => {
+    const vals = arr.map(r => r[key]).filter(v => v != null && !isNaN(v) && v > 0);
+    if (!vals.length) return null;
+    return vals.reduce((a, b) => a + b, 0) / vals.length;
+  };
+  const pack = (arr) => ({
+    paceS:        avg(arr, "paceS"),
+    watts:        avg(arr, "watts"),
+    strokeRate:   avg(arr, "strokeRate"),
+    heartRate:    avg(arr, "heartRate"),
+    driveLengthM: avg(arr, "driveLengthM"),
+    peakForceLbs: avg(arr, "peakForceLbs"),
+  });
+  return { first: pack(first), last: pack(last), n: rows.length };
+}
+
+// Fatigue breakdown (#15) — first-quarter vs last-quarter fade.
+// Positive fade % = got worse (slower split, lower watts, shorter
+// drive). HR drift is a raw bpm delta. Returns null when there isn't
+// enough interval data.
+function computeFatigue(entry) {
+  const qa = quartileAverages(entry && entry.results);
+  if (!qa || !qa.first || !qa.last) return null;
+  const f = qa.first, l = qa.last;
+  const pct = (a, b, higherIsWorse) => {
+    if (a == null || b == null || a === 0) return null;
+    const change = (b - a) / a * 100;
+    return higherIsWorse ? change : -change;
+  };
+  const fade = {
+    split:    pct(f.paceS, l.paceS, true),          // slower split = fade
+    watts:    pct(f.watts, l.watts, false),         // lower watts = fade
+    driveLen: pct(f.driveLengthM, l.driveLengthM, false), // shorter = fade
+    rate:     (f.strokeRate != null && l.strokeRate != null) ? (l.strokeRate - f.strokeRate) : null,
+    hrDrift:  (f.heartRate != null && l.heartRate != null) ? (l.heartRate - f.heartRate) : null,
+  };
+  // Fatigue index: 100 = no fade. Penalise the adverse changes. Weights
+  // tuned so a mild fade (≈2% split, 3% watts) lands ~85 and a severe
+  // blow-up (≈9% split, 13% watts) lands ~25 — a usable 0–100 gauge.
+  let penalty = 0;
+  if (fade.split    != null) penalty += Math.max(0, fade.split)    * 3;
+  if (fade.watts    != null) penalty += Math.max(0, fade.watts)    * 2;
+  if (fade.driveLen != null) penalty += Math.max(0, fade.driveLen) * 2;
+  if (fade.hrDrift  != null) penalty += Math.max(0, fade.hrDrift)  * 0.5;
+  const index = Math.max(0, Math.min(100, Math.round(100 - penalty)));
+  // Rank adverse contributors for the headline.
+  const contributors = [];
+  if (fade.driveLen != null && fade.driveLen > 2)
+    contributors.push({ w: fade.driveLen * 3, text: `Drive length dropped ${fade.driveLen.toFixed(1)}% in the final quarter.` });
+  if (fade.watts != null && fade.watts > 2)
+    contributors.push({ w: fade.watts * 3, text: `Power dropped ${fade.watts.toFixed(1)}% from the first quarter to the last.` });
+  if (fade.split != null && fade.split > 1)
+    contributors.push({ w: fade.split * 4, text: `Split slowed ${fade.split.toFixed(1)}% over the piece.` });
+  if (fade.hrDrift != null && fade.hrDrift > 5)
+    contributors.push({ w: fade.hrDrift * 0.6, text: `Heart rate drifted up ${Math.round(fade.hrDrift)} bpm.` });
+  contributors.sort((a, b) => b.w - a.w);
+  return {
+    index,
+    fade,
+    mainIssue:      contributors[0] ? contributors[0].text : "Held steady — minimal fade.",
+    secondaryIssue: contributors[1] ? contributors[1].text : null,
+  };
+}
+
+// Data-quality flags (#13). Interval-granular (we don't persist
+// per-stroke data), so it catches gross anomalies: implausible rate,
+// non-increasing distance, HR dropouts mid-session, watts spikes.
+function computeDataQuality(entry) {
+  const rows = (entry && entry.results) || [];
+  const issues = [];
+  if (!rows.length) {
+    // Plain session — only totals to check.
+    const T = entry && entry.totals;
+    if (!T || !(T.distanceM > 0) || !(T.elapsedS > 0)) {
+      return { score: 100, issues: [], note: "No interval data to inspect." };
+    }
+    return { score: 100, issues: [], note: "No interval breakdown — limited checks." };
+  }
+  // Implausible stroke rate.
+  const badRate = rows.filter(r => r.strokeRate != null && (r.strokeRate > 50 || (r.strokeRate > 0 && r.strokeRate < 8))).length;
+  if (badRate) issues.push(`${badRate} interval${badRate>1?"s":""} with an implausible stroke rate.`);
+  // Distance not increasing.
+  const zeroDist = rows.filter(r => !(r.distanceM > 0)).length;
+  if (zeroDist) issues.push(`${zeroDist} interval${zeroDist>1?"s":""} logged no distance.`);
+  // HR dropouts mid-session (some rows have HR, some don't).
+  const hrPresent = rows.filter(r => r.heartRate > 0).length;
+  if (hrPresent > 0 && hrPresent < rows.length) {
+    issues.push(`Heart rate dropped out for ${rows.length - hrPresent} of ${rows.length} intervals.`);
+  }
+  // Watts spike: any interval > 2× the median.
+  const watts = rows.map(r => r.watts).filter(v => v > 0).sort((a, b) => a - b);
+  if (watts.length >= 3) {
+    const med = watts[Math.floor(watts.length / 2)];
+    const spikes = rows.filter(r => r.watts > med * 2).length;
+    if (spikes) issues.push(`${spikes} watts reading${spikes>1?"s":""} look spiky (>2× median).`);
+  }
+  const score = Math.max(40, 100 - issues.length * 8);
+  return { score, issues };
+}
+
+// Technique + fitness insight cards (#16). Rule-based, plain English.
+// `history` lets a few rules compare against recent sessions.
+function computeInsights(entry, history) {
+  const out = [];
+  const fat = computeFatigue(entry);
+  const qa  = quartileAverages(entry && entry.results);
+
+  if (fat && qa && qa.first && qa.last) {
+    const f = fat.fade;
+    // --- Warning / technique insights from fade ---
+    if (f.driveLen != null && f.driveLen > 4) {
+      out.push({ type: "tech", title: "Drive shortened under fatigue.",
+        body: `Your drive length dropped ${f.driveLen.toFixed(1)}% from the first quarter to the last — usually compression loss or rushing the catch as you tire.` });
+    }
+    if (f.watts != null && f.watts > 5) {
+      out.push({ type: "warn", title: "Late-piece power fade.",
+        body: `Average watts fell ${f.watts.toFixed(1)}% in the final quarter.` });
+    }
+    if (f.split != null && f.split > 2) {
+      out.push({ type: "warn", title: "Split faded through the piece.",
+        body: `Your split slowed ${f.split.toFixed(1)}% from start to finish.` });
+    }
+    // Rate up but power flat/down → rushing / shortening.
+    if (f.rate != null && f.rate >= 1 && f.watts != null && f.watts >= 0) {
+      out.push({ type: "tech", title: "Rate rose, power didn't.",
+        body: `Stroke rate climbed ~${Math.round(f.rate)} spm but watts didn't follow — you may have shortened the drive or rushed the recovery.` });
+    }
+    // HR drift with flat/declining power → aerobic drift.
+    if (f.hrDrift != null && f.hrDrift > 6 && (f.watts == null || f.watts >= -1)) {
+      out.push({ type: "fitness", title: "Aerobic drift.",
+        body: `Heart rate rose ${Math.round(f.hrDrift)} bpm while power held — normal on long pieces, worth watching if it's steep.` });
+    }
+    // --- Positive insights ---
+    if (f.driveLen != null && f.driveLen < -1) {
+      out.push({ type: "positive", title: "Drive length held — even lengthened.",
+        body: `Your drive actually grew ${Math.abs(f.driveLen).toFixed(1)}% into the piece. Strong connection late.` });
+    }
+    if (fat.index >= 90) {
+      out.push({ type: "positive", title: "Very even effort.",
+        body: `Fatigue index ${fat.index}/100 — you barely faded. Excellent pacing.` });
+    }
+  }
+
+  // Compare to recent sessions of the same workout type for a
+  // "best in a while" insight.
+  if (entry && entry.totals && Array.isArray(history)) {
+    const sameType = history.filter(h =>
+      h.id !== entry.id &&
+      ((entry.plan && entry.plan.benchKey)
+        ? (h.plan && h.plan.benchKey === entry.plan.benchKey)
+        : (h.title === entry.title)) &&
+      h.totals && h.totals.avgWatts > 0
+    ).slice(0, 8);
+    if (sameType.length >= 2 && entry.totals.avgWatts > 0) {
+      const recentAvg = sameType.reduce((a, h) => a + h.totals.avgWatts, 0) / sameType.length;
+      const delta = (entry.totals.avgWatts - recentAvg) / recentAvg * 100;
+      if (delta > 3) {
+        out.push({ type: "positive", title: "Stronger than your recent average.",
+          body: `Average power was ${delta.toFixed(0)}% above your last ${sameType.length} similar sessions.` });
+      }
+    }
+  }
+
+  // Always give one recommendation if we have any fade signal.
+  if (fat) {
+    if (fat.fade.driveLen != null && fat.fade.driveLen > 4) {
+      out.push({ type: "rec", title: "Next focus: hold the length.",
+        body: "Try a steady-state piece at 18–20 spm and keep drive length above your first-quarter average all the way through." });
+    } else if (fat.fade.watts != null && fat.fade.watts > 5) {
+      out.push({ type: "rec", title: "Next focus: negative-split practice.",
+        body: "Aim to finish the next piece stronger than you start — hold back 2–3 watts early so you have something left." });
+    }
+  }
+  return out;
+}
+
+// One-shot analysis bundle used by the Summary modal (and L13 later).
+function analyzeSession(entry, history) {
+  return {
+    fatigue:  computeFatigue(entry),
+    quality:  computeDataQuality(entry),
+    insights: computeInsights(entry, history || state.history),
+  };
+}
+
+const INSIGHT_BADGE = {
+  positive: "✓ STRONG", warn: "⚠ WATCH", tech: "🛠 TECHNIQUE",
+  fitness: "❤ FITNESS", rec: "🎯 NEXT",
+};
+function renderSummaryAnalysis(entry) {
+  const el = document.getElementById("summaryAnalysis");
+  if (!el) return;
+  const a = analyzeSession(entry, state.history);
+  const hasFatigue = !!a.fatigue;
+  const hasInsights = a.insights && a.insights.length;
+  const hasQualityIssue = a.quality && a.quality.issues && a.quality.issues.length;
+  if (!hasFatigue && !hasInsights && !hasQualityIssue) {
+    // Nothing useful to show (e.g. a plain short session).
+    el.style.display = "none";
+    return;
+  }
+  el.style.display = "";
+  let html = "";
+  // Fatigue + quality summary row.
+  if (hasFatigue || a.quality) {
+    html += `<div class="sa-row">`;
+    if (hasFatigue) {
+      const idx = a.fatigue.index;
+      const tone = idx >= 85 ? "ok" : idx >= 65 ? "warn" : "bad";
+      html += `<div class="sa-stat sa-${tone}">
+        <div class="sa-stat-n">${idx}<span>/100</span></div>
+        <div class="sa-stat-l">FATIGUE INDEX</div></div>`;
+    }
+    if (a.quality) {
+      const q = a.quality.score;
+      const tone = q >= 90 ? "ok" : q >= 70 ? "warn" : "bad";
+      html += `<div class="sa-stat sa-${tone}">
+        <div class="sa-stat-n">${q}<span>%</span></div>
+        <div class="sa-stat-l">DATA QUALITY</div></div>`;
+    }
+    html += `</div>`;
+  }
+  // Fatigue headline.
+  if (hasFatigue && a.fatigue.mainIssue) {
+    html += `<div class="sa-fatigue"><b>Main:</b> ${a.fatigue.mainIssue}`;
+    if (a.fatigue.secondaryIssue) html += `<br><b>Also:</b> ${a.fatigue.secondaryIssue}`;
+    html += `</div>`;
+  }
+  // Data-quality issues.
+  if (hasQualityIssue) {
+    html += `<div class="sa-quality">` +
+      a.quality.issues.map(i => `<div class="sa-qissue">⚠ ${i}</div>`).join("") +
+      `</div>`;
+  }
+  // Insight cards.
+  if (hasInsights) {
+    html += `<div class="sa-insights">`;
+    for (const ins of a.insights) {
+      html += `<div class="sa-card sa-${ins.type}">
+        <div class="sa-card-badge">${INSIGHT_BADGE[ins.type] || ""}</div>
+        <div class="sa-card-title">${ins.title}</div>
+        <div class="sa-card-body">${ins.body}</div></div>`;
+    }
+    html += `</div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ----- L4: live race prediction ----------------------------------
+// Smarter than the naive currentPrProjectedFinish — projects the
+// finish of the active benchmark Test using the OBSERVED split trend
+// across completed intervals (so a fading rower's projection slows
+// realistically) blended with current pace. Returns seconds (time
+// benchmarks) or metres (distance benchmarks), or null.
+function racePrediction() {
+  const plan = state.localPlan;
+  if (!plan || !plan.benchKey) return null;
+  const bench = BENCHMARKS.find(b => b.key === plan.benchKey);
+  if (!bench) return null;
+  const done = state.planResults || [];
+  // Need the live pace at minimum.
+  if (state.paceS == null || state.paceS <= 0) return null;
+
+  if (bench.kind === "time") {
+    const targetDist = BENCH_TARGET_DIST[plan.benchKey];
+    if (!targetDist) return null;
+    const doneDist = (state.distanceM || 0);
+    const remain = Math.max(0, targetDist - doneDist);
+    // Trend: compare avg pace of the most recent completed intervals
+    // to the earliest, extrapolate the drift over the remaining
+    // distance. Fall back to flat current pace when we have <2 legs.
+    let projPace = state.paceS;
+    if (done.length >= 2) {
+      const recent = done.slice(-2).map(r => r.paceS).filter(Boolean);
+      const early  = done.slice(0, 2).map(r => r.paceS).filter(Boolean);
+      if (recent.length && early.length) {
+        const driftPerLeg = (avgArr(recent) - avgArr(early)) / Math.max(1, done.length - 1);
+        // Estimate legs remaining from a typical interval distance.
+        const legDist = targetDist / Math.max(1, (plan.intervals || []).length);
+        const legsLeft = remain / Math.max(1, legDist);
+        projPace = state.paceS + driftPerLeg * legsLeft * 0.5; // damp the extrapolation
+      }
+    }
+    const remainTime = remain / 500 * Math.max(60, projPace);
+    const elapsed = state.elapsedTimeS || 0;
+    return elapsed + remainTime;
+  } else {
+    // Distance target: project total metres at the (lightly trended) pace.
+    const targetTime = BENCH_TARGET_TIME[plan.benchKey];
+    if (!targetTime) return null;
+    const elapsed = state.elapsedTimeS || 0;
+    const remain = Math.max(0, targetTime - elapsed);
+    const projMetres = (state.distanceM || 0) + remain / Math.max(60, state.paceS) * 500;
+    return projMetres;
+  }
+}
+function avgArr(a) { return a.reduce((x, y) => x + y, 0) / a.length; }
 
 // ----- Clubs (coming-soon) modal --------------------------------
 // openClubs / closeClubs used to drive a "coming soon" modal — Phase 1

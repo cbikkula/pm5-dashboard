@@ -18,10 +18,10 @@ To pull the next item: open a chat with me and say `do backlog #N`. I'll build i
 | 10 |        | Local-only privacy mode                | Settings toggle: disable Drive sync, global counter, sign-in |
 | 11 | ✅ done v1.5.0 | Connection health panel                | Mini-widget: PM5, HR, Drive sync, last packet, dropped packets |
 | 12 |        | Versioned workout format               | `schemaVersion` + `appVersion` on every saved session |
-| 13 |        | Data quality flags                     | "Data quality: 93% · 7 dropped packets" — flag suspect spikes |
+| 13 | ✅ done v1.6.0 | Data quality flags                     | "Data quality: 93% · 7 dropped packets" — flag suspect spikes |
 | 14 | ✅ done v1.5.0 | Stroke bookmarks                       | Mark moments mid-piece with `M` keyboard shortcut |
-| 15 |        | Fatigue analysis                       | First 25% vs last 25% breakdown after a session. *Feeds L13 — Fatigue Trends section.* |
-| 16 |        | Technique insight cards                | Rule-based callouts: "Peak force moved later", etc. *Feeds L13 — Insights + Technique Trends sections.* |
+| 15 | ✅ done v1.6.0 | Fatigue analysis                       | First 25% vs last 25% breakdown after a session. *Feeds L13 — Fatigue Trends section.* |
+| 16 | ✅ done v1.6.0 | Technique insight cards                | Rule-based callouts: "Peak force moved later", etc. *Feeds L13 — Insights + Technique Trends sections.* |
 | 17 |        | Import sessions                        | Paste JSON or upload CSV from another device |
 | 18 |        | Smarter workout builder                | Repeat-group blocks (3× [8 min / 2 min rest]) |
 | 19 |        | First-time setup wizard                | Athlete/coach mode, max HR, resting HR, units, default layout |
@@ -46,7 +46,7 @@ Bigger items that don't fit in a single session — multi-session features, exte
 | L1  |        | Multi-coach Firebase mode              | Phase 2 Steps 4–7: invite links, role enforcement, audit log, real-time presence. Foundation already shipped behind placeholder config. |
 | L2  |        | Multi-erg synchronization              | Winter training: 8 ergs paired to one coach screen with WebRTC peer-to-peer sync. Crew rhythm + drive timing alignment. |
 | L3  |        | AI technique analysis                  | Peak-timing trends across many sessions, fatigue patterns, "you tend to shorten the drive after stroke 200" callouts. |
-| L4  |        | Race prediction                        | Extrapolate current pace + HR drift to a finish-line projection. |
+| L4  | ✅ done v1.6.0 | Race prediction                        | Extrapolate current pace + HR drift to a finish-line projection. |
 | L5  |        | Garmin / Apple Health HR integration   | Pull HR from a watch instead of (or alongside) a chest strap. |
 | L6  |        | Wear OS companion                      | Heart-rate complication that mirrors the dashboard's current zone. |
 | L7  |        | Session sharing                        | Signed read-only URLs so a coach can review an athlete's finished session. |

@@ -43,7 +43,7 @@ Bigger items that don't fit in a single session — multi-session features, exte
 
 | #   | Status | Feature                                | Notes |
 |----:|:---:|----------------------------------------|-------|
-| L1  |        | Multi-coach Firebase mode              | Phase 2 Steps 4–7: invite links, role enforcement, audit log, real-time presence. Foundation already shipped behind placeholder config. |
+| L1  | 🟡 foundation live v1.10.0 | Multi-coach Firebase mode              | Phase 2 Steps 4–7: invite links, role enforcement, audit log, real-time presence. Foundation already shipped behind placeholder config. |
 | L2  |        | Multi-erg synchronization              | Winter training: 8 ergs paired to one coach screen with WebRTC peer-to-peer sync. Crew rhythm + drive timing alignment. |
 | L3  |        | AI technique analysis                  | Peak-timing trends across many sessions, fatigue patterns, "you tend to shorten the drive after stroke 200" callouts. |
 | L4  | ✅ done v1.6.0 | Race prediction                        | Extrapolate current pace + HR drift to a finish-line projection. |

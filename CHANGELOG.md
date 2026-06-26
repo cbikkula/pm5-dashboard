@@ -10,6 +10,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Session replay
 - AI technique analysis (peak-timing trends)
 
+## [v1.10.0] — June 2026 — Cloud sync activated (Firebase)
+
+The Phase 2 Foundation (Auth + Firestore + lineup sync), shipped dormant in an earlier release, is now **live** — a real Firebase project is wired in.
+
+### Changed
+- `FIREBASE_CONFIG` now holds the live project (`pm5-dashboard-f4bc0`); `FIREBASE_ENABLED` is true.
+- Firestore security rules (owner-scoped) published.
+
+### What this unlocks
+- **Sign in from the Clubs view** → your club, roster, shells, oars, and lineups sync to Firestore.
+- **Real-time** cross-device updates via `onSnapshot` listeners.
+- Data is locked to your account by the security rules.
+
+This is the foundation for full multi-coach mode (L1 Steps 4–7: invite links, role enforcement, audit log, presence), which is the next build on top.
+
 ## [v1.9.0] — June 2026 — Test suite + CI (repo tooling)
 
 Backlog #24, #25. Repo-only — no app behaviour change.

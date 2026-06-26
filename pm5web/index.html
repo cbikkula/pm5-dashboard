@@ -3915,12 +3915,12 @@ document.dispatchEvent(new Event("fb-api-ready"));
 // keeps working in single-user / Drive-sync mode as before.
 //
 const FIREBASE_CONFIG = {
-  apiKey:            "REPLACE_ME_AFTER_FIREBASE_SETUP",
-  authDomain:        "REPLACE_ME.firebaseapp.com",
-  projectId:         "REPLACE_ME",
-  storageBucket:     "REPLACE_ME.appspot.com",
-  messagingSenderId: "REPLACE_ME",
-  appId:             "REPLACE_ME",
+  apiKey:            "AIzaSyCHt_kzdJFbIyT_Dje-aEmGN31Lkrhzy6Y",
+  authDomain:        "pm5-dashboard-f4bc0.firebaseapp.com",
+  projectId:         "pm5-dashboard-f4bc0",
+  storageBucket:     "pm5-dashboard-f4bc0.firebasestorage.app",
+  messagingSenderId: "119787911732",
+  appId:             "1:119787911732:web:8307b24e182e679e462861",
 };
 const FIREBASE_ENABLED =
   !!FIREBASE_CONFIG.apiKey &&
@@ -4002,12 +4002,21 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.8.0";
+const APP_VERSION = "1.10.0";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 const SESSION_SCHEMA_VERSION = 2;
 
 const RELEASE_NOTES = {
+  "1.10.0": {
+    date: "June 2026",
+    headline: "Cloud sync is live",
+    items: [
+      "Firebase is now connected — sign in from the Clubs view to sync your club, roster, shells, oars, and lineups across every device.",
+      "Real-time: edit a lineup on your laptop and it updates on your phone.",
+      "Your data is locked to your account by Firestore security rules — nobody else can read or write it.",
+    ],
+  },
   "1.8.0": {
     date: "June 2026",
     headline: "Privacy, accessibility, dev tools",

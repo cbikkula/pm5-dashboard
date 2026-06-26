@@ -1,0 +1,201 @@
+rules_version = '2';
+
+// =====================================================================
+// PM5 Dashboard — Firestore security rules (v1.11.0 club membership)
+//
+// Security model (Spark plan, no Cloud Functions — rules ARE the
+// product). Everything is denied unless a rule below allows it.
+//
+// Hardened after an adversarial review that found 5 real root-cause
+// holes (join not invite-validated; self-chosen athlete link;
+// availability null-trap + missing existing-doc check; audit
+// backdating; revoked-invite readability). All five are closed below.
+// =====================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- helpers ----------------------------------------------------
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+
+    function memberPath(clubId) {
+      return /databases/$(database)/documents/clubs/$(clubId)/members/$(uid());
+    }
+    function isMember(clubId) {
+      return signedIn() && exists(memberPath(clubId));
+    }
+    function member(clubId) {
+      return get(memberPath(clubId)).data;
+    }
+    function isActiveMember(clubId) {
+      return isMember(clubId) && member(clubId).status == 'active';
+    }
+    function hasRole(clubId, roles) {
+      return isActiveMember(clubId) && (member(clubId).role in roles);
+    }
+    function clubData(clubId) {
+      return get(/databases/$(database)/documents/clubs/$(clubId)).data;
+    }
+    function isOwner(clubId) {
+      return signedIn()
+             && exists(/databases/$(database)/documents/clubs/$(clubId))
+             && clubData(clubId).ownerId == uid();
+    }
+
+    // An invite is valid for a JOIN if it exists, isn't revoked, isn't
+    // expired, and its role matches the role the joiner is requesting.
+    // (Same-path get()s are memoised by Firestore, so this is ~1 doc
+    // access despite the repeated reads.)
+    function invitePath(clubId, code) {
+      return /databases/$(database)/documents/clubs/$(clubId)/invites/$(code);
+    }
+    function validJoinInvite(clubId, code, role) {
+      return code != null
+             && exists(invitePath(clubId, code))
+             && get(invitePath(clubId, code)).data.revoked == false
+             && get(invitePath(clubId, code)).data.expiresAt > request.time
+             && get(invitePath(clubId, code)).data.role == role;
+    }
+
+    // ---- users ------------------------------------------------------
+    match /users/{userId} {
+      allow read, write: if signedIn() && uid() == userId;
+    }
+
+    // ---- clubs ------------------------------------------------------
+    match /clubs/{clubId} {
+      allow read: if isOwner(clubId) || isActiveMember(clubId);
+
+      allow create: if signedIn()
+                    && request.resource.data.ownerId == uid();
+
+      // Update club settings / teams / squads / equipment = owner or
+      // admin. ownerId is immutable except when the current OWNER
+      // changes it (= ownership transfer).
+      allow update: if (isOwner(clubId) || hasRole(clubId, ['admin']))
+                    && (request.resource.data.ownerId == resource.data.ownerId
+                        || isOwner(clubId));
+
+      allow delete: if isOwner(clubId);
+
+      // ---- members ---------------------------------------------------
+      match /members/{memberUid} {
+        allow read: if isOwner(clubId)
+                    || isActiveMember(clubId)
+                    || (signedIn() && uid() == memberUid);
+
+        allow list: if isOwner(clubId) || isActiveMember(clubId);
+
+        // JOIN — now invite-validated. A signed-in user creates ONLY
+        // their own row, as 'pending', with:
+        //   - a valid, unrevoked, unexpired invite (carried as
+        //     inviteCode) whose role matches the requested role,
+        //   - linkedAthleteId == null (linking is admin-only, post-
+        //     approval — a joiner can never self-link to an athlete).
+        // This closes the invite-bypass, role-cap-bypass, expiry/
+        // revocation-bypass, spam, and self-link holes at once.
+        allow create: if signedIn()
+                      && uid() == memberUid
+                      && request.resource.data.status == 'pending'
+                      && request.resource.data.role != 'owner'
+                      && request.resource.data.linkedAthleteId == null
+                      && validJoinInvite(clubId, request.resource.data.inviteCode,
+                                         request.resource.data.role);
+
+        // Approve / change role / suspend / link athlete = owner/admin.
+        //   - nobody may set role 'owner' here (transfer is owner-only,
+        //     on the club doc),
+        //   - admins cannot touch the owner's row and cannot mint admins.
+        allow update: if (
+          (isOwner(clubId) || hasRole(clubId, ['admin']))
+          && request.resource.data.role != 'owner'
+          && (isOwner(clubId) || (
+                memberUid != clubData(clubId).ownerId
+                && request.resource.data.role != 'admin'
+             ))
+        );
+
+        allow delete: if isOwner(clubId)
+                      || (hasRole(clubId, ['admin']) && memberUid != clubData(clubId).ownerId);
+      }
+
+      // ---- athletes (rowable roster) ---------------------------------
+      match /athletes/{athleteId} {
+        allow read, list: if isOwner(clubId) || isActiveMember(clubId);
+        allow create, update, delete: if hasRole(clubId, ['owner', 'admin', 'coach']) || isOwner(clubId);
+      }
+
+      // ---- lineups ---------------------------------------------------
+      match /lineups/{lineupId} {
+        allow read, list: if isOwner(clubId) || isActiveMember(clubId);
+        allow create, update, delete: if hasRole(clubId, ['owner', 'admin', 'coach']) || isOwner(clubId);
+      }
+
+      // ---- availability (date/practice overrides) --------------------
+      // Coaches+ may set anyone's availability. An athlete may touch
+      // ONLY rows that belong to their linked athlete — and only if
+      // they're actually linked (linkedAthleteId != null). Split per
+      // operation so update/delete can verify the EXISTING row's owner
+      // (resource.data), not just the incoming value (request.resource).
+      match /availability/{entryId} {
+        allow read, list: if isOwner(clubId) || isActiveMember(clubId);
+
+        function isCoachPlus() {
+          return hasRole(clubId, ['owner', 'admin', 'coach']) || isOwner(clubId);
+        }
+        function ownAthlete() {
+          return isActiveMember(clubId)
+                 && member(clubId).role == 'athlete'
+                 && member(clubId).linkedAthleteId != null;
+        }
+
+        allow create: if isCoachPlus()
+                      || (ownAthlete()
+                          && request.resource.data.athleteId == member(clubId).linkedAthleteId);
+
+        allow update: if isCoachPlus()
+                      || (ownAthlete()
+                          && resource.data.athleteId == member(clubId).linkedAthleteId
+                          && request.resource.data.athleteId == member(clubId).linkedAthleteId);
+
+        allow delete: if isCoachPlus()
+                      || (ownAthlete()
+                          && resource.data.athleteId == member(clubId).linkedAthleteId);
+      }
+
+      // ---- invites (bearer tokens; code = doc id) --------------------
+      match /invites/{code} {
+        // Owner/admin can always read their invites (to manage). A
+        // bearer (holder of the code) can read it ONLY while it is
+        // still valid — a revoked/expired code is unreadable, so it
+        // can't seed a join. LIST is owner/admin only (no enumeration).
+        allow get:  if isOwner(clubId) || hasRole(clubId, ['admin'])
+                    || (signedIn()
+                        && resource.data.revoked == false
+                        && resource.data.expiresAt > request.time);
+        allow list: if isOwner(clubId) || hasRole(clubId, ['admin']);
+
+        allow create: if (isOwner(clubId) || hasRole(clubId, ['admin']))
+                      && request.resource.data.role in ['athlete', 'coach', 'admin']
+                      && request.resource.data.role != 'owner'
+                      && (isOwner(clubId) || request.resource.data.role != 'admin');
+
+        allow update, delete: if isOwner(clubId) || hasRole(clubId, ['admin']);
+      }
+
+      // ---- audit logs (APPEND-ONLY, real-time-stamped) ---------------
+      match /auditLogs/{logId} {
+        allow read, list: if isOwner(clubId) || hasRole(clubId, ['admin']);
+        // Active members append entries for actions they performed.
+        // actorUid must be themselves and createdAt must be the server
+        // time of the write, so history can't be forged or backdated.
+        allow create: if isActiveMember(clubId)
+                      && request.resource.data.actorUid == uid()
+                      && request.resource.data.createdAt == request.time;
+        // Nobody — not even the owner — can edit or delete history.
+        allow update, delete: if false;
+      }
+    }
+  }
+}

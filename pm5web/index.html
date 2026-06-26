@@ -2283,6 +2283,18 @@
     font-size:5vh; line-height:1; }
   .race-proj { color:var(--text-muted); font-size:2vh; min-height:2vh; }
 
+  /* History filters (#29) */
+  .history-filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+    margin:8px 0; }
+  .history-filters input, .history-filters select {
+    background:var(--bg-base); color:var(--text); border:1px solid var(--border-bright);
+    border-radius:8px; padding:6px 10px; font-family:inherit; font-size:12.5px; outline:none; }
+  .history-filters input:focus, .history-filters select:focus { border-color:var(--accent); }
+  .history-filters #histSearch { flex:1; min-width:120px; }
+  .history-filters #histMinDist { width:110px; }
+  .history-filters .hist-count { color:var(--text-dim); font-size:11px;
+    letter-spacing:0.5px; margin-left:auto; }
+
   /* Session analysis in Summary modal (#13/#15/#16) */
   .summary-analysis { margin-top:12px; display:flex; flex-direction:column; gap:10px; }
   .sa-row { display:flex; gap:10px; }
@@ -3621,10 +3633,30 @@
       <span id="historyAccount" class="h-sub" style="margin: 0;"></span>
     </div>
     <div class="h-sub" id="historySub">Saved sessions appear here. Click one to view its summary.</div>
+    <!-- Filters (#29) -->
+    <div class="history-filters" id="historyFilters">
+      <input type="text" id="histSearch" placeholder="Search title…">
+      <select id="histType">
+        <option value="">All sessions</option>
+        <option value="pr">PRs only</option>
+        <option value="bookmarks">With bookmarks</option>
+        <option value="notes">With notes</option>
+        <option value="recovered">Recovered</option>
+        <option value="hr">Has heart rate</option>
+      </select>
+      <input type="number" id="histMinDist" placeholder="Min metres" min="0" step="500">
+      <select id="histSort">
+        <option value="date">Newest first</option>
+        <option value="dist">Longest first</option>
+        <option value="pace">Fastest split</option>
+      </select>
+      <span class="hist-count" id="histCount"></span>
+    </div>
     <div class="history-list-wrap">
       <div class="history-list" id="historyList"></div>
     </div>
     <div class="modal-buttons">
+      <button id="historyImportBtn" class="left">Import</button>
       <button id="historyExportCsvBtn" class="left">Export CSV</button>
       <button id="historyExportBtn" class="left">Export JSON</button>
       <button class="accent" id="closeHistoryBtn">Close</button>
@@ -3675,6 +3707,7 @@
     </div>
     <div class="modal-buttons">
       <button id="summaryExportCsvBtn" class="left">Export CSV</button>
+      <button id="summaryExportJsonBtn" class="left">Export JSON</button>
       <button class="accent" id="closeSummaryBtn">Close</button>
     </div>
   </div>
@@ -3937,9 +3970,22 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.6.0";
+const APP_VERSION = "1.7.0";
+// Session record schema version (#12). Bump when the saved-entry shape
+// changes incompatibly so migrations have a foothold.
+const SESSION_SCHEMA_VERSION = 2;
 
 const RELEASE_NOTES = {
+  "1.7.0": {
+    date: "June 2026",
+    headline: "History tools — filter, import, export",
+    items: [
+      "History filters — search by title, filter to PRs / bookmarked / noted / recovered / has-HR sessions, set a minimum distance, and sort by date, distance, or split.",
+      "Import sessions — paste an exported history or session JSON to bring workouts over from another device; merges by id with no duplicates.",
+      "Export a single session as raw JSON from its summary (full metadata, intervals, bookmarks, PR record).",
+      "Every saved session is now stamped with a schema version so future updates can migrate old records safely.",
+    ],
+  },
   "1.6.0": {
     date: "June 2026",
     headline: "Session analysis",
@@ -6555,6 +6601,8 @@ function checkRecoverySnapshot() {
   // Build a recovered history entry — tagged so it's obvious in the
   // history list.
   const entry = {
+    schemaVersion: SESSION_SCHEMA_VERSION,
+    appVersion: APP_VERSION,
     id: uid(),
     date: new Date(snap.savedAt).toISOString(),
     title: (snap.plan && snap.plan.title) || "Recovered session",
@@ -6607,6 +6655,11 @@ function logCurrentWorkout({ silent = false } = {}) {
     return null;
   }
   const entry = {
+    // Schema version (#12) — every saved session is stamped so future
+    // app updates can migrate old records safely. v2 is the current
+    // shape (totals + per-interval results + optional pr/bookmarks).
+    schemaVersion: SESSION_SCHEMA_VERSION,
+    appVersion: APP_VERSION,
     id: uid(),
     date: new Date().toISOString(),
     title: (state.localPlan && state.localPlan.title) ||
@@ -10742,14 +10795,41 @@ function openHistory() {
 function closeHistory() {
   document.getElementById("historyModal").classList.remove("open");
 }
+// Filters (#29) — read the controls and produce the visible subset.
+function filteredHistory() {
+  let rows = state.history.slice();
+  const q = (document.getElementById("histSearch")?.value || "").trim().toLowerCase();
+  const type = document.getElementById("histType")?.value || "";
+  const minDist = parseFloat(document.getElementById("histMinDist")?.value);
+  const sort = document.getElementById("histSort")?.value || "date";
+  if (q) rows = rows.filter(e => (e.title || "").toLowerCase().includes(q));
+  if (type === "pr")         rows = rows.filter(e => e.pr && e.pr.keys && e.pr.keys.length);
+  else if (type === "bookmarks") rows = rows.filter(e => e.bookmarks && e.bookmarks.length);
+  else if (type === "notes") rows = rows.filter(e => (e.notes && e.notes.trim()) || (e.tags && e.tags.length));
+  else if (type === "recovered") rows = rows.filter(e => e.recovered);
+  else if (type === "hr")    rows = rows.filter(e => e.totals && e.totals.avgHr > 0);
+  if (!isNaN(minDist) && minDist > 0) rows = rows.filter(e => (e.totals?.distanceM || 0) >= minDist);
+  if (sort === "dist")      rows.sort((a, b) => (b.totals?.distanceM || 0) - (a.totals?.distanceM || 0));
+  else if (sort === "pace") rows.sort((a, b) => (a.totals?.avgPaceS || 1e9) - (b.totals?.avgPaceS || 1e9));
+  else                      rows.sort((a, b) => new Date(b.date) - new Date(a.date));
+  return rows;
+}
 function renderHistoryList() {
   const list = document.getElementById("historyList");
+  const countEl = document.getElementById("histCount");
   if (!state.history.length) {
     list.innerHTML = `<div class="empty">No saved workouts yet.<br>Click <b>Log</b> after rowing to save the session.</div>`;
+    if (countEl) countEl.textContent = "";
+    return;
+  }
+  const rows = filteredHistory();
+  if (countEl) countEl.textContent = `${rows.length} of ${state.history.length}`;
+  if (!rows.length) {
+    list.innerHTML = `<div class="empty">No sessions match these filters.</div>`;
     return;
   }
   list.innerHTML = "";
-  for (const e of state.history) {
+  for (const e of rows) {
     const row = document.createElement("div");
     row.className = "history-row";
     const dateStr = new Date(e.date).toLocaleString(undefined,
@@ -11089,10 +11169,77 @@ function resetLayoutToDefault() {
 
 function exportHistoryJson() {
   const blob = new Blob(
-    [JSON.stringify({ user: state.user, history: state.history }, null, 2)],
+    [JSON.stringify({ kind: "pm5-history-export", schemaVersion: SESSION_SCHEMA_VERSION,
+                      appVersion: APP_VERSION, exportedAt: new Date().toISOString(),
+                      user: { id: state.user.id }, history: state.history }, null, 2)],
     { type: "application/json" }
   );
   triggerDownload(blob, `pm5-history-${new Date().toISOString().slice(0,10)}.json`);
+}
+
+// Export a single session as raw JSON (#30) — full metadata, results,
+// bookmarks, PR record. Used from the Summary modal.
+function exportSessionJson(entry) {
+  const e = entry || {
+    schemaVersion: SESSION_SCHEMA_VERSION, appVersion: APP_VERSION,
+    id: "live", date: new Date().toISOString(),
+    plan: state.localPlan, results: state.planResults || [],
+    totals: { distanceM: state.distanceM, elapsedS: state.elapsedTimeS,
+              avgWatts: state.watts, avgPaceS: workoutAvgPace() },
+    bookmarks: state.bookmarks || [],
+  };
+  const blob = new Blob([JSON.stringify({
+    kind: "pm5-session-export", schemaVersion: SESSION_SCHEMA_VERSION,
+    appVersion: APP_VERSION, exportedAt: new Date().toISOString(), session: e,
+  }, null, 2)], { type: "application/json" });
+  const safe = (e.title || "session").replace(/[^a-z0-9_-]/gi, "_");
+  triggerDownload(blob, `pm5-${safe}-${new Date().toISOString().slice(0,10)}.json`);
+}
+
+// Import sessions (#17) — accepts a whole-history export, a single
+// session export, a bare array of entries, or a bare entry. Merges by
+// id (no dupes), normalises the schema, and re-renders.
+function importSessionsFromText(raw) {
+  let parsed;
+  try { parsed = JSON.parse(raw); }
+  catch (e) { setToast("That doesn't look like valid JSON.", "err"); return 0; }
+  let incoming = [];
+  if (Array.isArray(parsed)) incoming = parsed;
+  else if (parsed.kind === "pm5-history-export" && Array.isArray(parsed.history)) incoming = parsed.history;
+  else if (parsed.kind === "pm5-session-export" && parsed.session) incoming = [parsed.session];
+  else if (parsed.history && Array.isArray(parsed.history)) incoming = parsed.history;
+  else if (parsed.id && parsed.totals) incoming = [parsed];
+  else { setToast("Unrecognised file — expected a PM5 history or session export.", "err"); return 0; }
+  // Normalise: ensure id + date + schemaVersion exist.
+  const norm = incoming.filter(e => e && typeof e === "object").map(e => ({
+    schemaVersion: e.schemaVersion || 1,
+    appVersion: e.appVersion || "imported",
+    id: e.id || uid(),
+    date: e.date || new Date().toISOString(),
+    title: e.title || "Imported session",
+    description: e.description || "",
+    plan: e.plan || null,
+    results: e.results || [],
+    totals: e.totals || {},
+    ...(e.pr ? { pr: e.pr } : {}),
+    ...(e.bookmarks ? { bookmarks: e.bookmarks } : {}),
+    ...(e.notes ? { notes: e.notes } : {}),
+    ...(e.rating ? { rating: e.rating } : {}),
+    ...(e.tags ? { tags: e.tags } : {}),
+    ...(e.recovered ? { recovered: e.recovered } : {}),
+    imported: true,
+  }));
+  const before = state.history.length;
+  state.history = mergeHistory(state.history, norm);
+  const added = state.history.length - before;
+  saveHistory();
+  renderHistoryList();
+  setToast(`Imported ${added} new session${added === 1 ? "" : "s"} (${norm.length - added} already present).`, "ok");
+  return added;
+}
+function promptImportSessions() {
+  const raw = prompt("Paste exported PM5 session/history JSON:");
+  if (raw && raw.trim()) importSessionsFromText(raw.trim());
 }
 
 // ----- CSV export -------------------------------------------------
@@ -11303,6 +11450,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // displayed — pass null to use those.
     exportSessionCsv(null);
   });
+  document.getElementById("summaryExportJsonBtn").addEventListener("click", () => {
+    const e = state.summaryHistoryEntryId
+      ? state.history.find(h => h.id === state.summaryHistoryEntryId) : null;
+    exportSessionJson(e);
+  });
   document.getElementById("sessionNotesSaveBtn").addEventListener("click", () => {
     const id = state.summaryHistoryEntryId;
     if (!id) return;
@@ -11329,6 +11481,15 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("closeHistoryBtn").addEventListener("click", closeHistory);
   document.getElementById("historyExportBtn").addEventListener("click", exportHistoryJson);
   document.getElementById("historyExportCsvBtn").addEventListener("click", exportHistoryCsv);
+  document.getElementById("historyImportBtn").addEventListener("click", promptImportSessions);
+  // History filters (#29) — re-render on any change.
+  ["histSearch","histType","histMinDist","histSort"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("input", renderHistoryList);
+      el.addEventListener("change", renderHistoryList);
+    }
+  });
 
   // Home menu cards — each one routes to its own sub-flow.
   document.querySelectorAll(".menu-card[data-menu]").forEach(card => {

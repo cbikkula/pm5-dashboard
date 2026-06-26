@@ -10,6 +10,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Session replay
 - AI technique analysis (peak-timing trends)
 
+## [v1.7.0] — June 2026 — History tools: filter, import, export, schema
+
+Backlog #12, #17, #29, #30. 8/8 import unit tests pass; filters live-verified.
+
+### Added
+- **History filters (#29)** — title search, type filter (PRs only / bookmarked / noted / recovered / has-HR), minimum distance, and sort by date / distance / split. A live "N of M" count shows how many match.
+- **Import sessions (#17)** — paste an exported history or single-session JSON; accepts whole-history exports, single-session exports, bare arrays, or bare entries. Merges by id (no duplicates), normalises the schema, flags imported records.
+- **Single-session raw JSON export (#30)** — from a session's summary, export the full record (metadata, per-interval results, bookmarks, PR record) wrapped in a typed envelope.
+- **Versioned session format (#12)** — every logged and recovered session is now stamped with `schemaVersion` + `appVersion`, so future updates have a migration foothold. Exports carry the version too.
+
 ## [v1.6.0] — June 2026 — Session analysis
 
 Backlog #13, #15, #16, L4 — turning the raw session into meaning. All implemented as pure functions (`computeFatigue`, `computeDataQuality`, `computeInsights`, `analyzeSession`) so the Performance page (L13) can reuse them. 14/14 analysis unit tests pass.

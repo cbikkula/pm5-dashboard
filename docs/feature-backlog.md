@@ -17,12 +17,12 @@ To pull the next item: open a chat with me and say `do backlog #N`. I'll build i
 | 9  | ✅ done v1.5.0 | Target zones                           | Pre-workout target ranges + green/yellow/red while rowing |
 | 10 |        | Local-only privacy mode                | Settings toggle: disable Drive sync, global counter, sign-in |
 | 11 | ✅ done v1.5.0 | Connection health panel                | Mini-widget: PM5, HR, Drive sync, last packet, dropped packets |
-| 12 |        | Versioned workout format               | `schemaVersion` + `appVersion` on every saved session |
+| 12 | ✅ done v1.7.0 | Versioned workout format               | `schemaVersion` + `appVersion` on every saved session |
 | 13 | ✅ done v1.6.0 | Data quality flags                     | "Data quality: 93% · 7 dropped packets" — flag suspect spikes |
 | 14 | ✅ done v1.5.0 | Stroke bookmarks                       | Mark moments mid-piece with `M` keyboard shortcut |
 | 15 | ✅ done v1.6.0 | Fatigue analysis                       | First 25% vs last 25% breakdown after a session. *Feeds L13 — Fatigue Trends section.* |
 | 16 | ✅ done v1.6.0 | Technique insight cards                | Rule-based callouts: "Peak force moved later", etc. *Feeds L13 — Insights + Technique Trends sections.* |
-| 17 |        | Import sessions                        | Paste JSON or upload CSV from another device |
+| 17 | ✅ done v1.7.0 | Import sessions                        | Paste JSON or upload CSV from another device |
 | 18 |        | Smarter workout builder                | Repeat-group blocks (3× [8 min / 2 min rest]) |
 | 19 |        | First-time setup wizard                | Athlete/coach mode, max HR, resting HR, units, default layout |
 | 20 | ✅ done v1.5.0 | Fullscreen race mode                   | Distraction-free: split + rate + dist remaining + PR delta |
@@ -34,8 +34,8 @@ To pull the next item: open a chat with me and say `do backlog #N`. I'll build i
 | 26 |        | Accessibility pass                     | Keyboard nav, screen-reader labels, reduced-motion mode |
 | 27 |        | Mobile portrait polish                 | Bottom-nav, swipe between metric pages, wake lock |
 | 28 |        | Performance monitor                    | Hidden devtools panel — render time, packet rate, memory |
-| 29 |        | Session history filters                | Date range, distance, PR-only, has-HR, has-force-curve |
-| 30 |        | Export raw JSON                        | Single-session JSON with full metadata + force curves |
+| 29 | ✅ done v1.7.0 | Session history filters                | Date range, distance, PR-only, has-HR, has-force-curve |
+| 30 | ✅ done v1.7.0 | Export raw JSON                        | Single-session JSON with full metadata + force curves |
 
 ## Long-term roadmap
 

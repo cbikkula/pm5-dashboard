@@ -15,7 +15,7 @@ To pull the next item: open a chat with me and say `do backlog #N`. I'll build i
 | 7  | ✅ done v1.4.0 | PR tracking                            | Auto-detect PRs from benchmark Test sessions, 🏆 badge on history row, full provenance. *Feeds L13 — Benchmark Progress + Personal Records sections.* |
 | 8  | ✅ done v1.4.0 | Live PR pace                           | PR Δ + Proj. Finish metrics during benchmark tests, green/red vs PR pace |
 | 9  | ✅ done v1.5.0 | Target zones                           | Pre-workout target ranges + green/yellow/red while rowing |
-| 10 |        | Local-only privacy mode                | Settings toggle: disable Drive sync, global counter, sign-in |
+| 10 | ✅ done v1.8.0 | Local-only privacy mode                | Settings toggle: disable Drive sync, global counter, sign-in |
 | 11 | ✅ done v1.5.0 | Connection health panel                | Mini-widget: PM5, HR, Drive sync, last packet, dropped packets |
 | 12 | ✅ done v1.7.0 | Versioned workout format               | `schemaVersion` + `appVersion` on every saved session |
 | 13 | ✅ done v1.6.0 | Data quality flags                     | "Data quality: 93% · 7 dropped packets" — flag suspect spikes |
@@ -31,9 +31,9 @@ To pull the next item: open a chat with me and say `do backlog #N`. I'll build i
 | 23 |        | Compare sessions                       | Side-by-side: pick two from history. *Feeds L13 — Compare Sessions button.* |
 | 24 |        | Synthetic PM5 test harness             | `tests/bleParser.test.js` + fake packet fixtures |
 | 25 |        | GitHub Actions CI                      | Syntax check + bundle size guard + Lighthouse PWA score |
-| 26 |        | Accessibility pass                     | Keyboard nav, screen-reader labels, reduced-motion mode |
+| 26 | ✅ done v1.8.0 | Accessibility pass                     | Keyboard nav, screen-reader labels, reduced-motion mode |
 | 27 |        | Mobile portrait polish                 | Bottom-nav, swipe between metric pages, wake lock |
-| 28 |        | Performance monitor                    | Hidden devtools panel — render time, packet rate, memory |
+| 28 | ✅ done v1.8.0 | Performance monitor                    | Hidden devtools panel — render time, packet rate, memory |
 | 29 | ✅ done v1.7.0 | Session history filters                | Date range, distance, PR-only, has-HR, has-force-curve |
 | 30 | ✅ done v1.7.0 | Export raw JSON                        | Single-session JSON with full metadata + force curves |
 

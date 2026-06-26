@@ -2283,6 +2283,29 @@
     font-size:5vh; line-height:1; }
   .race-proj { color:var(--text-muted); font-size:2vh; min-height:2vh; }
 
+  /* Accessibility (#26) */
+  body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::after {
+    transition: none !important; animation: none !important;
+    scroll-behavior: auto !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+  body.large-text { font-size: 18px; }
+  body.large-text .card .lab, body.large-text .h-sub { font-size: 14px; }
+  /* Visible keyboard-focus ring for a11y (only on keyboard nav). */
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Performance monitor (#28) — hidden dev panel, Ctrl+Shift+P. */
+  .perf-monitor {
+    position: fixed; bottom: 12px; left: 12px; z-index: 500;
+    background: rgba(11,13,18,0.92); border: 1px solid var(--accent);
+    border-radius: 8px; padding: 8px 12px; font-size: 11px;
+    font-family: ui-monospace, "Cascadia Code", Menlo, monospace;
+    color: var(--accent-3); line-height: 1.7; pointer-events: none;
+    white-space: pre;
+  }
+
   /* History filters (#29) */
   .history-filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center;
     margin:8px 0; }
@@ -2485,13 +2508,13 @@
     <div class="hdr-actions" id="hdrActions" style="display:none;">
       <button id="hdrProgramBtn">Program</button>
       <button id="hdrLogBtn">Log</button>
-      <button id="hdrMarkBtn" title="Bookmark this stroke (M)">🔖</button>
+      <button id="hdrMarkBtn" title="Bookmark this stroke (M)" aria-label="Bookmark this stroke">🔖</button>
       <button id="hdrHistoryBtn">History</button>
       <button id="hdrSummaryBtn" disabled>Summary</button>
-      <button id="hdrHealthBtn" title="Connection health">📶</button>
-      <button id="hdrRaceBtn" title="Fullscreen race mode">⛶</button>
-      <button id="hdrFocusBtn" title="Switch focus (which metrics show)">🎯</button>
-      <button id="hdrSettingsBtn" title="Customize layout">⚙</button>
+      <button id="hdrHealthBtn" title="Connection health" aria-label="Connection health">📶</button>
+      <button id="hdrRaceBtn" title="Fullscreen race mode" aria-label="Fullscreen race mode">⛶</button>
+      <button id="hdrFocusBtn" title="Switch focus (which metrics show)" aria-label="Switch focus preset">🎯</button>
+      <button id="hdrSettingsBtn" title="Customize layout" aria-label="Settings">⚙</button>
     </div>
     <!-- Connection health dropdown panel -->
     <div class="conn-health-panel" id="connHealthPanel" style="display:none;"></div>
@@ -3152,6 +3175,15 @@
         <button id="settingsDemoBtn" class="accent" type="button">
           🎮 Start Demo Mode
         </button>
+      </div>
+      <div class="settings-section">
+        <div class="section-title">PRIVACY &amp; ACCESSIBILITY</div>
+        <label class="tz-toggle"><input type="checkbox" id="prefPrivacyLocal">
+          <span>Keep all data on this device (no Drive sync, no global counter)</span></label>
+        <label class="tz-toggle"><input type="checkbox" id="prefReducedMotion">
+          <span>Reduce motion (disable non-essential animations)</span></label>
+        <label class="tz-toggle"><input type="checkbox" id="prefLargeText">
+          <span>Larger text</span></label>
       </div>
     </div>
     <div class="modal-buttons">
@@ -3970,12 +4002,21 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.7.0";
+const APP_VERSION = "1.8.0";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 const SESSION_SCHEMA_VERSION = 2;
 
 const RELEASE_NOTES = {
+  "1.8.0": {
+    date: "June 2026",
+    headline: "Privacy, accessibility, dev tools",
+    items: [
+      "Local-only privacy mode — a Settings toggle that keeps everything on this device: no Drive sync, no cross-user counter ping.",
+      "Accessibility — reduce-motion and larger-text options, a visible keyboard focus ring, aria-labels on the icon buttons, and automatic respect for your OS reduced-motion setting.",
+      "Performance monitor — press Ctrl+Shift+P for a live overlay of render time, packet rate, heap usage, and force-curve point count.",
+    ],
+  },
   "1.7.0": {
     date: "June 2026",
     headline: "History tools — filter, import, export",
@@ -4258,6 +4299,10 @@ const state = {
       driveLen: null, drag: null,
     },
     targetEnabled: false,
+    // Privacy + accessibility (#10, #26).
+    privacyLocal: false,   // keep all data on this device — no Drive, no counter
+    reducedMotion: false,  // disable non-essential transitions/animations
+    largeText: false,      // bump base font size
   },
 
   // Tracks whether the current session has already been auto-logged
@@ -5598,13 +5643,59 @@ function render() {
   _renderScheduled = true;
   requestAnimationFrame(() => {
     _renderScheduled = false;
+    const t0 = (performance && performance.now) ? performance.now() : 0;
     renderHero();
     renderCards();
     renderWorkoutPanel();
     renderForceCurve();
     if (state.raceMode) renderRaceOverlay();
     renderConnHealth();
+    if (t0) { _perfMon.lastRenderMs = performance.now() - t0;
+              _perfMon.frames++; }
+    if (_perfMon.on) renderPerfMonitor();
   });
+}
+
+// ---- Performance monitor (#28) ----------------------------------
+const _perfMon = { on: false, lastRenderMs: 0, frames: 0 };
+function togglePerfMonitor(force) {
+  _perfMon.on = force != null ? force : !_perfMon.on;
+  let el = document.getElementById("perfMonitor");
+  if (_perfMon.on) {
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "perfMonitor";
+      el.className = "perf-monitor";
+      document.body.appendChild(el);
+    }
+    renderPerfMonitor();
+  } else if (el) {
+    el.remove();
+  }
+}
+function renderPerfMonitor() {
+  const el = document.getElementById("perfMonitor");
+  if (!el) return;
+  const rate = state.conn.packetTimes.length / 3;
+  let mem = "—";
+  if (performance && performance.memory) {
+    mem = (performance.memory.usedJSHeapSize / 1048576).toFixed(1) + " MB";
+  }
+  const fc = state.forceCurve ? state.forceCurve.length : 0;
+  el.textContent =
+    `render   ${_perfMon.lastRenderMs.toFixed(2)} ms\n` +
+    `frames   ${_perfMon.frames}\n` +
+    `pkt rate ${rate.toFixed(1)}/s\n` +
+    `fc pts   ${fc}\n` +
+    `heap     ${mem}\n` +
+    `strokes  ${state.strokeCount || 0}`;
+}
+
+// ---- Accessibility prefs (#26) ----------------------------------
+function applyAccessibilityPrefs() {
+  const p = state.userPrefs || {};
+  document.body.classList.toggle("reduced-motion", !!p.reducedMotion);
+  document.body.classList.toggle("large-text", !!p.largeText);
 }
 
 function renderHero() {
@@ -6490,6 +6581,8 @@ async function refreshGlobalCounter() {
 }
 
 async function bumpGlobalCounter() {
+  // Local-only privacy mode (#10) — don't ping the cross-user counter.
+  if (state.userPrefs && state.userPrefs.privacyLocal) return;
   try {
     const r = await fetch(`${COUNTER_BASE}/up`, { cache: "no-store" });
     if (!r.ok) return;
@@ -8579,6 +8672,7 @@ function loadAllUserState() {
   restoreActivePreset();
   loadClub();
   applyTheme(state.userPrefs.theme || "dark");
+  applyAccessibilityPrefs();
   state.planCurrentIdx = 0;
   state.planStartTimeS = null;
   state.planStartDistM = null;
@@ -9103,6 +9197,8 @@ async function syncHistoryToDrive() {
   // Demo Mode pauses Drive sync — fake workouts must never leak into
   // the user's real Drive document.
   if (demoActive()) return;
+  // Local-only privacy mode (#10) — never send anything off-device.
+  if (state.userPrefs && state.userPrefs.privacyLocal) return;
   try {
     return await _syncHistoryToDriveInner();
   } catch (err) {
@@ -10930,6 +11026,10 @@ function openSettings() {
   // Target zones (#9).
   document.getElementById("prefTargetEnabled").checked = !!state.userPrefs.targetEnabled;
   buildTargetZoneForm();
+  // Privacy + accessibility (#10, #26).
+  document.getElementById("prefPrivacyLocal").checked   = !!state.userPrefs.privacyLocal;
+  document.getElementById("prefReducedMotion").checked  = !!state.userPrefs.reducedMotion;
+  document.getElementById("prefLargeText").checked      = !!state.userPrefs.largeText;
   document.getElementById("settingsModal").classList.add("open");
 }
 
@@ -11154,6 +11254,11 @@ function applySettingsFromDialog() {
   readBenchmarksFromForm();
   // Target zones (#9).
   readTargetZonesFromForm();
+  // Privacy + accessibility (#10, #26).
+  state.userPrefs.privacyLocal  = !!document.getElementById("prefPrivacyLocal").checked;
+  state.userPrefs.reducedMotion = !!document.getElementById("prefReducedMotion").checked;
+  state.userPrefs.largeText     = !!document.getElementById("prefLargeText").checked;
+  applyAccessibilityPrefs();
   prefsChanged = true;
   if (prefsChanged) persistUserPrefs();
   closeSettings();
@@ -11681,6 +11786,9 @@ document.addEventListener("DOMContentLoaded", () => {
       addBookmark();
     } else if (e.key === "Escape" && state.raceMode) {
       exitRaceMode();
+    } else if (e.ctrlKey && e.shiftKey && (e.key === "P" || e.key === "p")) {
+      e.preventDefault();
+      togglePerfMonitor();   // #28 hidden dev panel
     }
   });
   // Close the health panel on outside click.

@@ -10,6 +10,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Session replay
 - AI technique analysis (peak-timing trends)
 
+## [v1.8.0] — June 2026 — Privacy, accessibility, dev tools
+
+Backlog #10, #26, #28. (Two other items originally grouped here — #19 first-run wizard and #27 mobile-portrait polish — are still queued.)
+
+### Added
+- **Local-only privacy mode (#10)** — a Settings toggle that gates Drive sync *and* the cross-user counter, so a privacy-conscious user can train fully offline-of-cloud.
+- **Accessibility pass (#26)** — reduce-motion and larger-text toggles, a `:focus-visible` keyboard ring, `aria-label`s on icon-only buttons, and a `prefers-reduced-motion` media query so the OS setting is honoured automatically.
+- **Performance monitor (#28)** — Ctrl+Shift+P toggles a live overlay: render time (ms), frame count, BLE packet rate, force-curve point count, and JS heap usage where the browser exposes it.
+
 ## [v1.7.0] — June 2026 — History tools: filter, import, export, schema
 
 Backlog #12, #17, #29, #30. 8/8 import unit tests pass; filters live-verified.

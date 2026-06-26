@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test + lint + size
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: JS syntax check (main app script)
+        run: node scripts/syntax-check.js
+
+      - name: Unit tests
+        run: node tests/run.js
+
+      - name: Service-worker syntax check
+        run: node --check pm5web/sw.js

@@ -6,6 +6,7 @@
 
 **Real-time Bluetooth dashboard for the Concept2 PM5 — built by a rower, for rowers.**
 
+[![CI](https://github.com/cbikkula/pm5-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/cbikkula/pm5-dashboard/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Vanilla JS](https://img.shields.io/badge/JavaScript-vanilla%20%C2%B7%20no%20bundler-yellow.svg)
 ![PWA](https://img.shields.io/badge/PWA-installable-9b66ff.svg)

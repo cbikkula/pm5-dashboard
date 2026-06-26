@@ -29,8 +29,8 @@ To pull the next item: open a chat with me and say `do backlog #N`. I'll build i
 | 21 |        | Session replay                         | Stroke-by-stroke scrubber. Needs per-stroke history persistence. |
 | 22 |        | Telemetry view                         | Multi-chart post-workout analysis page. *Feeds L13 — Performance Trends section.* |
 | 23 |        | Compare sessions                       | Side-by-side: pick two from history. *Feeds L13 — Compare Sessions button.* |
-| 24 |        | Synthetic PM5 test harness             | `tests/bleParser.test.js` + fake packet fixtures |
-| 25 |        | GitHub Actions CI                      | Syntax check + bundle size guard + Lighthouse PWA score |
+| 24 | ✅ done v1.9.0 | Synthetic PM5 test harness             | `tests/bleParser.test.js` + fake packet fixtures |
+| 25 | ✅ done v1.9.0 | GitHub Actions CI                      | Syntax check + bundle size guard + Lighthouse PWA score |
 | 26 | ✅ done v1.8.0 | Accessibility pass                     | Keyboard nav, screen-reader labels, reduced-motion mode |
 | 27 |        | Mobile portrait polish                 | Bottom-nav, swipe between metric pages, wake lock |
 | 28 | ✅ done v1.8.0 | Performance monitor                    | Hidden devtools panel — render time, packet rate, memory |

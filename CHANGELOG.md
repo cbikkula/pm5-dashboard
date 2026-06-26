@@ -10,6 +10,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Session replay
 - AI technique analysis (peak-timing trends)
 
+## [v1.9.0] — June 2026 — Test suite + CI (repo tooling)
+
+Backlog #24, #25. Repo-only — no app behaviour change.
+
+### Added
+- **Test harness + suite (#24)** — `tests/harness.js` loads the single-file app into a stubbed DOM/browser sandbox; `tests/run.js` is a zero-dependency runner with **29 assertions** covering force-curve resampling, PR detection, the two-device benchmark merge, fatigue analysis, data quality, target zones, session import/merge, and a bundle-size guard. `npm test` runs it.
+- **GitHub Actions CI (#25)** — `.github/workflows/ci.yml` runs on every push and PR: JS syntax check of the main script, the unit suite, and a `node --check` of the service worker. A CI badge now sits at the top of the README.
+- `package.json` with `test` / `lint` / `check` scripts; `scripts/syntax-check.js` standalone linter.
+
 ## [v1.8.0] — June 2026 — Privacy, accessibility, dev tools
 
 Backlog #10, #26, #28. (Two other items originally grouped here — #19 first-run wizard and #27 mobile-portrait polish — are still queued.)

@@ -30,7 +30,12 @@ yarn-debug.log*
 yarn-error.log*
 package-lock.json
 
-# Local config / secrets (none in repo today, future-proofing)
+# Local config / secrets
+# The real Firebase web config lives here in deployments but is kept out
+# of the repo. It's public-by-design (ships to every browser; data is
+# secured by firestore.rules), but we don't commit it — see
+# pm5web/firebase-config.example.js for the template.
+pm5web/firebase-config.js
 .env
 .env.local
 .env.*.local

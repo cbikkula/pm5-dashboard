@@ -2530,10 +2530,15 @@
   .release-notes-list {
     list-style: none;
     margin: 8px 0 0;
-    padding: 0;
+    padding: 0 4px 0 0;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    /* Scroll the list (not the whole modal) when there are more notes
+       than fit — keeps the header + "Got it" button always visible. */
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
   }
   .release-notes-list li {
     background: var(--bg-base);
@@ -3415,7 +3420,7 @@
 
 <!-- Release notes — fires once when the app version bumps. -->
 <div class="modal-overlay" id="releaseNotesModal">
-  <div class="modal" style="width: 540px;">
+  <div class="modal" style="width: 540px; max-height: 85vh; display: flex; flex-direction: column;">
     <div class="row" style="justify-content: space-between; align-items: baseline;">
       <h2 id="releaseNotesTitle">WHAT'S NEW</h2>
       <span class="h-sub" style="margin:0;" id="releaseNotesDate"></span>
@@ -4252,9 +4257,17 @@ window.fbApi = {
 document.dispatchEvent(new Event("fb-api-ready"));
 </script>
 
+<!-- Firebase project config lives in a SEPARATE file that is gitignored
+     (kept out of the public repo). The repo ships firebase-config.example.js
+     with placeholders — copy it to firebase-config.js and fill in your
+     project. A Firebase WEB apiKey is public by design (it ships to every
+     browser); real security is the Firestore rules + auth domains. This
+     split just keeps it out of source control / silences secret scanners. -->
+<script src="firebase-config.js"></script>
+
 <script>
 // =====================================================================
-// Firebase config — paste your project's keys here to activate Phase 2.
+// Firebase config — provided by firebase-config.js (see note above).
 // =====================================================================
 //
 // SETUP (10 min, free, no billing — Spark plan):
@@ -4284,14 +4297,9 @@ document.dispatchEvent(new Event("fb-api-ready"));
 // Until you do steps 1–6, FIREBASE_ENABLED stays false and the app
 // keeps working in single-user / Drive-sync mode as before.
 //
-const FIREBASE_CONFIG = {
-  apiKey:            "AIzaSyCHt_kzdJFbIyT_Dje-aEmGN31Lkrhzy6Y",
-  authDomain:        "pm5-dashboard-f4bc0.firebaseapp.com",
-  projectId:         "pm5-dashboard-f4bc0",
-  storageBucket:     "pm5-dashboard-f4bc0.firebasestorage.app",
-  messagingSenderId: "119787911732",
-  appId:             "1:119787911732:web:8307b24e182e679e462861",
-};
+const FIREBASE_CONFIG =
+  (typeof window !== "undefined" && window.__FIREBASE_CONFIG__) ||
+  { apiKey: "REPLACE_ME_AFTER_FIREBASE_SETUP" };
 const FIREBASE_ENABLED =
   !!FIREBASE_CONFIG.apiKey &&
   FIREBASE_CONFIG.apiKey !== "REPLACE_ME_AFTER_FIREBASE_SETUP";
@@ -4464,12 +4472,23 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.11.0";
+const APP_VERSION = "1.11.1";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 const SESSION_SCHEMA_VERSION = 2;
 
 const RELEASE_NOTES = {
+  "1.11.0": {
+    date: "June 2026",
+    headline: "Multi-coach clubs",
+    items: [
+      "Invite coaches and athletes to your club with a share link — they join as pending and you approve them.",
+      "Roles: owner, admin, coach, and athlete, each with the right level of access. Coaches manage roster and lineups; admins manage equipment, teams, members, and invites.",
+      "Members panel — change roles, suspend or remove people, and link a member to their roster athlete.",
+      "Athletes get a read-only view of the lineups they're seated in, and can mark their own availability.",
+      "Activity log — owners and admins see an append-only record of every membership and invite change.",
+    ],
+  },
   "1.10.0": {
     date: "June 2026",
     headline: "Cloud sync is live",

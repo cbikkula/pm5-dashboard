@@ -114,6 +114,33 @@
   }
   .back-btn:hover { border-color: var(--accent); }
 
+  /* Header collapses cleanly on phone widths (v1.12.1): shrink the title,
+     drop the subtitle, tighten padding, and allow wrapping as a safety net
+     so the account chip can never overflow the viewport. */
+  @media (max-width: 560px) {
+    header {
+      padding: 8px 12px;
+      gap: 8px;
+      flex-wrap: wrap;
+      row-gap: 6px;
+      height: auto;
+      min-height: 52px;
+    }
+    header > div { min-width: 0; }
+    header .title {
+      font-size: 15px;
+      letter-spacing: 1.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    header .subtitle { display: none; }
+    .back-btn { padding: 6px 10px; margin-right: 0; flex-shrink: 0; }
+    .account-chip { padding: 5px 9px 5px 5px; font-size: 12px; gap: 6px; flex-shrink: 0; }
+    .account-chip img, .account-chip .avatar { width: 24px; height: 24px; font-size: 12px; }
+    .hdr-actions { flex-wrap: wrap; }
+  }
+
   /* View switching: only one view active at a time. */
   .view { display: none; flex: 1; min-height: 0; }
   .view.active { display: flex; flex-direction: column; gap: 12px; }
@@ -1460,6 +1487,15 @@
   .club-row .cr-actions .fc-mini-select { padding: 4px 8px; }
   /* Name + role badges wrap as one unit and stay vertically centered. */
   .club-row .cr-title { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+
+  /* Phone: stack each club row (lineups, roster, members, …) so the
+     title + sub keep full width and the readiness chip / status / actions
+     drop to their own line instead of squishing the text (v1.12.1). */
+  @media (max-width: 480px) {
+    .club-row { flex-wrap: wrap; row-gap: 8px; }
+    .club-row .cr-main { flex: 1 1 auto; min-width: calc(100% - 46px); }
+    .club-row .cr-actions { justify-content: flex-start; }
+  }
   /* Center the awaiting-approval card instead of stretching edge-to-edge. */
   .club-pending-notice { max-width: 460px; margin: 12px auto 0; }
   .club-pending-notice .cpn-title { margin-top: 12px; }
@@ -4689,7 +4725,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.12.0";
+const APP_VERSION = "1.12.1";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 const SESSION_SCHEMA_VERSION = 2;

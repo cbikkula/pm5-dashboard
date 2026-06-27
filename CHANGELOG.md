@@ -11,6 +11,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Session replay
 - AI technique analysis (peak-timing trends)
 
+## [v1.12.1] — June 2026 — Mobile polish + rowing UI cleanup
+
+A focused phone-width pass closing the one layout issue surfaced during the v1.12.0 preview.
+
+- **Header no longer overflows on phones** — at ≤560px the header tightens padding, shrinks the title, drops the subtitle, and wraps as a safety net so the account / sign-in chip can never push past the viewport. Verified `document.documentElement.scrollWidth ≤ innerWidth` at **375px** across home, Clubs, the lineup builder, the athlete view, and the Performance page.
+- **Club rows stack on phones** — lineup cards (with their new readiness chip), roster rows, and member rows now give the title + sub full width and drop the chip / status / action buttons to their own line at ≤480px, instead of squishing text into a vertical sliver.
+- No logic, data, or Firestore-rules changes; desktop layout and every v1.12.0 screenshot are unchanged. Tests remain 44/44.
+
 ## [v1.12.0] — June 2026 — Lineup Readiness + Rowing Intelligence
 
 Made the lineup builder feel like a real rowing tool. A new pure **readiness engine** (`evaluateLineupReadiness`) scores every boat **Ready / Needs attention / Blocked** and is the single source of truth behind the builder panel, the lineup-list chip, copy/export, and the athlete view.

@@ -36,6 +36,8 @@ package-lock.json
 # secured by firestore.rules), but we don't commit it — see
 # pm5web/firebase-config.example.js for the template.
 pm5web/firebase-config.js
+# Concept2 PM5 BLE spec — third-party reference, kept locally, not published.
+pm5_ble_spec.pdf
 .env
 .env.local
 .env.*.local

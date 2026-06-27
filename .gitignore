@@ -15,7 +15,8 @@ dist/
 *.manifest
 *.exe
 
-# IDE / OS
+# IDE / OS / local tooling
+.claude/
 .vscode/
 .idea/
 *.swp

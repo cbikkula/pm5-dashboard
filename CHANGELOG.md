@@ -11,6 +11,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Session replay
 - AI technique analysis (peak-timing trends)
 
+## [v1.11.4] — June 2026 — Club UI polish + docs for review
+
+A design pass on the new club UI (driven by a multi-dimension UI audit) plus a documentation refresh aimed at portfolio/review readers.
+
+- **UI:** compact, consistent action buttons in the Members pane (they were rendering at the chunky global default); role badges now have tinted fills so they stay legible on the light theme; styled the previously-unstyled empty states; tightened the 8-tab strip; centered the awaiting-approval card; a **"danger zone" divider** sets the Delete button apart from Export/Switch; mobile fixes for member rows and the invite form.
+- **Docs:** new [`docs/security.md`](docs/security.md) (threat model, Firestore-rules walkthrough, both adversarial-review tables); README modernized to the current feature set (multi-coach, cloud sync, Performance page, PR tracking) with an Engineering-highlights box; architecture/reflection updated to reflect the shipped club system.
+
 ## [v1.11.3] — June 2026 — Club client polish + hardening
 
 Follow-ups on the multi-coach client:

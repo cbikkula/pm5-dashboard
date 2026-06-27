@@ -21,6 +21,20 @@
 
 > Open in Chrome or Edge on a desktop or Android phone. Click **Connect**, pair the PM5 over Bluetooth, and row.
 
+**Current release: `v1.11.3`** ([changelog](CHANGELOG.md)) · 48 commits · single 528 KB `index.html`, no framework, no build step.
+
+---
+
+## Engineering highlights
+
+The part I'd want a reviewer to see first:
+
+- 🔐 **Role-based access control with no server.** A full multi-coach club system (owner / admin / coach / athlete) enforced *entirely* by **Firestore Security Rules** — on Firebase's free Spark plan there are no Cloud Functions, so [the rules **are** the backend](firestore.rules). Invite/approval flows with unguessable bearer-token join codes, an append-only audit log that **nobody — not even the owner — can edit or delete**, and a client permission engine that mirrors the rules so the UI never offers what the server will reject.
+- 🛡️ **Designed adversarially.** I wrote the rules, then tried to break them — a pass that found **5 root-cause auth holes** (invite-bypass join, self-chosen athlete link, availability null-trap, audit backdating, revoked-invite readability). Then I reviewed the client across **5 dimensions and fixed 12 more bugs** (3 data-loss-critical) before release. The whole threat model + findings table is in [`docs/security.md`](docs/security.md).
+- 📡 **Reverse-engineered the PM5 BLE protocol** from the Concept2 GATT spec — 64-sample force-curve resampling, ~20 Hz stroke parsing, `< 10 ms` render — documented in [`docs/ble-protocol.md`](docs/ble-protocol.md) (including the off-by-3 byte bug I shipped first).
+- 🧪 **Tested & CI'd.** A 29-assertion zero-dependency test suite (`npm test`) runs in GitHub Actions on every push alongside a syntax check and a bundle-size guard.
+- ⚙️ **One file, zero dependencies, $0/mo.** ~13,600 lines of vanilla HTML/CSS/JS in a single installable PWA. No framework, no bundler, no server I run.
+
 ---
 
 ## What it does
@@ -28,7 +42,11 @@
 | | |
 |---|---|
 | **Live force curve** | Reads the raw force-vs-position curve from the PM5 every stroke, draws it smoothed in real time, and overlays your **best stroke** and **session average** as ghost curves. Peak-force markers show where in the drive the peak occurs — early peak vs late peak is the most actionable technique signal you can give a rower. |
-| **45 live metrics** | Stroke rate, pace, watts, distance, peak force, avg force, work/stroke, drive length, drive ratio, slip (catch/release), peak force timing, meters/stroke, drag factor, calories, splits, and 18 HR-specific metrics (current zone, % max, % HRR, time-in-zone, drift, decoupling, recovery deltas, TRIMP load). |
+| **Multi-coach club system** *(v1.11)* | A full role-based club: **owner / admin / coach / athlete**, invite links + expiring join codes, pending-request approval, a members panel (change role, suspend, remove, link a member to a roster athlete), an append-only **audit log**, and athlete self-service availability. Enforced end-to-end by Firestore Security Rules — see [Engineering highlights](#engineering-highlights) and [`docs/security.md`](docs/security.md). |
+| **Cloud sync (Firebase)** *(v1.10)* | Sign in from the Clubs view and your club, roster, shells, oars, and lineups sync to **Cloud Firestore** with real-time `onSnapshot` updates across every device. Separate from, and complementary to, the Google Drive sync of your personal workout history. |
+| **Performance page** *(v1.3)* | A real top-level analysis area (not a teaser): tabs for **Overview / Insights / Technique / Fitness / Goals / Compare** that answer *"am I getting faster / fitter / more consistent?"* with trends, fatigue, technique drift, and rule-based per-workout insights. |
+| **PR tracking + live PR pace** *(v1.4)* | Auto-detects personal records from benchmark Test sessions (500 m / 1k / 2k / 5k / 6k / 10k / 30 min) with full provenance and a 🏆 badge on history rows. During a test, a live **PR Δ** (*"ahead by 2.8 s"*) and projected finish update every stroke. |
+| **48 live metrics** | Stroke rate, pace, watts, distance, peak force, avg force, work/stroke, drive length, drive ratio, slip (catch/release), peak force timing, meters/stroke, drag factor, calories, splits, and 20 HR-specific metrics (current zone, % max, % HRR, time-in-zone, drift, decoupling, recovery deltas, TRIMP load). |
 | **Tier-based layouts + 6 focus presets** | Cards size themselves by importance tier (primary / secondary / passive). Six curated presets — Balanced, Technical, Power, Heart Rate, Endurance, Race — rewrite the entire screen in one tap. Race mode pins **split** as a 168 px primary; Heart Rate mode swaps the force curve out for HR-zone-driven metrics. Each preset enforces **locked metrics** that can't be removed without breaking the mode. |
 | **Workout builder + benchmark tests** | Build interval workouts (1 min · 500 m · 1k · 2k · 5k · 6k · 10k · 30 min · 1 hour · half & full marathon). One-tap tests for the standard distances pre-fill the right interval structure (e.g. 2k → 8×250 m, no rest). Plans sync across devices. |
 | **Demo Mode** *(v1.2)* | Don't have a PM5? Open Settings → DEMO MODE → **Start Demo Mode** and the dashboard runs against synthetic stroke data — force curve, pace, watts, HR all move realistically. Drive sync auto-pauses so demo workouts never leak into your real history. Lets coaches and visitors explore every screen before practice. |
@@ -68,7 +86,7 @@
 
 ### Settings — layout, theme, HR, force-curve overlays
 
-> Per-area card slots (left column, right column, bottom strip). Each slot picks any of the 45 metrics. Theme picker, FC overlay toggles, and HR prefs all live here.
+> Per-area card slots (left column, right column, bottom strip). Each slot picks any of the 48 metrics. Theme picker, FC overlay toggles, and HR prefs all live here.
 
 ![Settings dialog](docs/screenshots/settings.png)
 
@@ -84,11 +102,12 @@
 
 ![Demo Mode section in Settings](docs/screenshots/demo-mode-settings.png)
 
-### Performance *(v1.2.2, teaser only — page itself is L13 on the roadmap)*
+### Performance page *(v1.3 — shipped)*
 
-> The marquee long-term feature: a curated section answering *"what does all this data actually mean?"* — trends, fatigue, technique, **insights**. Tapping the home-menu **Performance** card opens this preview modal until the real page ships.
+> A real top-level analysis area answering *"what does all this data actually mean?"* — **Overview / Insights / Technique / Fitness / Goals / Compare** tabs with trends, fatigue, technique drift, and rule-based per-workout insights (*"Longest drive length in 3 weeks. Lowest HR for this pace. Stroke consistency up 6%."*).
 
-![Performance teaser modal](docs/screenshots/performance-soon.png)
+![Performance overview](docs/screenshots/performance-overview.png)
+![Performance insights](docs/screenshots/performance-insights.png)
 
 ---
 
@@ -96,20 +115,23 @@
 
 |                                  |               |
 |----------------------------------|---------------|
-| Lines of code                    | **9,660**     |
-| Shipped bundle                   | **360 KB**    |
-| Live metrics                     | **45**        |
-| Of those, heart-rate metrics     | **18**        |
+| Lines of code (web app)          | **~13,600** (single `index.html`) |
+| Shipped bundle                   | **528 KB**    |
+| Live metrics                     | **48**        |
+| Of those, heart-rate metrics     | **20**        |
 | Focus presets                    | **6**         |
+| Roles enforced by Firestore rules | **4** (owner / admin / coach / athlete) |
+| Firestore security rules         | **~220 lines** — the entire access-control layer |
+| Auth holes found + fixed in adversarial review | **5** (rules) **+ 12** (client) |
 | Supported boat classes (lineup builder) | **8**  |
 | Force-curve resample resolution  | **64 samples**|
 | Updates per stroke               | every PM5 BLE notification (~20 Hz peak) |
 | Render time (mid-tier hardware)  | < 10 ms       |
 | Offline-capable                  | yes (after first load) |
 | Crash-resistant                  | yes (auto-save recovery every 5 s) |
-| Tagged releases                  | **3** (v1.0.0, v1.1.0, v1.2.0/v1.2.1) |
-| Total commits to date            | see [activity](https://github.com/cbikkula/pm5-dashboard/commits/main) |
-| External backend                 | **none**      |
+| Released versions                | **15** (v1.0.0 → v1.11.3; [changelog](CHANGELOG.md)) · 7 git tags |
+| Total commits                    | **48** ([activity](https://github.com/cbikkula/pm5-dashboard/commits/main)) |
+| Server I run                     | **none** — serverless by design (Firebase Spark, **$0/mo**) |
 
 ---
 
@@ -123,17 +145,28 @@ flowchart LR
     GIS[Google Identity<br/>Services]
     SW[Service Worker<br/>cache-aware shell]
     Counter[counterapi.dev<br/>cross-user counter]
+    FBAuth[Firebase Auth<br/>Google sign-in]
+    FS[(Cloud Firestore<br/>clubs · members · athletes<br/>lineups · invites · audit)]
+    Rules{{Security Rules<br/>= the entire backend}}
 
     PM5 -- Web Bluetooth --> Chrome
     Chrome -- OAuth --> GIS
     GIS --> Drive
-    Chrome -- per-user JSON --> Drive
+    Chrome -- per-user history JSON --> Drive
     Chrome --- SW
     Chrome -- POST --> Counter
+    Chrome -- auth --> FBAuth
+    Chrome -- "real-time onSnapshot" --> FS
+    FS -. "every read/write checked by" .- Rules
 
     subgraph "Browser (single index.html)"
       Chrome
       SW
+    end
+    subgraph "Firebase (free Spark plan, no Cloud Functions)"
+      FBAuth
+      FS
+      Rules
     end
 ```
 
@@ -148,7 +181,8 @@ For the BLE byte-layouts I reverse-engineered against the Concept2 spec (and the
 **Web (`pm5web/`)**
 - Vanilla HTML / CSS / JavaScript (no framework, no bundler, no build step)
 - Web Bluetooth API
-- Google Identity Services + Google Drive API (`drive.appdata` scope)
+- **Firebase Auth + Cloud Firestore** — multi-coach club sync, access control enforced entirely by Firestore Security Rules on the free Spark plan
+- Google Identity Services + Google Drive API (`drive.appdata` scope) — personal history sync
 - Service Worker (PWA install + offline shell)
 - Surge.sh hosting (free static)
 
@@ -185,44 +219,50 @@ Or build a single-file `.exe` with PyInstaller (Windows): `build_exe.bat`.
 
 ```
 pm5-dashboard/
-├── pm5web/                  ← The web app (deployed)
-├── pm5dashboard/            ← Original Python desktop app
+├── pm5web/                       ← The web app (deployed)
+│   ├── index.html                ← The entire app (one file)
+│   ├── sw.js                     ← Service worker (PWA / offline)
+│   └── firebase-config.example.js ← Cloud-sync config template (real one gitignored)
+├── pm5dashboard/                 ← Original Python desktop prototype
+├── firestore.rules               ← The access-control layer (the "backend")
+├── tests/                        ← run.js + harness.js — 29-assertion suite
+├── scripts/syntax-check.js       ← Standalone main-script linter (used by CI)
+├── .github/workflows/ci.yml      ← Syntax check · unit tests · bundle-size guard
+├── package.json                  ← npm test / lint / check
 └── docs/
-    ├── architecture.md      ← Deep dive on system design
-    ├── ble-protocol.md      ← BLE byte-layout notes
-    ├── reflection.md        ← What I learned + would do differently
-    ├── testing.md           ← Browsers / devices / firmware tested
-    ├── timeline.md          ← Development timeline
-    ├── faq.md               ← Mac? iOS? ErgData? Privacy?
-    ├── known-issues.md      ← Open bugs / browser limitations
-    ├── logo.svg             ← Vector logo
-    └── screenshots/         ← In-app captures
+    ├── architecture.md           ← System design deep dive
+    ├── security.md               ← Threat model, rules walkthrough, review findings
+    ├── club-schema.md            ← Club / membership data model + join flow
+    ├── ble-protocol.md           ← PM5 BLE byte-layouts I reverse-engineered
+    ├── reflection.md             ← What I learned + would do differently
+    ├── feature-backlog.md        ← Roadmap + shipped-item tracker
+    ├── testing.md                ← Browsers / devices / firmware tested
+    ├── timeline.md               ← Development timeline
+    ├── faq.md                    ← Mac? iOS? ErgData? Privacy?
+    ├── known-issues.md           ← Open bugs / browser limitations
+    ├── logo.svg                  ← Vector logo
+    └── screenshots/              ← In-app captures
 ```
 
 ---
 
 ## Coming soon
 
-The roadmap is tracked in [`docs/feature-backlog.md`](docs/feature-backlog.md) so nothing gets forgotten. **24 short-cycle items** (one focused session each) plus **12 long-term items** (multi-session or with external dependencies). A few highlights:
+Most of the original roadmap has shipped — PR tracking, target zones, fatigue analysis, technique insights, race mode, the Performance page, GitHub Actions CI, cloud sync, and the whole multi-coach club system are all live (see the [changelog](CHANGELOG.md)). The full tracker lives in [`docs/feature-backlog.md`](docs/feature-backlog.md). What's still ahead:
 
-**Short-cycle (next):**
-- PR tracking — auto-detect 500m / 1k / 2k / 5k / 6k / 10k PRs, badge on history rows
-- Live PR pace during benchmark tests — *"Ahead by 2.8 sec"* delta vs your best
-- Target zones — pre-workout split / watts / rate / HR ranges with green/yellow/red status
-- Fatigue analysis — first-25% vs last-25% breakdown after a session
-- Technique insight cards — rule-based callouts: *"Peak force moved later — connection at the catch slowed"*
-- Fullscreen race mode — distraction-free for test pieces
+**Club system (next phases):**
+- Workout assignment to lineups *(v1.13.0)*
+- Read-only **viewer** role + signed session-sharing URLs *(v1.14.0)*
+- Real-time presence — see who's online during a session
+
+**Analysis & data:**
 - Session replay — stroke-by-stroke scrubber
-- GitHub Actions CI — automated checks on every commit
+- AI technique analysis — peak-timing + fatigue patterns across many sessions
+- Garmin / Apple Health HR integration
 
-**Long-term roadmap:**
-- ⭐ **Performance page** *(marquee)* — a whole new top-level area answering *"what does all this data actually mean?"* Training overview, performance trends, benchmark progress, technique trends, fatigue trends, heart-rate distribution, training load, personal records, compare sessions, and rule-based per-workout **Insights**: *"Longest drive length in 3 weeks. Lowest HR for this pace. Stroke consistency up 6%. Drive shortened after minute 24."* The reason someone keeps coming back. ([full spec](docs/feature-backlog.md#l13--performance-page-spec))
-- **Multi-coach Firebase mode** — invite links, role enforcement, audit log, real-time presence (Phase 2 scaffolding already shipped behind a placeholder config)
-- **Multi-erg synchronization** — winter team training: 8 ergs paired to one coach screen via WebRTC for crew rhythm analysis. Genuinely useful in a way nothing else on the market is.
-- **AI technique analysis** — peak-timing trends, fatigue patterns across many sessions
-- **Garmin / Apple Health HR integration**, **Wear OS companion**, **session-sharing URLs**, **TWA build for Play Store**
-
-The cadence is roughly *one short-cycle item every 2–4 days*. See the backlog file for the full list, status, and notes.
+**Bigger bets:**
+- **Multi-erg synchronization** — winter team training: 8 ergs paired to one coach screen via WebRTC for crew-rhythm analysis. Genuinely useful in a way nothing else on the market is.
+- Wear OS companion · TWA build for the Play Store
 
 ---
 
@@ -231,8 +271,11 @@ The cadence is roughly *one short-cycle item every 2–4 days*. See the backlog 
 | File | What's inside |
 |---|---|
 | [`docs/architecture.md`](docs/architecture.md) | System design deep dive |
+| [`docs/security.md`](docs/security.md) | **Threat model, Firestore-rules walkthrough, adversarial-review findings** |
+| [`docs/club-schema.md`](docs/club-schema.md) | Club / membership data model + join flow |
 | [`docs/ble-protocol.md`](docs/ble-protocol.md) | PM5 BLE byte-layouts I reverse-engineered |
 | [`docs/reflection.md`](docs/reflection.md) | What I learned, what I'd do differently |
+| [`docs/feature-backlog.md`](docs/feature-backlog.md) | Roadmap + shipped-item tracker |
 | [`docs/testing.md`](docs/testing.md) | Browsers / devices / PM5 firmware tested |
 | [`docs/timeline.md`](docs/timeline.md) | Development timeline |
 | [`docs/faq.md`](docs/faq.md) | Common questions |

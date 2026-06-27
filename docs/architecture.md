@@ -181,13 +181,18 @@ Compared on three axes:
 
 The PWA path covers 95% of what a native app would, with none of the maintenance.
 
-## Phase 2 (not yet shipped)
+## Multi-coach club system (shipped — v1.10.0 → v1.11.x)
 
-The Firebase scaffolding for multi-coach sharing is in the codebase but dormant behind a placeholder config. When activated:
+What used to be "Phase 2 scaffolding" is now live. A real Firebase project backs a full role-based club system, and the security model is the interesting part: **on the free Spark plan there are no Cloud Functions, so the Firestore Security Rules *are* the backend.** Every access decision is a stateless rule.
 
-- **Firebase Auth** for user identity (separate from current Drive sign-in for now).
-- **Firestore** for shared club data: `clubs/{clubId}` with `members/{userId}`, `lineups/{lineupId}` subcollections.
-- **Security rules** included as a comment block, ready to paste into the Firestore Rules tab.
-- **Real-time listeners** so a coach edit on a laptop pushes to every athlete's phone.
+- **Firebase Auth (Google)** for identity; **Cloud Firestore** for shared club data.
+- **Data model:** `clubs/{clubId}` holds club settings + equipment; **subcollections** `members/{uid}`, `athletes/{athleteId}`, `lineups/{lineupId}`, `availability/{entryId}`, `invites/{code}`, `auditLogs/{logId}`. Members ≠ athletes: a *member* is a login with a role; an *athlete* is a rowable roster entry; a member may be *linked* to an athlete. (Full schema: [`club-schema.md`](club-schema.md).)
+- **Roles** — owner / admin / coach / athlete — enforced by the rules *and* mirrored by a client permission engine (`fbCan`) so the UI only offers what the server will allow.
+- **Invite + approval flow:** owners/admins mint role-capped, expiring invite codes (the doc id is an unguessable bearer token); joiners self-create a `pending` row that a manager approves. The rule re-reads the invite on the join write — the only enforcement point available without a server.
+- **Append-only audit log** pinned to `request.time` — no client backdating, and `update`/`delete` are denied to *everyone, including the owner*.
+- **Real-time** `onSnapshot` listeners; athletes-as-subcollection so coaches (who can't write the club doc) can still edit the roster.
 
-The data model is designed to migrate cleanly — every entity already has a stable `id` field.
+The security reasoning, threat model, and the adversarial-review findings that hardened the rules live in [`security.md`](security.md). The roster moved from a club-doc array into a subcollection mid-project; every entity having a stable `id` from v1 made that migration clean.
+
+### Still ahead
+Real-time presence, workout assignment to lineups (v1.13.0), and a read-only viewer role + signed session-sharing URLs (v1.14.0).

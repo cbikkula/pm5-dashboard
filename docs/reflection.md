@@ -45,9 +45,15 @@ That tradeoff stops working at some scale, but I haven't hit it yet.
 3. **Test on a phone earlier.** I built the layout for a 1440×900 laptop and only checked phone layouts after I'd shipped 6 versions. The card sizing system had to be retrofitted to be responsive. Mobile-first would've saved a rebuild.
 4. **Plan multi-user from the start.** The data model in v1 assumed one user with one club. When I started thinking about Phase 2 (multiple coaches sharing lineups), every entity needed a stable ID and a foreign-key strategy. Doable but it was a big refactor. Future projects: stable IDs everywhere, even if there's only one user today.
 
+## Security engineering — the part I'm proudest of
+
+The multi-coach club system (v1.10.0–v1.11.x) taught me more than any other piece of this project. On Firebase's free plan there are no Cloud Functions, so there is **nowhere to put server-side logic** — the Firestore Security Rules are the *only* enforcement point. That constraint forces a different way of thinking: every access decision has to be expressible as a stateless rule evaluated against the document being written, and you have to assume the client is hostile. A signed-in user can craft any write they want; the rule is all that stands between them and the data.
+
+I designed the rules first, then deliberately tried to break them. That adversarial pass found five real root-cause holes (a join that didn't validate its invite, a self-chosen athlete link, an availability null-trap, audit backdating, and revoked invites still being readable) — each one a case where I'd written a rule that *looked* right but allowed something it shouldn't. Closing them, then reviewing the client implementation across five more dimensions and fixing the bugs that surfaced, is documented in [`security.md`](security.md). The lesson that stuck: **"it works when I use it normally" and "it's secure" are completely different claims**, and only the second one matters once other people's data is involved.
+
 ## What's next
 
-Multi-coach mode via Firebase (Phase 2 scaffolding is in the codebase, dormant). Eventually a Trusted Web Activity build for the Play Store. Maybe — if I get there — a multi-erg sync mode for team winter training, where 8 ergs paired to one coach screen produces a real-time crew synchronization view. That last one feels like it could be genuinely useful to coaches in a way nothing else on the market is.
+Real-time presence, workout assignment, and a read-only viewer role with signed session-sharing URLs. Eventually a Trusted Web Activity build for the Play Store. And maybe — if I get there — a multi-erg sync mode for team winter training, where 8 ergs paired to one coach screen produces a real-time crew synchronization view. That last one feels like it could be genuinely useful to coaches in a way nothing else on the market is.
 
 ---
 

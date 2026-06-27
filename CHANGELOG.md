@@ -6,9 +6,27 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-- Multi-coach mode (Firebase Phase 2 — scaffolding shipped behind a placeholder config)
+- Workout assignment to lineups (v1.13.0)
+- Viewer role + read-only session sharing (v1.14.0)
 - Session replay
 - AI technique analysis (peak-timing trends)
+
+## [v1.11.0] — June 2026 — Multi-coach club client (roles, invites, approvals)
+
+Full multi-user club management on top of the v1.10.0 cloud-sync foundation. Built **security-first**: the hardened, adversarially-reviewed Firestore rules came first, then the client UI against them. Everything still runs on the free Spark plan — the rules *are* the backend.
+
+### Added
+- **Roles** — `owner` / `admin` / `coach` / `athlete`, each with a distinct capability set enforced by both the rules and the client permission engine (`fbCan`). Coaches manage roster + lineups; admins also manage equipment, teams, members, and invites; only the owner can mint admins.
+- **Invite links + join codes** — owners/admins generate a role-capped, expiring invite (`?join=CODE&club=ID`). The doc id is an unguessable bearer token; revoked/expired codes are unreadable by the rules.
+- **Pending join requests + approve/decline** — new members self-create a `pending` row (rules validate the invite); a manager approves them to `active` or declines.
+- **Members panel** — list, change role, suspend/reactivate, remove, and **link a member to a roster athlete** (makes them seatable + lets them mark their own availability).
+- **Athletes → subcollection** — the roster moved out of the club doc into `clubs/{id}/athletes/{id}` so coaches (who can't write the club doc) can edit it. Mirrors the existing lineup-sync pattern; legacy single-user clubs migrate transparently on upload.
+- **Append-only audit log** — every membership/invite action is recorded with a server-stamped time the rules pin to `request.time` (no client backdating, no edits or deletes — even by the owner). Owners/admins see an **Activity** tab.
+- **Athlete self-service** — athletes get a read-only view of the lineups they're seated in and can mark their own per-date availability.
+- **Role-based UI gating** — edit affordances, tabs, and the awaiting-approval state all follow the active role; local single-user mode is unchanged and keeps full control.
+
+### Security
+- Rules hardened after an adversarial review that closed 5 root-cause holes (invite-bypass join, self-chosen athlete link, availability null-trap, audit backdating, revoked-invite readability) and an owner-bootstrap fix so club creators can write their own owner row.
 
 ## [v1.10.0] — June 2026 — Cloud sync activated (Firebase)
 

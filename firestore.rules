@@ -87,21 +87,36 @@ service cloud.firestore {
 
         allow list: if isOwner(clubId) || isActiveMember(clubId);
 
-        // JOIN — now invite-validated. A signed-in user creates ONLY
-        // their own row, as 'pending', with:
-        //   - a valid, unrevoked, unexpired invite (carried as
-        //     inviteCode) whose role matches the requested role,
-        //   - linkedAthleteId == null (linking is admin-only, post-
-        //     approval — a joiner can never self-link to an athlete).
-        // This closes the invite-bypass, role-cap-bypass, expiry/
-        // revocation-bypass, spam, and self-link holes at once.
-        allow create: if signedIn()
-                      && uid() == memberUid
-                      && request.resource.data.status == 'pending'
-                      && request.resource.data.role != 'owner'
-                      && request.resource.data.linkedAthleteId == null
-                      && validJoinInvite(clubId, request.resource.data.inviteCode,
-                                         request.resource.data.role);
+        // CREATE — two legitimate paths, nothing else:
+        //
+        //   (a) OWNER BOOTSTRAP. The club creator writes their OWN
+        //       owner/active membership row right after creating the
+        //       club doc. Only the real ownerId can satisfy isOwner(),
+        //       and only for their own uid, so this can't be abused to
+        //       mint someone else an owner row or self-promote in a
+        //       club you don't own.
+        //
+        //   (b) INVITE-VALIDATED JOIN. A signed-in user creates ONLY
+        //       their own row, as 'pending', with:
+        //         - a valid, unrevoked, unexpired invite (carried as
+        //           inviteCode) whose role matches the requested role,
+        //         - linkedAthleteId == null (linking is admin-only,
+        //           post-approval — a joiner can never self-link).
+        //       This closes the invite-bypass, role-cap-bypass, expiry/
+        //       revocation-bypass, spam, and self-link holes at once.
+        allow create: if signedIn() && uid() == memberUid && (
+          // (a) owner bootstrapping their own membership row
+          (isOwner(clubId)
+           && request.resource.data.role == 'owner'
+           && request.resource.data.status == 'active')
+          ||
+          // (b) invite-validated pending join
+          (request.resource.data.status == 'pending'
+           && request.resource.data.role != 'owner'
+           && request.resource.data.linkedAthleteId == null
+           && validJoinInvite(clubId, request.resource.data.inviteCode,
+                              request.resource.data.role))
+        );
 
         // Approve / change role / suspend / link athlete = owner/admin.
         //   - nobody may set role 'owner' here (transfer is owner-only,
@@ -187,10 +202,11 @@ service cloud.firestore {
       // ---- audit logs (APPEND-ONLY, real-time-stamped) ---------------
       match /auditLogs/{logId} {
         allow read, list: if isOwner(clubId) || hasRole(clubId, ['admin']);
-        // Active members append entries for actions they performed.
-        // actorUid must be themselves and createdAt must be the server
-        // time of the write, so history can't be forged or backdated.
-        allow create: if isActiveMember(clubId)
+        // Active members (and the owner, who may not yet have a member
+        // row) append entries for actions they performed. actorUid must
+        // be themselves and createdAt must be the server time of the
+        // write, so history can't be forged or backdated.
+        allow create: if (isActiveMember(clubId) || isOwner(clubId))
                       && request.resource.data.actorUid == uid()
                       && request.resource.data.createdAt == request.time;
         // Nobody — not even the owner — can edit or delete history.

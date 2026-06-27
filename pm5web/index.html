@@ -1302,6 +1302,84 @@
   .cr-tag.av-ok    { color: var(--accent-3); border-color: rgba(86,249,179,0.45); }
   .cr-tag.av-muted { color: var(--text-dim); }
 
+  /* Multi-coach club client (v1.11.0) */
+  .role-badge {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 1px 8px;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    vertical-align: middle;
+    margin-left: 6px;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .role-badge.role-owner     { color: #ffd479; border-color: rgba(255,212,121,0.5); }
+  .role-badge.role-admin     { color: #8fd3ff; border-color: rgba(143,211,255,0.5); }
+  .role-badge.role-coach     { color: var(--accent-3); border-color: rgba(86,249,179,0.45); }
+  .role-badge.role-athlete   { color: var(--text-muted); }
+  .role-badge.role-suspended { color: #ff7a7a; border-color: rgba(255,122,122,0.5); }
+  .fc-mini-select {
+    background: var(--bg-base);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+  .club-row .cr-actions button.danger { color: #ff8a8a; }
+  .club-readonly .cr-actions button[data-act="edit"],
+  .club-readonly .cr-actions button[data-act="del"] { display: none; }
+  .club-pending-notice {
+    border: 1px solid var(--border-bright);
+    background: var(--bg-panel);
+    border-radius: 12px;
+    padding: 28px 24px;
+    text-align: center;
+    color: var(--text);
+    margin-top: 12px;
+  }
+  .club-pending-notice .cpn-icon { font-size: 34px; }
+  .club-pending-notice .cpn-title { font-weight: 800; margin-top: 8px; font-size: 16px; }
+  .club-pending-notice .cpn-sub { color: var(--text-muted); margin-top: 6px; font-size: 13px; }
+  .invite-result {
+    margin-top: 12px;
+    border: 1px solid var(--border-bright);
+    border-radius: 10px;
+    padding: 12px;
+    background: var(--bg-base);
+  }
+  .invite-result input {
+    width: 100%;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 7px 9px;
+    font-size: 12px;
+    font-family: monospace;
+  }
+  .athlete-home-card {
+    border: 1px solid var(--border);
+    background: var(--bg-panel);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .ahc-section-title {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .avail-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
   /* Squads visually nest under their team in the Teams pane. */
   .team-block { display: flex; flex-direction: column; gap: 4px; }
   .squad-sublist {
@@ -2570,8 +2648,11 @@
         <div class="card-name">Focus</div>
         <div class="card-sub" id="cardFocusSub">Choose what to see while rowing</div>
       </button>
-      <!-- Clubs is hidden for now — clubsView + Firebase Phase 2 code
-           still in the file, just no entry point from the home menu. -->
+      <button class="menu-card" data-menu="clubs">
+        <div class="card-icon">🚣‍♀️</div>
+        <div class="card-name">Clubs</div>
+        <div class="card-sub" id="cardClubsSub">Teams, lineups &amp; coaching</div>
+      </button>
       <button class="menu-card" data-menu="settings">
         <div class="card-icon">⚙</div>
         <div class="card-name">Settings</div>
@@ -2956,7 +3037,16 @@
         <button class="club-tab" data-section="shells">Shells</button>
         <button class="club-tab" data-section="oars">Oars</button>
         <button class="club-tab" data-section="teams">Teams</button>
+        <button class="club-tab" data-section="members" style="display:none;">Members</button>
+        <button class="club-tab" data-section="activity" style="display:none;">Activity</button>
       </div>
+    </div>
+
+    <!-- Shown instead of the panes while my membership is 'pending'. -->
+    <div class="club-pending-notice" id="clubPendingNotice" style="display:none;">
+      <div class="cpn-icon">⏳</div>
+      <div class="cpn-title">Request sent — waiting for approval</div>
+      <div class="cpn-sub" id="clubPendingSub">A coach or admin needs to approve you before you can see this club.</div>
     </div>
 
     <div class="club-content">
@@ -2976,17 +3066,40 @@
         </div>
         <div class="club-hint">
           <div>
-            <b>Phase 1 — single-coach mode.</b>
-            Build your club, roster, shells, and lineups here. Everything saves
-            to this device and (if you're signed in) syncs to your Google Drive.
-            Athletes don't have their own logins yet — they're names in your
-            roster. Use <b>Copy as text</b> on a lineup to share it via DM
-            or email.
+            <b>Build your club here</b> — roster, shells, oars, teams, and
+            lineups. Everything saves to this device and syncs to your Google
+            Drive when signed in. Turn on <b>☁ cloud sync</b> to bring on
+            other coaches and athletes: use <b>Members → Invite people</b> to
+            send a join link, approve who joins, and set each person's role.
           </div>
           <div class="club-hint-actions">
             <button id="overviewNewLineupBtn" class="accent">+ New lineup</button>
             <button id="overviewNewAthleteBtn">+ Add athlete</button>
             <button id="overviewNewShellBtn">+ Add shell</button>
+          </div>
+        </div>
+
+        <!-- Athlete self-service card — only shown to athlete members. -->
+        <div class="athlete-home-card" id="athleteHomeCard" style="display:none;">
+          <div>
+            <div class="ahc-section-title">My lineups</div>
+            <div class="lineup-list" id="athleteAssignedLineups"></div>
+          </div>
+          <div>
+            <div class="ahc-section-title">Mark my availability</div>
+            <div class="avail-row" style="margin-top:6px;">
+              <input type="date" id="athleteAvailDate" class="fc-mini-select">
+              <select id="athleteAvailStatus" class="fc-mini-select">
+                <option value="available">Available</option>
+                <option value="absent">Absent</option>
+                <option value="injured">Injured</option>
+                <option value="limited">Limited</option>
+                <option value="land">Land training</option>
+                <option value="race-only">Race only</option>
+              </select>
+              <button class="accent" id="saveAvailBtn">Save</button>
+            </div>
+            <div class="roster-list" id="athleteAvailHistory" style="margin-top:10px;"></div>
           </div>
         </div>
       </div>
@@ -3034,6 +3147,28 @@
           <button class="accent" id="newTeamBtn">+ Add team</button>
         </div>
         <div class="team-list" id="teamList"></div>
+      </div>
+
+      <!-- Members pane (multi-coach) -->
+      <div class="club-pane" data-pane="members">
+        <div class="club-pane-header">
+          <h3>MEMBERS</h3>
+          <button class="accent" id="inviteMembersBtn" style="display:none;">＋ Invite people</button>
+        </div>
+        <div id="membersPendingWrap" style="display:none; margin-bottom:14px;">
+          <div class="ahc-section-title" style="margin-bottom:6px;">Pending requests</div>
+          <div class="roster-list" id="membersPendingList"></div>
+        </div>
+        <div class="ahc-section-title" style="margin-bottom:6px;">Members</div>
+        <div class="roster-list" id="membersActiveList"></div>
+      </div>
+
+      <!-- Activity / audit pane (owner + admin only) -->
+      <div class="club-pane" data-pane="activity">
+        <div class="club-pane-header">
+          <h3>ACTIVITY</h3>
+        </div>
+        <div class="roster-list" id="auditList"></div>
       </div>
     </div>
   </div>
@@ -3369,10 +3504,10 @@
   <div class="modal" style="width: 600px;">
     <h2>JOIN CLUB</h2>
     <div class="join-phase2-note">
-      <b>Invite codes &amp; share links arrive in Phase 2</b> (Firebase, still $0).
-      Until then, the easiest way to join is to have the coach
-      <b>Export club</b> from their device and paste the resulting JSON below.
-      Your local club will be replaced with theirs.
+      <b>Got a share link from a coach?</b> Just open it — the link
+      (<code>…?join=CODE</code>) signs you in and sends a join request
+      for approval. No link? The offline fallback is to have the coach
+      <b>Export club</b> and paste their JSON below to work on a local copy.
     </div>
     <label class="lm-field" style="margin-top: 10px;">
       <span class="lm-label">Paste shared club JSON</span>
@@ -3382,6 +3517,78 @@
     <div class="modal-buttons">
       <button id="cancelJoinClubBtn">Back</button>
       <button class="accent" id="confirmJoinClubBtn">Import &amp; join</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invite people — generate a join link / code (owner + admin) -->
+<div class="modal-overlay" id="inviteModal">
+  <div class="modal" style="width: 600px; max-height: 90vh; overflow:auto;">
+    <h2>INVITE PEOPLE</h2>
+    <div class="h-sub">Generate a share link or code. New members join as <b>pending</b> and you approve them.</div>
+    <div class="lineup-meta" style="grid-template-columns: 1fr 1fr;">
+      <label class="lm-field">
+        <span class="lm-label">Role</span>
+        <select id="inviteRole"></select>
+      </label>
+      <label class="lm-field">
+        <span class="lm-label">Expires in</span>
+        <select id="inviteExpiry">
+          <option value="1">1 day</option>
+          <option value="7" selected>7 days</option>
+          <option value="30">30 days</option>
+        </select>
+      </label>
+    </div>
+    <div class="modal-buttons" style="justify-content:flex-start;">
+      <button class="accent" id="confirmCreateInviteBtn">Generate invite</button>
+    </div>
+    <div class="invite-result" id="inviteResult" style="display:none;">
+      <div class="lm-label">Share link</div>
+      <div class="row" style="gap:6px; margin:4px 0 10px;">
+        <input type="text" id="inviteLinkField" readonly>
+        <button class="fc-mini-btn" id="copyInviteLinkBtn">Copy</button>
+      </div>
+      <div class="lm-label">Or join code</div>
+      <div class="row" style="gap:6px; margin-top:4px;">
+        <input type="text" id="inviteCodeField" readonly>
+        <button class="fc-mini-btn" id="copyInviteCodeBtn">Copy</button>
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <div class="ahc-section-title" style="margin-bottom:6px;">Active invites</div>
+      <div class="roster-list" id="inviteList"></div>
+    </div>
+    <div class="modal-buttons">
+      <button id="closeInviteBtn">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Join confirm — surfaced from a ?join= deep link -->
+<div class="modal-overlay" id="joinConfirmModal">
+  <div class="modal" style="width: 480px;">
+    <h2>JOIN CLUB</h2>
+    <div class="h-sub" id="joinConfirmText">You've been invited to join.</div>
+    <div class="modal-buttons">
+      <button id="cancelJoinRemoteBtn">Cancel</button>
+      <button class="accent" id="confirmJoinRemoteBtn">Send join request</button>
+    </div>
+  </div>
+</div>
+
+<!-- Link a member to a roster athlete (owner + admin) -->
+<div class="modal-overlay" id="linkAthleteModal">
+  <div class="modal" style="width: 480px;">
+    <h2 id="linkAthleteTitle">LINK ATHLETE</h2>
+    <div class="h-sub">Linking makes this member seatable in lineups and lets them mark their own availability.</div>
+    <label class="lm-field" style="margin-top:10px;">
+      <span class="lm-label">Roster athlete</span>
+      <select id="linkAthleteSelect"></select>
+    </label>
+    <div class="modal-buttons">
+      <button id="cancelLinkAthleteBtn">Cancel</button>
+      <button class="accent" id="confirmLinkAthleteBtn">Save link</button>
     </div>
   </div>
 </div>
@@ -3766,7 +3973,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
   getFirestore, doc, collection, getDoc, setDoc, addDoc, deleteDoc,
-  onSnapshot, query, where, getDocs, serverTimestamp,
+  onSnapshot, query, where, orderBy, limit, getDocs,
+  serverTimestamp, Timestamp,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 let _app = null, _auth = null, _db = null;
@@ -3876,6 +4084,168 @@ window.fbApi = {
       callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
   },
+
+  // ---- Members (clubs/{id}/members/{uid}) -------------------------
+  // The owner's row is written by createClubWithOwner. Everyone else
+  // self-creates a 'pending' row via createJoinRequest (rules validate
+  // the invite); owner/admin approve / change role / suspend / link.
+  subscribeMember(clubId, memberUid, callback) {
+    if (!_db) return () => {};
+    return onSnapshot(doc(_db, "clubs", clubId, "members", memberUid), (snap) => {
+      callback(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+    });
+  },
+  subscribeMembers(clubId, callback) {
+    if (!_db) return () => {};
+    return onSnapshot(collection(_db, "clubs", clubId, "members"), (snap) => {
+      callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+  },
+  // One-shot read of my own member row (allowed for self by the rules,
+  // even while pending). Used to refuse a duplicate join.
+  async getMember(clubId, memberUid) {
+    if (!_db) return null;
+    try {
+      const snap = await getDoc(doc(_db, "clubs", clubId, "members", memberUid));
+      return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+    } catch (e) { return null; }
+  },
+  async createJoinRequest(clubId, memberUid, data) {
+    if (!_db) return;
+    // status:'pending' and linkedAthleteId:null are REQUIRED by the
+    // rules; the caller passes role + inviteCode that the rule re-reads
+    // off the invite doc to authorize this write.
+    await setDoc(doc(_db, "clubs", clubId, "members", memberUid), {
+      ...data,
+      userId: memberUid,
+      status: "pending",
+      linkedAthleteId: null,
+      joinedAt: Date.now(),
+    }, { merge: false });
+  },
+  async updateMember(clubId, memberUid, patch) {
+    if (!_db) return;
+    await setDoc(doc(_db, "clubs", clubId, "members", memberUid), patch,
+                 { merge: true });
+  },
+  async removeMember(clubId, memberUid) {
+    if (!_db) return;
+    await deleteDoc(doc(_db, "clubs", clubId, "members", memberUid));
+  },
+
+  // ---- Athletes (clubs/{id}/athletes/{athleteId}) -----------------
+  // Moved OUT of the club doc so coaches (who can't write the club doc)
+  // can still manage the roster. Mirrors the lineups subcollection.
+  subscribeAthletes(clubId, callback) {
+    if (!_db) return () => {};
+    return onSnapshot(collection(_db, "clubs", clubId, "athletes"), (snap) => {
+      callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+  },
+  async saveAthlete(clubId, athleteId, data) {
+    if (!_db) return;
+    const payload = { ...data, updatedAt: Date.now() };
+    delete payload.id;
+    await setDoc(doc(_db, "clubs", clubId, "athletes", athleteId), payload,
+                 { merge: false });
+  },
+  async deleteAthlete(clubId, athleteId) {
+    if (!_db) return;
+    await deleteDoc(doc(_db, "clubs", clubId, "athletes", athleteId));
+  },
+
+  // ---- Availability (clubs/{id}/availability/{entryId}) -----------
+  // Per-date overrides. Coaches set anyone's; an athlete may set only
+  // their own linked athlete's (enforced by rules).
+  subscribeAvailability(clubId, callback) {
+    if (!_db) return () => {};
+    return onSnapshot(collection(_db, "clubs", clubId, "availability"), (snap) => {
+      callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+  },
+  async setAvailability(clubId, entryId, data) {
+    if (!_db) return;
+    await setDoc(doc(_db, "clubs", clubId, "availability", entryId),
+                 { ...data, updatedAt: Date.now() }, { merge: false });
+  },
+  async deleteAvailability(clubId, entryId) {
+    if (!_db) return;
+    await deleteDoc(doc(_db, "clubs", clubId, "availability", entryId));
+  },
+
+  // ---- Invites (clubs/{id}/invites/{code}) ------------------------
+  // The doc id IS the unguessable join code (bearer token). expiresAt
+  // MUST be a Firestore Timestamp so the rules' `expiresAt >
+  // request.time` comparison type-checks.
+  async createInvite(clubId, code, data) {
+    if (!_db) return;
+    await setDoc(doc(_db, "clubs", clubId, "invites", code), {
+      ...data,
+      createdAt: Date.now(),
+      expiresAt: Timestamp.fromMillis(data.expiresAtMs),
+      revoked: false,
+      uses: 0,
+    }, { merge: false });
+  },
+  // A signed-in bearer can read a code ONLY while valid (rules hide
+  // revoked/expired). Returns null on permission-denied or absence.
+  async getInvite(clubId, code) {
+    if (!_db) return null;
+    try {
+      const snap = await getDoc(doc(_db, "clubs", clubId, "invites", code));
+      return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+    } catch (e) { return null; }
+  },
+  subscribeInvites(clubId, callback) {
+    if (!_db) return () => {};
+    return onSnapshot(collection(_db, "clubs", clubId, "invites"), (snap) => {
+      callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+  },
+  async revokeInvite(clubId, code) {
+    if (!_db) return;
+    await setDoc(doc(_db, "clubs", clubId, "invites", code),
+                 { revoked: true }, { merge: true });
+  },
+
+  // ---- Audit logs (clubs/{id}/auditLogs) — append-only ------------
+  // createdAt MUST be serverTimestamp() so it equals request.time and
+  // the rule accepts it (no client backdating).
+  async appendAudit(clubId, actorUid, entry) {
+    if (!_db) return;
+    await addDoc(collection(_db, "clubs", clubId, "auditLogs"), {
+      ...entry,
+      actorUid,
+      createdAt: serverTimestamp(),
+    });
+  },
+  subscribeAudit(clubId, callback, max) {
+    if (!_db) return () => {};
+    const q = query(collection(_db, "clubs", clubId, "auditLogs"),
+                    orderBy("createdAt", "desc"), limit(max || 80));
+    return onSnapshot(q, (snap) => {
+      callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+  },
+
+  // ---- Users (users/{uid}) — "my clubs" pointer -------------------
+  async getUserClubs(userUid) {
+    if (!_db) return [];
+    try {
+      const snap = await getDoc(doc(_db, "users", userUid));
+      return (snap.exists() && Array.isArray(snap.data().clubIds))
+        ? snap.data().clubIds : [];
+    } catch (e) { return []; }
+  },
+  async addUserClub(userUid, clubId) {
+    if (!_db) return;
+    try {
+      const existing = await this.getUserClubs(userUid);
+      if (existing.includes(clubId)) return;
+      await setDoc(doc(_db, "users", userUid),
+                   { clubIds: [...existing, clubId] }, { merge: true });
+    } catch (e) { /* best-effort */ }
+  },
 };
 
 // Tell the main script the API is ready in case it's listening.
@@ -3926,43 +4296,135 @@ const FIREBASE_ENABLED =
   !!FIREBASE_CONFIG.apiKey &&
   FIREBASE_CONFIG.apiKey !== "REPLACE_ME_AFTER_FIREBASE_SETUP";
 
-/* FIRESTORE_RULES — paste into the Firebase console's Firestore Rules tab.
+/* FIRESTORE_RULES (v1.11.0 multi-coach) — paste into the Firebase
+   console's Firestore → Rules tab and Publish. This MUST match
+   /firestore.rules in the repo. Security is enforced entirely here
+   (Spark plan = no Cloud Functions), so this is the product.
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Any signed-in user can read their own user profile doc.
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+    function memberPath(clubId) {
+      return /databases/$(database)/documents/clubs/$(clubId)/members/$(uid());
+    }
+    function isMember(clubId) { return signedIn() && exists(memberPath(clubId)); }
+    function member(clubId) { return get(memberPath(clubId)).data; }
+    function isActiveMember(clubId) {
+      return isMember(clubId) && member(clubId).status == 'active';
+    }
+    function hasRole(clubId, roles) {
+      return isActiveMember(clubId) && (member(clubId).role in roles);
+    }
+    function clubData(clubId) {
+      return get(/databases/$(database)/documents/clubs/$(clubId)).data;
+    }
+    function isOwner(clubId) {
+      return signedIn()
+             && exists(/databases/$(database)/documents/clubs/$(clubId))
+             && clubData(clubId).ownerId == uid();
+    }
+    function invitePath(clubId, code) {
+      return /databases/$(database)/documents/clubs/$(clubId)/invites/$(code);
+    }
+    function validJoinInvite(clubId, code, role) {
+      return code != null
+             && exists(invitePath(clubId, code))
+             && get(invitePath(clubId, code)).data.revoked == false
+             && get(invitePath(clubId, code)).data.expiresAt > request.time
+             && get(invitePath(clubId, code)).data.role == role;
     }
 
-    // Clubs: owner has full access. Members can read.
-    match /clubs/{clubId} {
-      allow read:   if request.auth != null && (
-        resource.data.ownerId == request.auth.uid ||
-        exists(/databases/$(database)/documents/clubs/$(clubId)/members/$(request.auth.uid))
-      );
-      allow create: if request.auth != null
-                    && request.resource.data.ownerId == request.auth.uid;
-      allow update, delete: if request.auth != null
-                            && resource.data.ownerId == request.auth.uid;
+    match /users/{userId} {
+      allow read, write: if signedIn() && uid() == userId;
+    }
 
-      // clubs/{clubId}/members — owner can write, members can read.
+    match /clubs/{clubId} {
+      allow read: if isOwner(clubId) || isActiveMember(clubId);
+      allow create: if signedIn() && request.resource.data.ownerId == uid();
+      allow update: if (isOwner(clubId) || hasRole(clubId, ['admin']))
+                    && (request.resource.data.ownerId == resource.data.ownerId
+                        || isOwner(clubId));
+      allow delete: if isOwner(clubId);
+
       match /members/{memberUid} {
-        allow read:  if request.auth != null && (
-          get(/databases/$(database)/documents/clubs/$(clubId)).data.ownerId == request.auth.uid ||
-          request.auth.uid == memberUid
+        allow read: if isOwner(clubId) || isActiveMember(clubId)
+                    || (signedIn() && uid() == memberUid);
+        allow list: if isOwner(clubId) || isActiveMember(clubId);
+        // (a) owner bootstraps own owner/active row; (b) invite-validated join.
+        allow create: if signedIn() && uid() == memberUid && (
+          (isOwner(clubId)
+           && request.resource.data.role == 'owner'
+           && request.resource.data.status == 'active')
+          ||
+          (request.resource.data.status == 'pending'
+           && request.resource.data.role != 'owner'
+           && request.resource.data.linkedAthleteId == null
+           && validJoinInvite(clubId, request.resource.data.inviteCode,
+                              request.resource.data.role))
         );
-        allow write: if request.auth != null &&
-          get(/databases/$(database)/documents/clubs/$(clubId)).data.ownerId == request.auth.uid;
+        allow update: if (
+          (isOwner(clubId) || hasRole(clubId, ['admin']))
+          && request.resource.data.role != 'owner'
+          && (isOwner(clubId) || (
+                memberUid != clubData(clubId).ownerId
+                && request.resource.data.role != 'admin'))
+        );
+        allow delete: if isOwner(clubId)
+                      || (hasRole(clubId, ['admin']) && memberUid != clubData(clubId).ownerId);
       }
 
-      // clubs/{clubId}/lineups — owner full access (Phase 4 expands
-      // this to coach/admin members).
+      match /athletes/{athleteId} {
+        allow read, list: if isOwner(clubId) || isActiveMember(clubId);
+        allow create, update, delete: if hasRole(clubId, ['owner', 'admin', 'coach']) || isOwner(clubId);
+      }
+
       match /lineups/{lineupId} {
-        allow read, write: if request.auth != null &&
-          get(/databases/$(database)/documents/clubs/$(clubId)).data.ownerId == request.auth.uid;
+        allow read, list: if isOwner(clubId) || isActiveMember(clubId);
+        allow create, update, delete: if hasRole(clubId, ['owner', 'admin', 'coach']) || isOwner(clubId);
+      }
+
+      match /availability/{entryId} {
+        allow read, list: if isOwner(clubId) || isActiveMember(clubId);
+        function isCoachPlus() {
+          return hasRole(clubId, ['owner', 'admin', 'coach']) || isOwner(clubId);
+        }
+        function ownAthlete() {
+          return isActiveMember(clubId)
+                 && member(clubId).role == 'athlete'
+                 && member(clubId).linkedAthleteId != null;
+        }
+        allow create: if isCoachPlus()
+                      || (ownAthlete() && request.resource.data.athleteId == member(clubId).linkedAthleteId);
+        allow update: if isCoachPlus()
+                      || (ownAthlete()
+                          && resource.data.athleteId == member(clubId).linkedAthleteId
+                          && request.resource.data.athleteId == member(clubId).linkedAthleteId);
+        allow delete: if isCoachPlus()
+                      || (ownAthlete() && resource.data.athleteId == member(clubId).linkedAthleteId);
+      }
+
+      match /invites/{code} {
+        allow get:  if isOwner(clubId) || hasRole(clubId, ['admin'])
+                    || (signedIn()
+                        && resource.data.revoked == false
+                        && resource.data.expiresAt > request.time);
+        allow list: if isOwner(clubId) || hasRole(clubId, ['admin']);
+        allow create: if (isOwner(clubId) || hasRole(clubId, ['admin']))
+                      && request.resource.data.role in ['athlete', 'coach', 'admin']
+                      && request.resource.data.role != 'owner'
+                      && (isOwner(clubId) || request.resource.data.role != 'admin');
+        allow update, delete: if isOwner(clubId) || hasRole(clubId, ['admin']);
+      }
+
+      match /auditLogs/{logId} {
+        allow read, list: if isOwner(clubId) || hasRole(clubId, ['admin']);
+        allow create: if (isActiveMember(clubId) || isOwner(clubId))
+                      && request.resource.data.actorUid == uid()
+                      && request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
       }
     }
   }
@@ -4002,7 +4464,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.10.0";
+const APP_VERSION = "1.11.0";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 const SESSION_SCHEMA_VERSION = 2;
@@ -4251,6 +4713,28 @@ const state = {
     unsubClub: null,
     unsubLineups: null,
     suppressNextLocalWrite: false,
+
+    // ---- Multi-coach club client (v1.11.0) ----------------------
+    // membership — MY member row in the active club {role,status,
+    //   linkedAthleteId,...} or null. Drives the permission engine
+    //   (fbCan) and the pending/suspended gates.
+    // isOwner    — true iff I created this club (clubData.ownerId==me).
+    // fullAttached — whether the active-member subscriptions (club,
+    //   lineups, athletes, availability, members, invites, audit) are
+    //   live. They only attach once my status flips to 'active'.
+    membership:   null,
+    isOwner:      false,
+    fullAttached: false,
+    members:      [],     // all member rows (Members panel)
+    invites:      [],     // active invites (owner/admin only)
+    audit:        [],     // recent audit entries (owner/admin only)
+    availability: [],     // per-date availability overrides
+    unsubMyMember:    null,
+    unsubMembers:     null,
+    unsubAthletes:    null,
+    unsubAvailability: null,
+    unsubInvites:     null,
+    unsubAudit:       null,
   },
 
   // Account / history. The user is "local" by default — a random ID
@@ -6923,16 +7407,13 @@ function persistClub() {
   if (state.user.signedIn && state.googleAccessToken) {
     syncHistoryToDrive().catch(err => console.warn("Drive sync failed:", err));
   }
-  // When Firebase is active, also push to Firestore. Skip the very
-  // next write if it's an echo of a Firestore snapshot we just took
-  // in (avoids "received → wrote → received my own write" loops).
-  if (fbActive()) {
-    if (state.fb.suppressNextLocalWrite) {
-      state.fb.suppressNextLocalWrite = false;
-    } else {
-      fbPushClubDoc();
-    }
-  }
+  // When Firebase is active, also push the club doc to Firestore.
+  // Inbound snapshots use persistClubLocalOnly() (never this function),
+  // so there is no echo to suppress here — pushing unconditionally is
+  // safe and avoids the bug where a stale suppress flag swallowed a
+  // genuine club-doc edit. (fbPushClubDoc itself no-ops for roles that
+  // can't write the club doc.)
+  if (fbActive()) fbPushClubDoc();
 }
 
 // Look up helpers — small but used everywhere by the builder, so
@@ -6993,74 +7474,141 @@ async function fbSignOutClick() {
 
 async function onFbAuthChanged(user) {
   state.fb.user = user;
+  // Tear down any prior attachment FIRST. Covers sign-out and the
+  // account-switch case (signing in as a different Google account
+  // without an intervening sign-out) so no stale club/listeners/role
+  // from the previous user leak through.
+  fbDetach();
   if (user) {
-    // Try to load their existing cloud club. If they have none AND
-    // they already have local data, offer to upload it.
+    // Resolve which club to attach to: one I own → one I've joined →
+    // otherwise offer to upload my local club.
     try {
       const cloud = await window.fbApi.getClubByOwner(user.uid);
       if (cloud) {
+        state.fb.isOwner = true;
         await fbAttachToClub(cloud.id, cloud);
-      } else if (!clubIsEmpty()) {
-        if (confirm(`Cloud sync is now on. Upload your local club "${state.club.name || "(unnamed)"}" so it's available on every device?`)) {
-          await fbUploadLocalClub();
+      } else {
+        // Reattach to a club I joined as a member (local pointer first,
+        // then the users/{uid}.clubIds list as a cross-device fallback).
+        let joinedId = null;
+        try { joinedId = localStorage.getItem(fbJoinedClubKey(user.uid)); } catch (e) {}
+        if (!joinedId) {
+          const ids = await window.fbApi.getUserClubs(user.uid);
+          joinedId = ids[0] || null;
+        }
+        if (joinedId) {
+          await fbAttachToClub(joinedId, null);
+        } else if (!clubIsEmpty() && !state.fb._joining) {
+          if (confirm(`Cloud sync is now on. Upload your local club "${state.club.name || "(unnamed)"}" so it's available on every device?`)) {
+            await fbUploadLocalClub();
+          }
         }
       }
     } catch (e) {
       console.warn("Firebase club load failed:", e);
       setToast("Cloud sync error: " + (e.message || e), "err");
     }
-  } else {
-    // Sign-out — detach listeners. Keep local state untouched so the
-    // user can still use the app.
-    fbDetach();
   }
+  // (Sign-out needs no extra work — the fbDetach() at the top already
+  // tore everything down; local state is left intact so the app keeps
+  // working single-user.)
   renderFbSyncChip();
 }
 
 function fbDetach() {
-  if (state.fb.unsubClub)    { state.fb.unsubClub();    state.fb.unsubClub = null; }
-  if (state.fb.unsubLineups) { state.fb.unsubLineups(); state.fb.unsubLineups = null; }
+  fbDetachFullSubscriptions();
+  if (state.fb.unsubMyMember) { state.fb.unsubMyMember(); state.fb.unsubMyMember = null; }
   state.fb.clubId = null;
+  state.fb.membership = null;
+  state.fb.isOwner = false;
+  state.fb.clubLoaded = false;
+  state.fb._migratingAthletes = false;
+  state.fb._ownerRowEnsured = false;
 }
 
 async function fbAttachToClub(clubId, initialSnap) {
   fbDetach();
   state.fb.clubId = clubId;
+  let legacyAthletes = null;
   if (initialSnap) {
-    // Hydrate state from the snapshot we already have, preserving
-    // local lineups until the subcollection listener delivers them.
-    const localLineups = state.club.lineups || [];
+    // Owner fast-path: hydrate from the club doc we already fetched,
+    // preserving local lineups + athletes until their subcollection
+    // listeners deliver the authoritative copies.
+    const localLineups  = state.club.lineups  || [];
+    const localAthletes = state.club.athletes || [];
     state.club = Object.assign(
       {
         name: "", subtitle: "",
-        teams: [], squads: [], athletes: [], shells: [], oarSets: [],
+        teams: [], squads: [], athletes: localAthletes, shells: [], oarSets: [],
         lineups: localLineups,
       },
       initialSnap,
     );
     delete state.club.id;
     backfillClubDefaults();
+    if (initialSnap.ownerId && state.fb.user) {
+      state.fb.isOwner = (initialSnap.ownerId === state.fb.user.uid);
+    }
+    state.fb.clubLoaded = true;
+    // Legacy migration: a pre-v1.11.0 club doc carried the roster as an
+    // `athletes` array. Move it into the athletes subcollection once,
+    // and guard the (briefly empty) athletes listener from wiping it.
+    if (Array.isArray(initialSnap.athletes) && initialSnap.athletes.length) {
+      legacyAthletes = initialSnap.athletes.slice();
+      state.fb._migratingAthletes = true;
+    }
   }
-  state.fb.unsubClub = window.fbApi.subscribeClub(clubId, (snap) => {
-    if (!snap) return;
-    const localLineups = state.club.lineups || [];
-    const next = Object.assign({}, snap);
-    delete next.id;
-    next.lineups = localLineups;
-    state.fb.suppressNextLocalWrite = true;
-    state.club = Object.assign(state.club, next);
-    backfillClubDefaults();
-    persistClubLocalOnly();
-    if (state.view === "clubs") renderClubsView();
-    renderFbSyncChip();
-  });
-  state.fb.unsubLineups = window.fbApi.subscribeLineups(clubId, (lineups) => {
-    state.fb.suppressNextLocalWrite = true;
-    state.club.lineups = lineups;
-    persistClubLocalOnly();
-    if (state.view === "clubs") renderClubsView();
-  });
+  // Watch MY membership row. When it resolves to 'active' (or I'm the
+  // owner), the full club subscriptions attach; while 'pending' they
+  // stay off and the clubs view shows the awaiting-approval notice.
+  if (state.fb.user) {
+    state.fb.unsubMyMember = window.fbApi.subscribeMember(clubId, state.fb.user.uid, (m) => {
+      state.fb.membership = m;
+      if (m && m.role === "owner") state.fb.isOwner = true;
+      // Self-heal: an owner whose member row never got written (e.g. a
+      // half-completed club creation) gets it recreated so they appear
+      // in the roster and can append audit entries.
+      if (!m && state.fb.isOwner && !state.fb._ownerRowEnsured) {
+        state.fb._ownerRowEnsured = true;
+        fbEnsureOwnerRow();
+      }
+      fbReconcileMemberState();
+      if (state.view === "clubs") renderClubsView();
+      renderFbSyncChip();
+    });
+  }
+  // Owners can render immediately from the hydrated snapshot.
+  if (state.fb.isOwner) fbReconcileMemberState();
+  if (legacyAthletes) fbMigrateLegacyAthletes(clubId, legacyAthletes);
   if (state.view === "clubs") renderClubsView();
+}
+
+// One-shot: copy a legacy doc-level roster into the athletes
+// subcollection, then strip it from the club doc.
+async function fbMigrateLegacyAthletes(clubId, legacy) {
+  try {
+    for (const a of legacy) { await window.fbApi.saveAthlete(clubId, a.id, a); }
+    await fbPushClubDoc();   // rewrites the club doc WITHOUT athletes
+  } catch (e) {
+    console.warn("Legacy athlete migration failed:", e);
+  } finally {
+    state.fb._migratingAthletes = false;
+  }
+}
+
+// Recreate the owner's own member row if it's missing (rules allow the
+// owner to bootstrap their own owner/active row).
+async function fbEnsureOwnerRow() {
+  if (!state.fb.isOwner || !state.fb.user) return;
+  try {
+    await window.fbApi.updateMember(state.fb.clubId, state.fb.user.uid, {
+      userId: state.fb.user.uid,
+      role: "owner",
+      status: "active",
+      name: state.fb.user.displayName || state.fb.user.email || "",
+      joinedAt: Date.now(),
+    });
+  } catch (e) { console.warn("Owner row self-heal failed:", e); }
 }
 
 async function fbUploadLocalClub() {
@@ -7068,21 +7616,27 @@ async function fbUploadLocalClub() {
   state.fb.syncing = true;
   renderFbSyncChip();
   try {
-    // Build the club doc (without lineups — those go in the subcoll).
+    // Build the club doc — WITHOUT athletes or lineups; both are
+    // subcollections so coaches (who can't write the club doc) can edit
+    // the roster and lineups.
     const clubData = {
       name:     state.club.name || "",
       subtitle: state.club.subtitle || "",
       teams:    state.club.teams    || [],
       squads:   state.club.squads   || [],
-      athletes: state.club.athletes || [],
       shells:   state.club.shells   || [],
       oarSets:  state.club.oarSets  || [],
     };
     const clubId = await window.fbApi.createClubWithOwner(state.fb.user.uid, clubData);
-    // Upload each existing lineup as a subcollection doc.
+    state.fb.isOwner = true;
+    // Upload each athlete + lineup as its own subcollection doc.
+    for (const a of state.club.athletes || []) {
+      await window.fbApi.saveAthlete(clubId, a.id, a);
+    }
     for (const l of state.club.lineups || []) {
       await window.fbApi.saveLineup(clubId, l.id, l, state.fb.user.displayName || "");
     }
+    await window.fbApi.addUserClub(state.fb.user.uid, clubId);
     await fbAttachToClub(clubId, { id: clubId, ...clubData, ownerId: state.fb.user.uid });
     setToast("Club uploaded to cloud — synced across devices.", "ok");
   } catch (e) {
@@ -7112,14 +7666,24 @@ function persistClubLocalOnly() {
   catch (e) {}
 }
 
-// Push the in-memory club doc to Firestore (excluding lineups).
+// Push the in-memory club doc to Firestore (excluding lineups +
+// athletes, which are subcollections). Club-doc writes are owner/admin
+// only, so bail for coaches/athletes rather than trip a denied write.
 async function fbPushClubDoc() {
-  if (!fbActive()) return;
+  if (!fbActive() || !fbCan("editClub")) return;
+  // ownerId is immutable per the rules. A non-owner admin must echo the
+  // EXISTING ownerId — so don't write until the first club snapshot has
+  // hydrated it, otherwise saveClub (merge:false) would drop ownerId and
+  // the rule would reject the write.
+  if (!state.fb.isOwner && !state.club.ownerId) {
+    console.warn("Club-doc write deferred: ownerId not hydrated yet.");
+    return;
+  }
   state.fb.syncing = true;
   renderFbSyncChip();
   try {
-    const { lineups, id, ...rest } = state.club;
-    rest.ownerId = state.fb.user.uid;
+    const { lineups, athletes, id, ...rest } = state.club;
+    rest.ownerId = state.fb.isOwner ? state.fb.user.uid : state.club.ownerId;
     await window.fbApi.saveClub(
       state.fb.clubId, rest,
       state.fb.user.displayName || state.fb.user.email || ""
@@ -7153,6 +7717,735 @@ async function fbDeleteLineupRemote(lineupId) {
   catch (e) { console.warn("Firestore lineup delete failed:", e); }
 }
 
+// =====================================================================
+// MULTI-COACH CLUB CLIENT (v1.11.0)
+// Role engine, membership lifecycle, invites, join/approval, audit,
+// athlete self-service. Security is enforced by firestore.rules — this
+// layer only mirrors the rules so the UI matches what the server allows.
+// =====================================================================
+
+// ---- Permission engine ----------------------------------------------
+// In LOCAL single-user mode (no Firebase club attached) the user is
+// effectively the owner of their own device copy — everything is
+// editable, preserving the original single-coach behaviour. Once a
+// cloud club is attached, the role from my member row governs.
+function fbRole() {
+  if (!fbActive()) return "owner";
+  if (state.fb.membership) return state.fb.membership.role;
+  if (state.fb.isOwner) return "owner";
+  return null;
+}
+function fbStatus() {
+  if (!fbActive()) return "active";
+  if (state.fb.membership) return state.fb.membership.status;
+  if (state.fb.isOwner) return "active";
+  return null;
+}
+function fbCan(action) {
+  if (!fbActive()) return true;            // local single-user mode
+  if (fbStatus() !== "active") return false;
+  const role = fbRole();
+  const coachPlus = role === "owner" || role === "admin" || role === "coach";
+  const adminPlus = role === "owner" || role === "admin";
+  switch (action) {
+    case "editRoster":                     // athletes subcollection (coach+)
+    case "editLineups":  return coachPlus;
+    case "editClub":                       // club-doc fields: teams/squads/shells/oars/name
+    case "manageMembers":
+    case "manageInvites":
+    case "viewAudit":    return adminPlus;
+    case "inviteAdmin":  return role === "owner";
+    default: return false;
+  }
+}
+
+// ---- Subscription lifecycle -----------------------------------------
+// Watch MY member row first; it drives whether the full club
+// subscriptions attach. A 'pending' user can read only their own row
+// (rules), so we must not subscribe to the club until they're active.
+function fbReconcileMemberState() {
+  const m = state.fb.membership;
+  const active = !!(m && m.status === "active") || state.fb.isOwner;
+  if (active && !state.fb.fullAttached) {
+    fbAttachFullSubscriptions(state.fb.clubId);
+    state.fb.fullAttached = true;
+  } else if (!active && state.fb.fullAttached) {
+    fbDetachFullSubscriptions();
+  }
+}
+
+function fbAttachFullSubscriptions(clubId) {
+  const api = window.fbApi;
+  // Club doc — preserve locally-owned subcollections (lineups+athletes)
+  // so the club-doc snapshot never clobbers them.
+  state.fb.unsubClub = api.subscribeClub(clubId, (snap) => {
+    if (!snap) return;
+    const localLineups  = state.club.lineups  || [];
+    const localAthletes = state.club.athletes || [];
+    const next = Object.assign({}, snap);
+    delete next.id;
+    next.lineups  = localLineups;
+    next.athletes = localAthletes;
+    if (snap.ownerId && state.fb.user) {
+      state.fb.isOwner = (snap.ownerId === state.fb.user.uid);
+    }
+    // Local-only write — never echoes back to Firestore (no suppress
+    // flag needed; club-doc writes only happen via explicit edits).
+    state.club = Object.assign(state.club, next);
+    state.fb.clubLoaded = true;        // ownerId now hydrated (see fbPushClubDoc)
+    backfillClubDefaults();
+    persistClubLocalOnly();
+    if (state.view === "clubs") renderClubsView();
+    renderFbSyncChip();
+  });
+  state.fb.unsubLineups = api.subscribeLineups(clubId, (lineups) => {
+    state.club.lineups = lineups;
+    persistClubLocalOnly();
+    if (state.view === "clubs") renderClubsView();
+  });
+  state.fb.unsubAthletes = api.subscribeAthletes(clubId, (athletes) => {
+    // Guard: during a legacy roster migration the subcollection is
+    // briefly empty — don't let that empty snapshot wipe the in-memory
+    // roster before the migration writes it back.
+    if (!athletes.length && state.fb._migratingAthletes) return;
+    state.club.athletes = athletes;
+    backfillClubDefaults();
+    persistClubLocalOnly();
+    if (state.view === "clubs") renderClubsView();
+  });
+  state.fb.unsubMembers = api.subscribeMembers(clubId, (members) => {
+    state.fb.members = members;
+    if (state.view === "clubs") renderClubsView();
+    renderFbSyncChip();
+  });
+  state.fb.unsubAvailability = api.subscribeAvailability(clubId, (av) => {
+    state.fb.availability = av;
+    if (state.view === "clubs") renderClubsView();
+  });
+  // Invites + audit are owner/admin-readable only — don't even
+  // subscribe as a coach/athlete or Firestore returns permission-denied.
+  if (fbCan("viewAudit")) {
+    state.fb.unsubInvites = api.subscribeInvites(clubId, (inv) => {
+      state.fb.invites = inv;
+      if (state.view === "clubs") { renderInviteList(); renderClubsView(); }
+    });
+    state.fb.unsubAudit = api.subscribeAudit(clubId, (a) => {
+      state.fb.audit = a;
+      if (state.view === "clubs") renderClubsView();
+    });
+  }
+  state.fb.fullAttached = true;
+}
+
+function fbDetachFullSubscriptions() {
+  for (const k of ["unsubClub", "unsubLineups", "unsubAthletes",
+                   "unsubMembers", "unsubAvailability",
+                   "unsubInvites", "unsubAudit"]) {
+    if (state.fb[k]) { state.fb[k](); state.fb[k] = null; }
+  }
+  state.fb.members = [];
+  state.fb.invites = [];
+  state.fb.audit = [];
+  state.fb.availability = [];
+  state.fb.fullAttached = false;
+}
+
+// ---- Athletes subcollection writers (mirror the lineup writers) -----
+async function fbPushAthlete(a) {
+  if (!fbActive() || !fbCan("editRoster") || !a) return;
+  try { await window.fbApi.saveAthlete(state.fb.clubId, a.id, a); }
+  catch (e) {
+    console.warn("Firestore athlete write failed:", e);
+    setToast("Cloud roster write failed: " + (e.message || e), "err");
+  }
+}
+async function fbDeleteAthleteRemote(athleteId) {
+  if (!fbActive()) return;
+  try { await window.fbApi.deleteAthlete(state.fb.clubId, athleteId); }
+  catch (e) { console.warn("Firestore athlete delete failed:", e); }
+}
+
+// ---- Audit trail -----------------------------------------------------
+async function fbAudit(action, targetType, targetId, before, after) {
+  if (!fbActive()) return;
+  try {
+    await window.fbApi.appendAudit(state.fb.clubId, state.fb.user.uid, {
+      action,
+      targetType: targetType || "",
+      targetId:   targetId || "",
+      before: before == null ? null : before,
+      after:  after  == null ? null : after,
+      actorName: state.fb.user.displayName || state.fb.user.email || "",
+    });
+  } catch (e) { console.warn("Audit append failed:", e); }
+}
+
+// ---- Small helpers ---------------------------------------------------
+function fbEsc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function fbFmtDate(ms) {
+  if (!ms) return "";
+  try { return new Date(ms).toLocaleDateString(); } catch (e) { return ""; }
+}
+function fbFmtDateTime(ms) {
+  if (!ms) return "";
+  try { return new Date(ms).toLocaleString(); } catch (e) { return ""; }
+}
+function fbCopy(text, msg) {
+  const ok = () => setToast(msg || "Copied.", "ok");
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok).catch(() => fbCopyFallback(text, ok));
+    } else { fbCopyFallback(text, ok); }
+  } catch (e) { fbCopyFallback(text, ok); }
+}
+function fbCopyFallback(text, ok) {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); document.body.removeChild(ta); ok();
+  } catch (e) { setToast("Copy failed — select the text and copy manually.", "warn"); }
+}
+function fbJoinedClubKey(userUid) { return "pm5_fb_joined_" + userUid; }
+function fbBoatLabel(l) {
+  return (BOAT_CLASSES[l.boatClass] && BOAT_CLASSES[l.boatClass].label) || l.boatClass || "Boat";
+}
+
+// ---- Invites ---------------------------------------------------------
+function fbGenerateInviteCode() {
+  // Unambiguous alphabet (no O/0/I/1/L). ~30^9 ≈ 2e13 space.
+  const A = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  const bytes = new Uint8Array(9);
+  (window.crypto || crypto).getRandomValues(bytes);
+  let s = ""; for (const b of bytes) s += A[b % A.length];
+  return s.slice(0, 4) + "-" + s.slice(4, 9);
+}
+function fbInviteJoinUrl(code) {
+  const base = location.origin + location.pathname;
+  return base + "?join=" + encodeURIComponent(code) +
+         "&club=" + encodeURIComponent(state.fb.clubId || "");
+}
+function openInviteModal() {
+  if (!fbCan("manageMembers")) { setToast("Only owners and admins can invite.", "warn"); return; }
+  const roleSel = document.getElementById("inviteRole");
+  roleSel.innerHTML = "";
+  const roles = fbCan("inviteAdmin") ? ["athlete", "coach", "admin"] : ["athlete", "coach"];
+  for (const r of roles) {
+    const o = document.createElement("option");
+    o.value = r; o.textContent = r.charAt(0).toUpperCase() + r.slice(1);
+    roleSel.appendChild(o);
+  }
+  document.getElementById("inviteExpiry").value = "7";
+  document.getElementById("inviteResult").style.display = "none";
+  renderInviteList();
+  document.getElementById("inviteModal").classList.add("open");
+}
+function closeInviteModal() {
+  document.getElementById("inviteModal").classList.remove("open");
+}
+async function confirmCreateInvite() {
+  if (!fbCan("manageMembers")) return;
+  const role = document.getElementById("inviteRole").value;
+  const days = parseInt(document.getElementById("inviteExpiry").value, 10) || 7;
+  if (role === "admin" && !fbCan("inviteAdmin")) {
+    setToast("Only the owner can invite admins.", "warn"); return;
+  }
+  const code = fbGenerateInviteCode();
+  const expiresAtMs = Date.now() + days * 24 * 60 * 60 * 1000;
+  try {
+    await window.fbApi.createInvite(state.fb.clubId, code, {
+      role, createdBy: state.fb.user.uid, expiresAtMs, maxUses: null,
+    });
+    await fbAudit("invite.create", "invite", code, null, { role, days });
+    const url = fbInviteJoinUrl(code);
+    document.getElementById("inviteResult").style.display = "";
+    document.getElementById("inviteLinkField").value = url;
+    document.getElementById("inviteCodeField").value = code;
+    setToast("Invite created.", "ok");
+  } catch (e) { setToast("Invite failed: " + (e.message || e), "err"); }
+}
+function renderInviteList() {
+  const wrap = document.getElementById("inviteList");
+  if (!wrap) return;
+  const list = (state.fb.invites || [])
+    .filter(i => !i.revoked)
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  if (!list.length) { wrap.innerHTML = `<div class="cr-empty">No active invites.</div>`; return; }
+  wrap.innerHTML = "";
+  for (const inv of list) {
+    const expMs = (inv.expiresAt && inv.expiresAt.toMillis) ? inv.expiresAt.toMillis() : 0;
+    const expired = expMs && expMs < Date.now();
+    const row = document.createElement("div");
+    row.className = "club-row";
+    row.innerHTML = `
+      <div class="cr-main">
+        <div class="cr-title">${fbEsc(inv.role)} · <code>${fbEsc(inv.id)}</code></div>
+        <div class="cr-sub">${expired ? "expired" : "expires " + fbFmtDate(expMs)}</div>
+      </div>`;
+    const act = document.createElement("div");
+    act.className = "cr-actions";
+    const copyBtn = document.createElement("button");
+    copyBtn.textContent = "Copy link";
+    copyBtn.onclick = () => fbCopy(fbInviteJoinUrl(inv.id), "Invite link copied.");
+    const revBtn = document.createElement("button");
+    revBtn.textContent = "Revoke";
+    revBtn.onclick = () => revokeInviteCode(inv.id);
+    act.appendChild(copyBtn); act.appendChild(revBtn);
+    row.appendChild(act);
+    wrap.appendChild(row);
+  }
+}
+async function revokeInviteCode(code) {
+  if (!fbCan("manageMembers")) return;
+  if (!confirm("Revoke this invite? Anyone holding the link won't be able to join with it.")) return;
+  try {
+    await window.fbApi.revokeInvite(state.fb.clubId, code);
+    await fbAudit("invite.revoke", "invite", code, null, null);
+    setToast("Invite revoked.", "ok");
+  } catch (e) { setToast("Revoke failed: " + (e.message || e), "err"); }
+}
+
+// ---- Join flow (?join=CODE&club=CLUBID) ------------------------------
+let _pendingJoin = null;
+function fbWaitForUser(ms) {
+  return new Promise((res) => {
+    const t0 = Date.now();
+    (function check() {
+      if (state.fb.user || Date.now() - t0 > ms) return res();
+      setTimeout(check, 150);
+    })();
+  });
+}
+async function handleJoinDeepLink(code, clubId) {
+  // _joining is armed synchronously at parse time (see the ?join=
+  // handler) so onFbAuthChanged suppresses its upload prompt regardless
+  // of auth-restore timing. We clear it on every resolution path below;
+  // the success/confirm path clears it in closeJoinConfirm().
+  const abort = (msg, tone) => { state.fb._joining = false; if (msg) setToast(msg, tone || "warn"); };
+  if (!FIREBASE_ENABLED) return abort("Cloud sync is off, so invite links can't be used here.");
+  if (!state.fb.user) {
+    setToast("Sign in to join this club…", "");
+    try { await window.fbApi.signIn(); } catch (e) { return abort("Sign-in is needed to join."); }
+    await fbWaitForUser(5000);
+    if (!state.fb.user) return abort("Sign-in is needed to join.");
+  }
+  // Already in THIS club? Join is create-only — never overwrite an
+  // existing membership row (that would demote an owner/coach to a
+  // pending athlete, or be rejected by the rules). Just take them in.
+  const existing = await window.fbApi.getMember(clubId, state.fb.user.uid);
+  if (existing) {
+    abort(existing.status === "pending"
+            ? "You've already requested to join — waiting for approval."
+            : "You're already a member of this club.",
+          existing.status === "pending" ? "" : "ok");
+    if (state.fb.clubId !== clubId) await fbAttachToClub(clubId, null);
+    showView("clubs");
+    return;
+  }
+  const invite = await window.fbApi.getInvite(clubId, code);
+  if (!invite) return abort("This invite link is invalid, expired, or revoked.", "err");
+  _pendingJoin = { invite, clubId, code };
+  document.getElementById("joinConfirmText").innerHTML =
+    `You've been invited to join as <b>${fbEsc(invite.role)}</b>.<br>` +
+    `Your request will be sent for a coach or admin to approve.`;
+  document.getElementById("joinConfirmModal").classList.add("open");
+  // _joining intentionally stays true until confirm/cancel resolves it.
+}
+function closeJoinConfirm() {
+  document.getElementById("joinConfirmModal").classList.remove("open");
+  _pendingJoin = null;
+  state.fb._joining = false;
+}
+async function confirmJoinRemote() {
+  if (!_pendingJoin) return;
+  const { invite, clubId, code } = _pendingJoin;
+  try {
+    await window.fbApi.createJoinRequest(clubId, state.fb.user.uid, {
+      role: invite.role,
+      inviteCode: code,
+      name: state.fb.user.displayName || state.fb.user.email || "",
+      invitedBy: invite.createdBy || null,
+    });
+    await window.fbApi.addUserClub(state.fb.user.uid, clubId);
+    try { localStorage.setItem(fbJoinedClubKey(state.fb.user.uid), clubId); } catch (e) {}
+    closeJoinConfirm();
+    setToast("Join request sent — waiting for approval.", "ok");
+    await fbAttachToClub(clubId, null);     // membership watcher shows 'pending'
+    showView("clubs");
+  } catch (e) {
+    state.fb._joining = false;
+    setToast("Join failed: " + (e.message || e), "err");
+  }
+}
+
+// ---- Member management (owner/admin) ---------------------------------
+function fbMember(memberUid) {
+  return (state.fb.members || []).find(m => m.id === memberUid) || null;
+}
+async function approveMember(memberUid) {
+  if (!fbCan("manageMembers")) return;
+  const m = fbMember(memberUid); if (!m) return;
+  try {
+    await window.fbApi.updateMember(state.fb.clubId, memberUid, { status: "active" });
+    await fbAudit("member.approve", "member", memberUid, { status: "pending" }, { status: "active", name: m.name });
+    setToast(`${m.name || "Member"} approved.`, "ok");
+  } catch (e) { setToast("Approve failed (admins can't approve admins): " + (e.message || e), "err"); }
+}
+async function declineMember(memberUid) {
+  if (!fbCan("manageMembers")) return;
+  const m = fbMember(memberUid); if (!m) return;
+  if (!confirm(`Decline ${m.name || "this request"}?`)) return;
+  try {
+    await window.fbApi.removeMember(state.fb.clubId, memberUid);
+    await fbAudit("member.decline", "member", memberUid, { name: m.name, role: m.role }, null);
+    setToast("Request declined.", "ok");
+  } catch (e) { setToast("Decline failed: " + (e.message || e), "err"); }
+}
+async function changeMemberRole(memberUid, role) {
+  if (!fbCan("manageMembers")) return;
+  const m = fbMember(memberUid); if (!m || m.role === role) return;
+  try {
+    await window.fbApi.updateMember(state.fb.clubId, memberUid, { role });
+    await fbAudit("member.role", "member", memberUid, { role: m.role }, { role, name: m.name });
+    setToast(`Role changed to ${role}.`, "ok");
+  } catch (e) {
+    setToast("Role change failed (only the owner can grant admin): " + (e.message || e), "err");
+    renderClubsView();   // revert the select to the real value
+  }
+}
+async function suspendMember(memberUid) {
+  if (!fbCan("manageMembers")) return;
+  const m = fbMember(memberUid); if (!m) return;
+  if (!confirm(`Suspend ${m.name || "this member"}? They keep their account but lose access until reactivated.`)) return;
+  try {
+    await window.fbApi.updateMember(state.fb.clubId, memberUid, { status: "suspended" });
+    await fbAudit("member.suspend", "member", memberUid, { status: m.status, name: m.name }, { status: "suspended" });
+    setToast("Member suspended.", "ok");
+  } catch (e) { setToast("Suspend failed: " + (e.message || e), "err"); }
+}
+async function reactivateMember(memberUid) {
+  if (!fbCan("manageMembers")) return;
+  const m = fbMember(memberUid); if (!m) return;
+  try {
+    await window.fbApi.updateMember(state.fb.clubId, memberUid, { status: "active" });
+    await fbAudit("member.reactivate", "member", memberUid, { status: "suspended", name: m.name }, { status: "active" });
+    setToast("Member reactivated.", "ok");
+  } catch (e) { setToast("Reactivate failed: " + (e.message || e), "err"); }
+}
+async function removeMemberConfirm(memberUid) {
+  if (!fbCan("manageMembers")) return;
+  const m = fbMember(memberUid); if (!m) return;
+  if (!confirm(`Remove ${m.name || "this member"} from the club? They'll need a new invite to rejoin.`)) return;
+  try {
+    await window.fbApi.removeMember(state.fb.clubId, memberUid);
+    await fbAudit("member.remove", "member", memberUid, { name: m.name, role: m.role }, null);
+    setToast("Member removed.", "ok");
+  } catch (e) { setToast("Remove failed: " + (e.message || e), "err"); }
+}
+
+// ---- Link a member to a roster athlete -------------------------------
+let _linkingMemberUid = null;
+function openLinkAthlete(memberUid) {
+  if (!fbCan("manageMembers")) return;
+  _linkingMemberUid = memberUid;
+  const m = fbMember(memberUid);
+  document.getElementById("linkAthleteTitle").textContent =
+    `Link ${(m && m.name) || "member"} to an athlete`;
+  const sel = document.getElementById("linkAthleteSelect");
+  sel.innerHTML = `<option value="">— None (unlink) —</option>`;
+  const sorted = (state.club.athletes || []).slice()
+    .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  for (const a of sorted) {
+    const o = document.createElement("option");
+    o.value = a.id; o.textContent = a.name || "(unnamed)";
+    if (m && m.linkedAthleteId === a.id) o.selected = true;
+    sel.appendChild(o);
+  }
+  document.getElementById("linkAthleteModal").classList.add("open");
+}
+function closeLinkAthlete() {
+  document.getElementById("linkAthleteModal").classList.remove("open");
+  _linkingMemberUid = null;
+}
+async function confirmLinkAthlete() {
+  if (!_linkingMemberUid) return;
+  const memberUid = _linkingMemberUid;
+  const m = fbMember(memberUid);
+  const athleteId = document.getElementById("linkAthleteSelect").value || null;
+  try {
+    await window.fbApi.updateMember(state.fb.clubId, memberUid, {
+      linkedAthleteId: athleteId, canBeSeated: !!athleteId,
+    });
+    // Mirror the link onto the athlete doc (athletes write = coach+).
+    if (athleteId) {
+      const a = findAthlete(athleteId);
+      if (a) { a.linkedUid = memberUid; await fbPushAthlete(a); }
+    }
+    await fbAudit("member.link", "member", memberUid,
+      { linkedAthleteId: (m && m.linkedAthleteId) || null },
+      { linkedAthleteId: athleteId, name: m && m.name });
+    setToast(athleteId ? "Member linked to athlete." : "Member unlinked.", "ok");
+    closeLinkAthlete();
+  } catch (e) { setToast("Link failed: " + (e.message || e), "err"); }
+}
+
+// ---- Athlete self-service (own availability) -------------------------
+function fbAssignedLineupsForAthlete(athleteId) {
+  return (state.club.lineups || []).filter(l =>
+    l.coxId === athleteId || (l.seats || []).some(s => s.athleteId === athleteId));
+}
+function fbSeatLabelFor(l, athleteId) {
+  if (l.coxId === athleteId) return "Cox";
+  const seat = (l.seats || []).find(s => s.athleteId === athleteId);
+  if (!seat) return "";
+  return "Seat " + (seat.seat != null ? seat.seat : "?");
+}
+async function saveMyAvailability() {
+  const athleteId = state.fb.membership && state.fb.membership.linkedAthleteId;
+  if (!athleteId) { setToast("You're not linked to a roster athlete yet.", "warn"); return; }
+  const date = document.getElementById("athleteAvailDate").value;
+  const status = document.getElementById("athleteAvailStatus").value;
+  if (!date) { setToast("Pick a date.", "warn"); return; }
+  const entryId = athleteId + "__" + date;
+  try {
+    await window.fbApi.setAvailability(state.fb.clubId, entryId, {
+      date, athleteId, status, byUid: state.fb.user.uid,
+    });
+    setToast("Availability saved.", "ok");
+  } catch (e) { setToast("Save failed: " + (e.message || e), "err"); }
+}
+
+// ---- Role-based UI gating + new-pane renderers -----------------------
+function applyClubRoleGating() {
+  const fb = fbActive();
+  const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? "" : "none"; };
+  const tabShow = (section, on) => {
+    const t = document.querySelector(`#clubsView .club-tab[data-section="${section}"]`);
+    if (t) t.style.display = on ? "" : "none";
+  };
+  // Members / Activity / Invite are cloud-only surfaces — hidden in
+  // local single-user mode even though fbCan() is permissive there.
+  const activeMember = fb && fbStatus() === "active";
+  tabShow("members",  activeMember);
+  tabShow("activity", fb && fbCan("viewAudit"));
+
+  const canRoster  = fbCan("editRoster");
+  const canLineups = fbCan("editLineups");
+  const canClub    = fbCan("editClub");
+  show("newLineupBtn", canLineups);  show("overviewNewLineupBtn", canLineups);
+  show("newAthleteBtn", canRoster);  show("overviewNewAthleteBtn", canRoster);
+  show("newShellBtn", canClub);      show("overviewNewShellBtn", canClub);
+  show("newOarSetBtn", canClub);
+  show("newTeamBtn", canClub);
+  show("inviteMembersBtn", fb && fbCan("manageMembers"));
+
+  const nameEl = document.getElementById("clubName");
+  const subEl  = document.getElementById("clubSubtitle");
+  if (nameEl) nameEl.readOnly = fb && !canClub;
+  if (subEl)  subEl.readOnly  = fb && !canClub;
+
+  const view = document.getElementById("clubsView");
+  if (view) view.classList.toggle("club-readonly", fb && !canLineups && !canRoster);
+}
+
+function fbRoleRank(role) {
+  return ({ owner: 0, admin: 1, coach: 2, athlete: 3 })[role] != null
+    ? ({ owner: 0, admin: 1, coach: 2, athlete: 3 })[role] : 9;
+}
+function renderMembersPane() {
+  const activeWrap = document.getElementById("membersActiveList");
+  if (!activeWrap) return;
+  const canManage = fbCan("manageMembers");
+  const members = state.fb.members || [];
+  const ownerUid = (members.find(m => m.role === "owner") || {}).id;
+
+  // Pending requests (manager-only section)
+  const pendings = members.filter(m => m.status === "pending");
+  const pendSection = document.getElementById("membersPendingWrap");
+  if (pendSection) pendSection.style.display = (canManage && pendings.length) ? "" : "none";
+  const pendWrap = document.getElementById("membersPendingList");
+  if (pendWrap) {
+    pendWrap.innerHTML = "";
+    for (const m of pendings) {
+      const row = document.createElement("div");
+      row.className = "club-row";
+      row.innerHTML = `
+        <div class="cr-main">
+          <div class="cr-title">${fbEsc(m.name || m.id)}</div>
+          <div class="cr-sub">wants to join as ${fbEsc(m.role)}</div>
+        </div>`;
+      const act = document.createElement("div");
+      act.className = "cr-actions";
+      const ap = document.createElement("button");
+      ap.className = "accent"; ap.textContent = "Approve";
+      // Only the owner can approve an admin-role joiner (rules cap).
+      if (m.role === "admin" && !fbCan("inviteAdmin")) {
+        ap.disabled = true;
+        ap.title = "Only the club owner can approve an admin.";
+      } else {
+        ap.onclick = () => approveMember(m.id);
+      }
+      const dc = document.createElement("button");
+      dc.textContent = "Decline";
+      dc.onclick = () => declineMember(m.id);
+      act.appendChild(ap); act.appendChild(dc);
+      row.appendChild(act);
+      pendWrap.appendChild(row);
+    }
+  }
+
+  // Active / suspended members
+  activeWrap.innerHTML = "";
+  const others = members.filter(m => m.status !== "pending")
+    .sort((a, b) => (fbRoleRank(a.role) - fbRoleRank(b.role)) ||
+                    (a.name || "").localeCompare(b.name || ""));
+  if (!others.length) {
+    activeWrap.innerHTML = `<div class="cr-empty">No active members yet.</div>`;
+    return;
+  }
+  for (const m of others) {
+    const row = document.createElement("div");
+    row.className = "club-row";
+    const linked = m.linkedAthleteId ? findAthlete(m.linkedAthleteId) : null;
+    const badges = `<span class="role-badge role-${fbEsc(m.role)}">${fbEsc(m.role)}</span>` +
+      (m.status === "suspended" ? ` <span class="role-badge role-suspended">suspended</span>` : "");
+    row.innerHTML = `
+      <div class="cr-main">
+        <div class="cr-title">${fbEsc(m.name || m.id)} ${badges}</div>
+        <div class="cr-sub">${linked ? "↔ " + fbEsc(linked.name) : (m.canBeSeated ? "seatable" : "not seatable")}</div>
+      </div>`;
+    // Manager controls — never on the owner's own row.
+    if (canManage && m.role !== "owner" && m.id !== ownerUid) {
+      const act = document.createElement("div");
+      act.className = "cr-actions";
+      const roleSel = document.createElement("select");
+      roleSel.className = "fc-mini-select";
+      const roleOpts = fbCan("inviteAdmin") ? ["athlete", "coach", "admin"] : ["athlete", "coach"];
+      for (const r of roleOpts) {
+        const o = document.createElement("option");
+        o.value = r; o.textContent = r;
+        if (m.role === r) o.selected = true;
+        roleSel.appendChild(o);
+      }
+      roleSel.onchange = () => changeMemberRole(m.id, roleSel.value);
+      const link = document.createElement("button");
+      link.textContent = linked ? "Re-link" : "Link";
+      link.onclick = () => openLinkAthlete(m.id);
+      const susp = document.createElement("button");
+      if (m.status === "suspended") { susp.textContent = "Reactivate"; susp.onclick = () => reactivateMember(m.id); }
+      else { susp.textContent = "Suspend"; susp.onclick = () => suspendMember(m.id); }
+      const rem = document.createElement("button");
+      rem.className = "danger"; rem.textContent = "Remove";
+      rem.onclick = () => removeMemberConfirm(m.id);
+      act.appendChild(roleSel); act.appendChild(link);
+      act.appendChild(susp); act.appendChild(rem);
+      row.appendChild(act);
+    }
+    activeWrap.appendChild(row);
+  }
+}
+
+function fbAuditLabel(a) {
+  const map = {
+    "member.approve": "Approved member", "member.decline": "Declined request",
+    "member.role": "Changed role", "member.suspend": "Suspended member",
+    "member.reactivate": "Reactivated member", "member.remove": "Removed member",
+    "member.link": "Linked athlete", "invite.create": "Created invite",
+    "invite.revoke": "Revoked invite",
+  };
+  let s = map[a.action] || a.action;
+  const who = a.after && a.after.name;
+  if (who) s += ` · ${who}`;
+  if (a.action === "member.role" && a.after && a.after.role) s += ` → ${a.after.role}`;
+  if (a.action === "invite.create" && a.after && a.after.role) s += ` (${a.after.role})`;
+  return s;
+}
+function renderActivityPane() {
+  const wrap = document.getElementById("auditList");
+  if (!wrap) return;
+  if (!fbCan("viewAudit")) {
+    wrap.innerHTML = `<div class="cr-empty">Only owners and admins can view activity.</div>`;
+    return;
+  }
+  const list = state.fb.audit || [];
+  if (!list.length) { wrap.innerHTML = `<div class="cr-empty">No activity recorded yet.</div>`; return; }
+  wrap.innerHTML = "";
+  for (const a of list) {
+    const when = (a.createdAt && a.createdAt.toMillis) ? a.createdAt.toMillis() : null;
+    const row = document.createElement("div");
+    row.className = "club-row";
+    row.innerHTML = `
+      <div class="cr-main">
+        <div class="cr-title">${fbEsc(fbAuditLabel(a))}</div>
+        <div class="cr-sub">${fbEsc(a.actorName || a.actorUid || "")}${when ? " · " + fbFmtDateTime(when) : ""}</div>
+      </div>`;
+    wrap.appendChild(row);
+  }
+}
+
+function renderAthleteHome() {
+  const card = document.getElementById("athleteHomeCard");
+  if (!card) return;
+  const isAthlete = fbActive() && fbRole() === "athlete" && fbStatus() === "active";
+  card.style.display = isAthlete ? "" : "none";
+  const hint = document.querySelector('#clubsView .club-pane[data-pane="overview"] .club-hint');
+  if (hint) hint.style.display = isAthlete ? "none" : "";
+  if (!isAthlete) return;
+
+  const athleteId = state.fb.membership && state.fb.membership.linkedAthleteId;
+  const al = document.getElementById("athleteAssignedLineups");
+  if (al) {
+    if (!athleteId) {
+      al.innerHTML = `<div class="cr-empty">A coach hasn't linked you to a roster athlete yet.</div>`;
+    } else {
+      const lus = fbAssignedLineupsForAthlete(athleteId);
+      if (!lus.length) { al.innerHTML = `<div class="cr-empty">No lineups assigned to you yet.</div>`; }
+      else {
+        al.innerHTML = "";
+        for (const l of lus) {
+          const row = document.createElement("div");
+          row.className = "club-row";
+          row.innerHTML = `
+            <div class="cr-main">
+              <div class="cr-title">${fbEsc(l.name || fbBoatLabel(l))}</div>
+              <div class="cr-sub">${fbEsc(l.date || "")}${l.date ? " · " : ""}${fbEsc(fbSeatLabelFor(l, athleteId))}</div>
+            </div>`;
+          al.appendChild(row);
+        }
+      }
+    }
+  }
+  const d = document.getElementById("athleteAvailDate");
+  if (d && !d.value) d.value = todayISODate();
+  const sb = document.getElementById("saveAvailBtn");
+  if (sb) sb.disabled = !athleteId;
+
+  const ah = document.getElementById("athleteAvailHistory");
+  if (ah) {
+    const mine = (state.fb.availability || [])
+      .filter(x => x.athleteId === athleteId)
+      .sort((a, b) => (a.date < b.date ? 1 : -1));
+    if (!mine.length) { ah.innerHTML = `<div class="cr-empty">No availability marked yet.</div>`; }
+    else {
+      ah.innerHTML = "";
+      for (const e of mine.slice(0, 12)) {
+        const av = AVAILABILITY[e.status] || { label: e.status };
+        const row = document.createElement("div");
+        row.className = "club-row";
+        row.innerHTML = `
+          <div class="cr-main">
+            <div class="cr-title">${fbEsc(e.date)}</div>
+            <div class="cr-sub">${fbEsc(av.label || e.status)}</div>
+          </div>`;
+        ah.appendChild(row);
+      }
+    }
+  }
+}
+
 // ----- Sync status chip in the clubs view header --------------------
 function renderFbSyncChip() {
   const chip = document.getElementById("fbSyncChip");
@@ -7178,9 +8471,19 @@ function renderFbSyncChip() {
     return;
   }
   const synced = !!state.fb.clubId;
+  if (synced && fbStatus() === "pending") {
+    chip.className = "fc-mini-btn fb-sync-chip warn";
+    chip.innerHTML = `☁ Awaiting approval`;
+    chip.title = "Your join request is waiting for a coach to approve. Click to sign out.";
+    chip.onclick = fbSignOutClick;
+    return;
+  }
+  const roleTag = (synced && state.fb.membership && state.fb.membership.role &&
+                   state.fb.membership.role !== "owner")
+    ? ` · ${state.fb.membership.role}` : "";
   chip.className = "fc-mini-btn fb-sync-chip " + (synced ? "on" : "warn");
   chip.innerHTML = synced
-    ? `☁ Synced · ${u.displayName || u.email || "you"}`
+    ? `☁ Synced · ${u.displayName || u.email || "you"}${roleTag}`
     : `☁ ${u.displayName || u.email || "signed in"} (no cloud club)`;
   chip.title = synced
     ? "Cloud sync is active. Click to sign out."
@@ -7219,8 +8522,23 @@ function renderClubsView() {
   document.getElementById("clubName").value     = state.club.name || "";
   document.getElementById("clubSubtitle").value = state.club.subtitle || "";
 
-  // Tab + pane visibility
-  const section = state.clubSection || "overview";
+  // Awaiting-approval gate: a 'pending' member can't read the club, so
+  // hide the tabs + panes and show the notice instead.
+  const pending = fbActive() && fbStatus() === "pending";
+  const pendNotice = document.getElementById("clubPendingNotice");
+  const content    = document.querySelector("#clubsView .club-content");
+  const tabStrip   = document.querySelector("#clubsView .club-tabs");
+  if (pendNotice) pendNotice.style.display = pending ? "" : "none";
+  if (content)    content.style.display    = pending ? "none" : "";
+  if (tabStrip)   tabStrip.style.display   = pending ? "none" : "";
+  if (pending) { applyClubRoleGating(); renderFbSyncChip(); return; }
+
+  // Resolve the active section, falling back to Overview if the current
+  // tab isn't visible for this role (e.g. an athlete on 'activity').
+  let section = state.clubSection || "overview";
+  const tabEl = document.querySelector(`#clubsView .club-tab[data-section="${section}"]`);
+  if (tabEl && tabEl.style.display === "none") section = "overview";
+
   document.querySelectorAll("#clubsView .club-tab").forEach(t => {
     t.classList.toggle("active", t.dataset.section === section);
   });
@@ -7236,6 +8554,10 @@ function renderClubsView() {
   renderShellList();
   renderOarSetList();
   renderTeamList();
+  renderMembersPane();
+  renderActivityPane();
+  renderAthleteHome();
+  applyClubRoleGating();
   renderFbSyncChip();
 }
 
@@ -7307,7 +8629,12 @@ function renderLineupList() {
     row.querySelector('[data-act="del"]').addEventListener("click", () => {
       if (confirm(`Delete lineup "${l.name || "Untitled"}"?`)) {
         state.club.lineups = state.club.lineups.filter(x => x.id !== l.id);
-        persistClubAndRerender();
+        // Lineups are a subcollection — delete the remote doc directly;
+        // routing through persistClub() would only rewrite the club doc
+        // and the lineup would resurrect from its untouched subcoll doc.
+        if (fbActive()) { persistClubLocalOnly(); fbDeleteLineupRemote(l.id); }
+        else            { persistClub(); }
+        renderClubsView();
       }
     });
     c.appendChild(row);
@@ -7380,11 +8707,10 @@ function renderShellList() {
           ${s.weight ? " · " + (s.weight === "lwt" ? "Lightweight" : "Open") : ""}
         </div>
       </div>
-      <div class="cr-actions">
-        <button data-act="edit">Edit</button>
-      </div>
+      ${fbCan("editClub") ? `<div class="cr-actions"><button data-act="edit">Edit</button></div>` : ``}
     `;
-    row.querySelector('[data-act="edit"]').addEventListener("click", () => openShellEditor(s.id));
+    const _eb = row.querySelector('[data-act="edit"]');
+    if (_eb) _eb.addEventListener("click", () => openShellEditor(s.id));
     c.appendChild(row);
   }
 }
@@ -7413,11 +8739,10 @@ function renderOarSetList() {
           ${bc.label || "—"}
         </div>
       </div>
-      <div class="cr-actions">
-        <button data-act="edit">Edit</button>
-      </div>
+      ${fbCan("editClub") ? `<div class="cr-actions"><button data-act="edit">Edit</button></div>` : ``}
     `;
-    row.querySelector('[data-act="edit"]').addEventListener("click", () => openOarSetEditor(o.id));
+    const _eb = row.querySelector('[data-act="edit"]');
+    if (_eb) _eb.addEventListener("click", () => openOarSetEditor(o.id));
     c.appendChild(row);
   }
 }
@@ -7446,14 +8771,16 @@ function renderTeamList() {
             ${squads.length ? " · " + squads.length + " squad" + (squads.length === 1 ? "" : "s") : ""}
           </div>
         </div>
-        <div class="cr-actions">
+        ${fbCan("editClub") ? `<div class="cr-actions">
           <button data-act="add-squad">+ Squad</button>
           <button data-act="edit">Edit team</button>
-        </div>
+        </div>` : ``}
       </div>
     `;
-    wrap.querySelector('[data-act="edit"]').addEventListener("click", () => openTeamEditor(t.id));
-    wrap.querySelector('[data-act="add-squad"]').addEventListener("click", () => openSquadEditor(null, t.id));
+    const _te = wrap.querySelector('[data-act="edit"]');
+    if (_te) _te.addEventListener("click", () => openTeamEditor(t.id));
+    const _ta = wrap.querySelector('[data-act="add-squad"]');
+    if (_ta) _ta.addEventListener("click", () => openSquadEditor(null, t.id));
     // Squad sub-rows
     if (squads.length) {
       const sl = document.createElement("div");
@@ -7468,11 +8795,10 @@ function renderTeamList() {
             <div class="cr-title">${sq.name || "(unnamed)"}</div>
             <div class="cr-sub">${sqMembers} athlete${sqMembers === 1 ? "" : "s"}</div>
           </div>
-          <div class="cr-actions">
-            <button data-act="edit-squad">Edit</button>
-          </div>
+          ${fbCan("editClub") ? `<div class="cr-actions"><button data-act="edit-squad">Edit</button></div>` : ``}
         `;
-        sr.querySelector('[data-act="edit-squad"]').addEventListener("click", () => openSquadEditor(sq.id));
+        const _se = sr.querySelector('[data-act="edit-squad"]');
+        if (_se) _se.addEventListener("click", () => openSquadEditor(sq.id));
         sl.appendChild(sr);
       }
       wrap.appendChild(sl);
@@ -7486,6 +8812,7 @@ function renderTeamList() {
 // =====================================================================
 let _editingAthleteId = null;
 function openAthleteEditor(id) {
+  if (fbActive() && !fbCan("editRoster")) { setToast("You don't have permission to edit the roster.", "warn"); return; }
   _editingAthleteId = id || null;
   const a = id ? findAthlete(id) : null;
   document.getElementById("athleteModalTitle").textContent =
@@ -7545,6 +8872,9 @@ function closeAthleteEditor() {
   _editingAthleteId = null;
 }
 function saveAthleteFromForm() {
+  if (fbActive() && !fbCan("editRoster")) {
+    setToast("You don't have permission to edit the roster.", "warn"); return;
+  }
   const name = document.getElementById("athleteName").value.trim();
   if (!name) { setToast("Athlete needs a name.", "warn"); return; }
   const teamIds  = Array.from(document.querySelectorAll("#athleteTeams .chk.active"))
@@ -7560,28 +8890,44 @@ function saveAthleteFromForm() {
     teamIds,
     squadIds,
   };
+  let target;
   if (_editingAthleteId) {
-    const a = findAthlete(_editingAthleteId);
-    if (a) Object.assign(a, payload);
+    target = findAthlete(_editingAthleteId);
+    if (target) Object.assign(target, payload);
   } else {
-    state.club.athletes.push({ id: uid(), ...payload });
+    target = { id: uid(), ...payload };
+    state.club.athletes.push(target);
   }
-  persistClub();
+  // Cloud club → write the athlete to its subcollection doc (so coaches
+  // can edit the roster without club-doc write access). Local → the
+  // whole-club persist path.
+  if (fbActive()) { persistClubLocalOnly(); fbPushAthlete(target); }
+  else            { persistClub(); }
   closeAthleteEditor();
   renderClubsView();
 }
 function deleteAthlete() {
   if (!_editingAthleteId) return;
+  if (fbActive() && !fbCan("editRoster")) {
+    setToast("You don't have permission to edit the roster.", "warn"); return;
+  }
   const a = findAthlete(_editingAthleteId);
   if (!a) return;
   if (!confirm(`Remove "${a.name}" from the roster?`)) return;
-  // Also remove them from any lineup seats they currently occupy.
+  // Also free any lineup seats they currently occupy.
+  const changedLineups = [];
   for (const l of state.club.lineups) {
-    if (l.coxId === a.id) l.coxId = null;
-    for (const s of (l.seats || [])) if (s.athleteId === a.id) s.athleteId = null;
+    let changed = false;
+    if (l.coxId === a.id) { l.coxId = null; changed = true; }
+    for (const s of (l.seats || [])) if (s.athleteId === a.id) { s.athleteId = null; changed = true; }
+    if (changed) changedLineups.push(l);
   }
   state.club.athletes = state.club.athletes.filter(x => x.id !== a.id);
-  persistClub();
+  if (fbActive()) {
+    persistClubLocalOnly();
+    fbDeleteAthleteRemote(a.id);
+    for (const l of changedLineups) fbPushLineup(l);
+  } else { persistClub(); }
   closeAthleteEditor();
   renderClubsView();
 }
@@ -7591,6 +8937,7 @@ function deleteAthlete() {
 // =====================================================================
 let _editingShellId = null;
 function openShellEditor(id) {
+  if (fbActive() && !fbCan("editClub")) { setToast("Only owners and admins can edit equipment.", "warn"); return; }
   _editingShellId = id || null;
   const s = id ? findShell(id) : null;
   document.getElementById("shellModalTitle").textContent =
@@ -7648,6 +8995,7 @@ function deleteShell() {
 // =====================================================================
 let _editingTeamId = null;
 function openTeamEditor(id) {
+  if (fbActive() && !fbCan("editClub")) { setToast("Only owners and admins can edit teams.", "warn"); return; }
   _editingTeamId = id || null;
   const t = id ? findTeam(id) : null;
   document.getElementById("teamModalTitle").textContent =
@@ -7683,16 +9031,28 @@ function deleteTeam() {
   const lostSquadIds = state.club.squads
     .filter(s => s.teamId === _editingTeamId).map(s => s.id);
   state.club.squads = state.club.squads.filter(s => s.teamId !== _editingTeamId);
+  const changedAthletes = [];
   for (const a of state.club.athletes) {
+    const bt = (a.teamIds || []).length, bs = (a.squadIds || []).length;
     a.teamIds  = (a.teamIds  || []).filter(id => id !== _editingTeamId);
     a.squadIds = (a.squadIds || []).filter(id => !lostSquadIds.includes(id));
+    if (a.teamIds.length !== bt || a.squadIds.length !== bs) changedAthletes.push(a);
   }
+  const changedLineups = [];
   for (const l of state.club.lineups) {
-    if (l.teamId === _editingTeamId) l.teamId = null;
-    if (lostSquadIds.includes(l.squadId)) l.squadId = null;
+    let ch = false;
+    if (l.teamId === _editingTeamId) { l.teamId = null; ch = true; }
+    if (lostSquadIds.includes(l.squadId)) { l.squadId = null; ch = true; }
+    if (ch) changedLineups.push(l);
   }
   state.club.teams = state.club.teams.filter(t => t.id !== _editingTeamId);
+  // persistClub() pushes the club doc (teams/squads arrays); the athlete
+  // and lineup edits live in subcollections and must be pushed per-doc.
   persistClub();
+  if (fbActive()) {
+    for (const a of changedAthletes) fbPushAthlete(a);
+    for (const l of changedLineups)  fbPushLineup(l);
+  }
   closeTeamEditor();
   renderClubsView();
 }
@@ -7702,6 +9062,7 @@ function deleteTeam() {
 // =====================================================================
 let _editingOarSetId = null;
 function openOarSetEditor(id) {
+  if (fbActive() && !fbCan("editClub")) { setToast("Only owners and admins can edit equipment.", "warn"); return; }
   _editingOarSetId = id || null;
   const o = id ? findOarSet(id) : null;
   document.getElementById("oarSetModalTitle").textContent =
@@ -7759,6 +9120,7 @@ function deleteOarSet() {
 // =====================================================================
 let _editingSquadId = null;
 function openSquadEditor(id, parentTeamId) {
+  if (fbActive() && !fbCan("editClub")) { setToast("Only owners and admins can edit teams.", "warn"); return; }
   _editingSquadId = id || null;
   const sq = id ? findSquad(id) : null;
   document.getElementById("squadModalTitle").textContent =
@@ -7811,12 +9173,20 @@ function saveSquadFromForm() {
 function deleteSquad() {
   if (!_editingSquadId) return;
   if (!confirm("Remove this squad? Athletes stay; they'll just lose the squad tag.")) return;
+  const changedAthletes = [];
   for (const a of state.club.athletes) {
+    const before = (a.squadIds || []).length;
     a.squadIds = (a.squadIds || []).filter(id => id !== _editingSquadId);
+    if (a.squadIds.length !== before) changedAthletes.push(a);
   }
-  for (const l of state.club.lineups) if (l.squadId === _editingSquadId) l.squadId = null;
+  const changedLineups = [];
+  for (const l of state.club.lineups) if (l.squadId === _editingSquadId) { l.squadId = null; changedLineups.push(l); }
   state.club.squads = state.club.squads.filter(s => s.id !== _editingSquadId);
   persistClub();
+  if (fbActive()) {
+    for (const a of changedAthletes) fbPushAthlete(a);
+    for (const l of changedLineups)  fbPushLineup(l);
+  }
   closeSquadEditor();
   renderClubsView();
 }
@@ -7842,6 +9212,7 @@ function emptySeatsFor(boatClass) {
 }
 
 function openLineupBuilder(id) {
+  if (fbActive() && !fbCan("editLineups")) { setToast("You don't have permission to edit lineups.", "warn"); return; }
   state.editingLineupId = id || null;
   const l = id ? findLineup(id) : null;
   document.getElementById("lineupModalTitle").textContent =
@@ -11535,6 +12906,25 @@ document.addEventListener("DOMContentLoaded", () => {
   renderAccountChip();
   showView("home");
 
+  // Deep-link join: ?join=CODE&club=CLUBID. Deferred so the modal
+  // button listeners (wired later in this same callback) are bound and
+  // auth has a moment to restore an existing session. The query string
+  // is stripped first so a reload or bookmark won't re-fire the join.
+  (function () {
+    let qs;
+    try { qs = new URLSearchParams(location.search); } catch (e) { return; }
+    const code = qs.get("join");
+    const clubId = qs.get("club");
+    if (code && clubId) {
+      // Arm the join intent NOW (synchronously) so that if auth restores
+      // a session in the meantime, onFbAuthChanged won't pop its
+      // "upload your local club" prompt over the join.
+      state.fb._joining = true;
+      try { history.replaceState(null, "", location.origin + location.pathname); } catch (e) {}
+      setTimeout(() => handleJoinDeepLink(code, clubId), 900);
+    }
+  })();
+
   // Register the PWA service worker so the page is installable on
   // Android / desktop Chrome / Edge as a real app. Best-effort —
   // anything that fails here doesn't affect normal operation.
@@ -11769,6 +13159,21 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("newClubName").addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); confirmCreateClub(); }
   });
+
+  // Multi-coach club client (v1.11.0) — invites, join, member linking,
+  // athlete availability.
+  document.getElementById("inviteMembersBtn")    .addEventListener("click", openInviteModal);
+  document.getElementById("confirmCreateInviteBtn").addEventListener("click", confirmCreateInvite);
+  document.getElementById("closeInviteBtn")      .addEventListener("click", closeInviteModal);
+  document.getElementById("copyInviteLinkBtn")   .addEventListener("click", () =>
+    fbCopy(document.getElementById("inviteLinkField").value, "Invite link copied."));
+  document.getElementById("copyInviteCodeBtn")   .addEventListener("click", () =>
+    fbCopy(document.getElementById("inviteCodeField").value, "Join code copied."));
+  document.getElementById("confirmJoinRemoteBtn").addEventListener("click", confirmJoinRemote);
+  document.getElementById("cancelJoinRemoteBtn") .addEventListener("click", closeJoinConfirm);
+  document.getElementById("confirmLinkAthleteBtn").addEventListener("click", confirmLinkAthlete);
+  document.getElementById("cancelLinkAthleteBtn").addEventListener("click", closeLinkAthlete);
+  document.getElementById("saveAvailBtn")        .addEventListener("click", saveMyAvailability);
 
   // Header copies of the workout-panel buttons (always available
   // while in the monitor view, including when "just rowing" with no

@@ -40,7 +40,7 @@ name:            string             // display
 inviteCode:      string             // the invite the join was made with (proof; validated by rules at create)
 joinedAt, invitedBy
 ```
-Access: read = active members or self · **join** = self-create as `pending`, **`linkedAthleteId` must be null**, and the row must carry a valid `inviteCode` whose role == the requested role (rules `get()` the invite and check exists/not-revoked/not-expired/role-match — this is the only enforcement point on Spark) · approve/role-change/suspend/link = owner/admin (admins can't touch owner, can't mint admins, can't set owner) · remove = owner/admin.
+Access: read = active members or self · **create** has exactly two legitimate paths: (a) the club **owner bootstraps** their own `owner`/`active` row right after creating the club doc (only the real `ownerId` satisfies `isOwner()`, and only for their own uid); (b) a **join** = self-create as `pending`, with **`linkedAthleteId` must be null**, carrying a valid `inviteCode` whose role == the requested role (rules `get()` the invite and check exists/not-revoked/not-expired/role-match — the only enforcement point on Spark) · approve/role-change/suspend/link = owner/admin (admins can't touch owner, can't mint admins, can't set owner) · remove = owner/admin.
 
 ### `clubs/{clubId}/athletes/{athleteId}`
 ```

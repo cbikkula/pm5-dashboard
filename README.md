@@ -60,6 +60,12 @@ The part I'd want a reviewer to see first:
 
 ## Screenshots
 
+### Live monitor — real-time telemetry
+
+> The headline feature: a live PM5 dashboard over Web Bluetooth. Force curve (live‑vs‑best overlay), drive/recovery ratio, stroke rate, pace, split, watts, drag factor, distance, and heart rate — 48 metrics in all, arranged per focus preset. *(Shown here in Demo Mode against synthetic stroke data, so every screen is explorable without hardware.)*
+
+![Live monitor with real-time stroke metrics](docs/screenshots/live-monitor.png)
+
 ### Home menu
 
 > Three-column grid of action cards. The active Drive sync session and global workout counter sit at the bottom.
@@ -131,6 +137,10 @@ The part I'd want a reviewer to see first:
 
 ![Lineup builder](docs/screenshots/club-lineup-builder.png)
 
+**Invite & approval flow** — generate a role-scoped share link or join code with an expiry. New members join as **pending** and must be approved before they can read anything; invites are listed for management and can be revoked at any time. Invite validity is re-checked by the Firestore rules *on the join write itself* — the client can't bypass it.
+
+![Invite and approval flow](docs/screenshots/club-invite-flow.png)
+
 **Members panel** — pending join requests (Approve / Decline), active members with role badges, and per-member controls (promote to Admin, suspend, remove, link to roster athlete).
 
 ![Members panel](docs/screenshots/club-members.png)
@@ -138,6 +148,14 @@ The part I'd want a reviewer to see first:
 **Activity log** — append-only audit trail of every administrative action (approvals, role changes, invites). Nobody — not even the owner — can edit or delete entries; enforced by the Firestore rules.
 
 ![Activity log](docs/screenshots/club-activity.png)
+
+**Athlete view** — what a linked athlete sees: their seat assignments across upcoming lineups (read-only) and a self-service control to mark their own availability. An athlete can't touch lineups, equipment, or other members — only their *own* availability, and only once a coach has linked them to a roster entry. All enforced by the rules.
+
+![Athlete assignment view](docs/screenshots/athlete-assignment-view.png)
+
+**Danger zone** — destructive actions are deliberately hard. Deleting a club is a five-step gauntlet that ends in typing the club's exact name; for a cloud club it spells out that every coach and athlete loses access and the entire activity log is destroyed.
+
+![Club danger zone — guarded delete](docs/screenshots/club-danger-zone.png)
 
 ---
 

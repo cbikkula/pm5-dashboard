@@ -96,6 +96,9 @@ function load() {
     "importSessionsFromText", "mergeHistory", "SESSION_SCHEMA_VERSION",
     "resampleCurve", "FC_SAMPLES",
     "fmtTime", "fmtPace", "fmtInt",
+    // v1.12 — rowing lineup-readiness engine
+    "evaluateLineupReadiness", "emptySeatsFor", "BOAT_CLASSES", "AVAILABILITY",
+    "sideToken", "seatRole",
   ];
   const shim = "\n;globalThis.__APP = {" +
     exposed.map((n) => `${n}: (typeof ${n}!=="undefined"?${n}:undefined)`).join(",") +

@@ -151,6 +151,103 @@ if (app.importSessionsFromText) {
 }
 
 // ---------------------------------------------------------------------
+// 9. Lineup readiness engine (v1.12) — pure rowing validation.
+// ---------------------------------------------------------------------
+group("lineup readiness");
+if (app.evaluateLineupReadiness && app.emptySeatsFor && app.BOAT_CLASSES) {
+  const E = app.evaluateLineupReadiness;
+  const seatsFor = app.emptySeatsFor;
+  const codesOf = (r) => r.issues.map((i) => i.code);
+  const has = (r, code) => codesOf(r).includes(code);
+  const blocks = (r) => r.issues.filter((i) => i.severity === "block");
+
+  const athletes = [
+    { id: "p1", name: "Port One",  side: "port" },      { id: "p2", name: "Port Two",   side: "port" },
+    { id: "p3", name: "Port Three", side: "port" },     { id: "p4", name: "Port Four",  side: "port" },
+    { id: "s1", name: "Star One",  side: "starboard" }, { id: "s2", name: "Star Two",   side: "starboard" },
+    { id: "s3", name: "Star Three", side: "starboard" },{ id: "s4", name: "Star Four",  side: "starboard" },
+    { id: "cox", name: "Cox One", side: "cox" },
+    { id: "sc1", name: "Scull One", side: "scull" }, { id: "sc2", name: "Scull Two", side: "scull" },
+    { id: "sc3", name: "Scull Three", side: "scull" }, { id: "sc4", name: "Scull Four", side: "scull" },
+    { id: "inj", name: "Hurt One", side: "port", availability: "injured" },
+  ];
+  // 8 side-flexible athletes for the balance test (no mismatch noise).
+  for (let i = 1; i <= 8; i++) athletes.push({ id: "x" + i, name: "Flex " + i, side: "any" });
+  const shells = [
+    { id: "sh8", name: "Eight",   boatClass: "8+" }, { id: "sh4p", name: "CoxFour", boatClass: "4+" },
+    { id: "sh2", name: "Pair",    boatClass: "2-" }, { id: "sh4x", name: "Quad",    boatClass: "4x" },
+  ];
+  const oars = [
+    { id: "sweep4",  name: "Sweep4",  type: "sweep", boatClass: "4-" },
+    { id: "scull4",  name: "Scull4",  type: "scull", boatClass: "4x" },
+    { id: "sweep2",  name: "Sweep2",  type: "sweep", boatClass: "2-" },
+    { id: "sweep8",  name: "Sweep8",  type: "sweep", boatClass: "8+" },
+    { id: "sweep4p", name: "Sweep4+", type: "sweep", boatClass: "4+" },
+  ];
+  const ctx = (lineups) => ({ athletes, shells, oarSets: oars, lineups: lineups || [], boatClasses: app.BOAT_CLASSES });
+  const fill = (boatClass, ids) => {
+    const seats = seatsFor(boatClass);
+    for (let i = 0; i < seats.length && i < ids.length; i++) seats[i].athleteId = ids[i];
+    return seats;
+  };
+  let r;
+
+  // 1) 8+ missing coxswain
+  r = E({ boatClass: "8+", seats: fill("8+", ["p1","s1","p2","s2","p3","s3","p4","s4"]), coxId: null }, ctx());
+  ok("8+ no cox flags no-cox", has(r, "no-cox"));
+  ok("8+ no cox is not 'ready'", r.level !== "ready");
+
+  // 2) 4x with sweep oars → blocking oar-type mismatch
+  r = E({ boatClass: "4x", seats: fill("4x", ["sc1","sc2","sc3","sc4"]), oarSetId: "sweep4" }, ctx());
+  ok("4x + sweep oars blocks (oar-type)", blocks(r).some((i) => i.code === "oar-type"));
+
+  // 3) 2- with sculling oars → blocking oar-type mismatch
+  r = E({ boatClass: "2-", seats: fill("2-", ["p1","s1"]), oarSetId: "scull4" }, ctx());
+  ok("2- + scull oars blocks (oar-type)", blocks(r).some((i) => i.code === "oar-type"));
+
+  // 4) duplicate athlete in one lineup
+  r = E({ boatClass: "2-", seats: fill("2-", ["p1","p1"]) }, ctx());
+  ok("duplicate athlete blocks (duplicate)", blocks(r).some((i) => i.code === "duplicate"));
+
+  // 5) athlete double-booked across active lineups (same day)
+  const lA = { id: "A", name: "Varsity A", boatClass: "2-", date: "2026-07-01", status: "planned", seats: fill("2-", ["p1","s1"]) };
+  const lB = { id: "B", name: "Varsity B", boatClass: "2-", date: "2026-07-01", status: "planned", seats: fill("2-", ["p1","s2"]) };
+  r = E(lA, ctx([lA, lB]));
+  ok("double-booked athlete blocks (double-booked)", blocks(r).some((i) => i.code === "double-booked"));
+
+  // 6) side imbalance in an 8+ (5 P / 3 S), flexible rowers so only imbalance fires
+  const imb = fill("8+", ["x1","x2","x3","x4","x5","x6","x7","x8"]);
+  ["port","port","port","port","port","starboard","starboard","starboard"].forEach((sd, i) => imb[i].side = sd);
+  r = E({ boatClass: "8+", seats: imb, coxId: "cox" }, ctx());
+  ok("8+ 5P/3S flags side-imbalance", has(r, "side-imbalance"));
+  ok("flexible rowers cause no side-mismatch", !has(r, "side-mismatch"));
+
+  // 7) port rower in a starboard seat → side-mismatch
+  const sm = seatsFor("2-");       // seat[0]=stroke(port rig), seat[1]=bow(starboard rig)
+  sm[1].athleteId = "p1";          // a Port rower sitting in the Starboard seat
+  r = E({ boatClass: "2-", seats: sm }, ctx());
+  ok("P rower in S seat flags side-mismatch", has(r, "side-mismatch"));
+
+  // 8) sculling boat must NOT use sweep side-balance/mismatch logic
+  r = E({ boatClass: "4x", seats: fill("4x", ["sc1","sc2","sc3","sc4"]), oarSetId: "scull4", shellId: "sh4x" }, ctx());
+  ok("4x has no side-imbalance", !has(r, "side-imbalance"));
+  ok("4x has no side-mismatch", !has(r, "side-mismatch"));
+
+  // 9) a complete, correct lineup → no blocking issues, level 'ready'
+  r = E({ boatClass: "4+", seats: fill("4+", ["p1","s1","p2","s2"]), coxId: "cox",
+          shellId: "sh4p", oarSetId: "sweep4p", notes: "Long through the front end.",
+          status: "confirmed", date: "2026-07-02" }, ctx());
+  ok("ready 4+ has zero blocking issues", blocks(r).length === 0);
+  ok("ready 4+ level is 'ready'", r.level === "ready");
+
+  // bonus) injured rower blocks; shell class mismatch blocks
+  r = E({ boatClass: "2-", seats: fill("2-", ["inj","s1"]) }, ctx());
+  ok("injured rower blocks (injured)", blocks(r).some((i) => i.code === "injured"));
+  r = E({ boatClass: "8+", seats: fill("8+", ["p1","s1","p2","s2","p3","s3","p4","s4"]), coxId: "cox", shellId: "sh4p" }, ctx());
+  ok("wrong-class shell blocks (shell-class)", blocks(r).some((i) => i.code === "shell-class"));
+}
+
+// ---------------------------------------------------------------------
 // 8. Bundle-size guard (#25) — keep the single file under budget.
 // ---------------------------------------------------------------------
 group("bundle size");

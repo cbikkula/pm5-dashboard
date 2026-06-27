@@ -36,6 +36,7 @@ To pull the next item: open a chat with me and say `do backlog #N`. I'll build i
 | 28 | ✅ done v1.8.0 | Performance monitor                    | Hidden devtools panel — render time, packet rate, memory |
 | 29 | ✅ done v1.7.0 | Session history filters                | Date range, distance, PR-only, has-HR, has-force-curve |
 | 30 | ✅ done v1.7.0 | Export raw JSON                        | Single-session JSON with full metadata + force curves |
+| 31 | ✅ done v1.12.0 | Lineup readiness + rowing intelligence | Pure readiness engine (Ready / Needs attention / Blocked), upgraded stroke→bow seat map, equipment validation (sweep/scull + boat class), compact P/S notation, rowing-specific copy/export + athlete view. *Partial down-payment on L9 (crew compatibility) and L11 (rigging).* |
 
 ## Long-term roadmap
 

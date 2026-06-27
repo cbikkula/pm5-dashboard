@@ -44,7 +44,9 @@ Access: read = active members or self · **create** has exactly two legitimate p
 
 ### `clubs/{clubId}/athletes/{athleteId}`
 ```
-name, side, weightClass
+name:        string
+side:        port | starboard | both | scull | cox | any   // "both" = bisweptual (rows P & S); UI shows compact P / S / P/S / Scull / Cox / Any
+weightClass: open | lwt
 teams: [teamId], squads: [squadId]
 defaultAvailability: available | absent | injured | limited | land-training | race-only
 linkedUid: uid | null
@@ -52,7 +54,15 @@ linkedUid: uid | null
 Access: read = active members · write = owner/admin/coach.
 
 ### `clubs/{clubId}/lineups/{lineupId}`
-(Existing Phase-1 lineup shape.) Access: read = active members · write = owner/admin/coach.
+```
+name, boatClass, date, kind (practice|race), status (planned|confirmed|done)
+shellId, oarSetId, teamId, squadId, assignedPlanId, coxId
+seats: [{ seat, athleteId, side }]   // stored stroke→bow; seat == boatClass.seats = Stroke, seat 1 = Bow
+notes, updatedAt, createdAt
+```
+Access: read = active members · write = owner/admin/coach.
+
+**Lineup readiness** *(v1.12 — computed, not stored):* `evaluateLineupReadiness(lineup, ctx)` is a pure function over the club's athletes / shells / oarSets / lineups returning a **Ready / Needs attention / Blocked** verdict plus an issue list (cox present, seat count, duplicate athletes, same-day double-booking across active lineups, availability, side mismatch + sweep balance, shell-class, oar sweep/scull + class). It adds **no persisted fields**, so the Firestore rules are unchanged.
 
 ### `clubs/{clubId}/availability/{entryId}`
 ```

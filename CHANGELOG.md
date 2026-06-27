@@ -11,6 +11,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Session replay
 - AI technique analysis (peak-timing trends)
 
+## [v1.12.0] — June 2026 — Lineup Readiness + Rowing Intelligence
+
+Made the lineup builder feel like a real rowing tool. A new pure **readiness engine** (`evaluateLineupReadiness`) scores every boat **Ready / Needs attention / Blocked** and is the single source of truth behind the builder panel, the lineup-list chip, copy/export, and the athlete view.
+
+- **Readiness panel** in the builder — checks coxswain presence, seat count, duplicate athletes, athletes double-booked across other active same-day lineups, availability, side mismatch + sweep side-balance, shell-class and oar (sweep/scull + class) compatibility, plus soft notes/status nudges. Every issue is `block` / `warn` / `info`; the verdict is the worst severity present (e.g. *"Needs attention — 2 issues: no coxswain assigned, 5 P / 3 S"*).
+- **Equipment intelligence** — an 8+ needs an 8+ shell; a 4x needs sculling oars; a 2- rejects sculling oars; sculling boats skip port/starboard logic entirely.
+- **Better seat map** — stroke→bow, Stroke/Bow labelled, a compact side badge per seat, empty-seat and side-mismatch highlighting, and quick rower-profile hints (preferred side, weight, availability, linked-member).
+- **Compact rowing notation everywhere** — P / S / P/S / Scull / Cox / Any in badges, the seat map, warnings, copy/export and the athlete view. New athlete **"Both sides (P/S)"** option for bisweptual rowers; full words kept in `title`/aria for accessibility.
+- **Coach copy/export** — a clean, rowing-specific lineup message (stroke→bow, sides, cox, notes) with an auto-generated **Warnings** section from the same engine.
+- **Athlete view** — rowing-specific wording: *"You're rowing 6-seat — S"*, stroke/cox names, and the coach note.
+- **Tests** — 15 new assertions for the pure readiness logic (44 total, all green). Firestore rules unchanged — the engine is pure client logic over existing club data.
+
 ## [v1.11.4] — June 2026 — Club UI polish + docs for review
 
 A design pass on the new club UI (driven by a multi-dimension UI audit) plus a documentation refresh aimed at portfolio/review readers.

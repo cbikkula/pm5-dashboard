@@ -1559,7 +1559,7 @@
   }
   .seat-row {
     display: grid;
-    grid-template-columns: 70px 1fr 110px;
+    grid-template-columns: 64px 1fr auto;
     align-items: center;
     gap: 10px;
     background: var(--bg-base);
@@ -1631,6 +1631,73 @@
     background: rgba(255, 95, 95, 0.10);
     border-color: rgba(255, 95, 95, 0.45);
     color: #ff8080;
+  }
+
+  /* ---- Lineup readiness panel (v1.12) ---- */
+  .readiness {
+    margin-top: 10px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--bg-base); padding: 10px 12px;
+  }
+  .readiness .rd-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .rd-badge {
+    font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 999px; border: 1px solid; white-space: nowrap;
+  }
+  .rd-badge.ready     { color: #66d39a; border-color: rgba(102,211,154,.5); background: rgba(102,211,154,.10); }
+  .rd-badge.attention { color: #ffcc55; border-color: rgba(255,204,85,.5);  background: rgba(255,204,85,.10); }
+  .rd-badge.blocked   { color: #ff8080; border-color: rgba(255,95,95,.5);   background: rgba(255,95,95,.10); }
+  .readiness .rd-summary { font-size: 12.5px; color: var(--text); font-weight: 600; }
+  .readiness .rd-side {
+    font-size: 11.5px; color: var(--text-dim); letter-spacing: .5px; margin-top: 6px;
+  }
+  .readiness .rd-list { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .rd-issue {
+    font-size: 12px; padding: 5px 10px; border-radius: 7px; border: 1px solid transparent;
+    display: flex; gap: 7px; align-items: flex-start;
+  }
+  .rd-issue .rd-ic { font-weight: 800; flex: 0 0 auto; }
+  .rd-issue.block { background: rgba(255,95,95,.08);  border-color: rgba(255,95,95,.4);  color: #ff8080; }
+  .rd-issue.warn  { background: rgba(255,204,85,.08); border-color: rgba(255,204,85,.4); color: #ffcc55; }
+  .rd-issue.info  { background: var(--bg-panel); border-color: var(--border); color: var(--text-muted); }
+
+  /* readiness chip on lineup-list cards */
+  .rd-chip {
+    font-size: 10px; font-weight: 800; letter-spacing: .5px; padding: 2px 7px;
+    border-radius: 999px; border: 1px solid; text-transform: uppercase; white-space: nowrap;
+  }
+  .rd-chip.ready     { color: #66d39a; border-color: rgba(102,211,154,.5); }
+  .rd-chip.attention { color: #ffcc55; border-color: rgba(255,204,85,.5); }
+  .rd-chip.blocked   { color: #ff8080; border-color: rgba(255,95,95,.5); }
+
+  /* ---- Seat map enhancements (v1.12) ---- */
+  .seat-row.empty    { border-style: dashed; }
+  .seat-row.mismatch { border-color: rgba(255,204,85,.6); box-shadow: inset 3px 0 0 #ffcc55; }
+  .seat-row .seat-num .stroke-mark { color: var(--accent); }
+  .seat-row .seat-pick { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .seat-row .seat-hints { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+  .seat-badge {
+    font-size: 10px; font-weight: 700; letter-spacing: .4px; padding: 1px 6px;
+    border-radius: 999px; border: 1px solid var(--border); color: var(--text-muted);
+    background: var(--bg-panel); white-space: nowrap;
+  }
+  .seat-badge.side    { color: var(--text-dim); }
+  .seat-badge.miss    { color: #ffcc55; border-color: rgba(255,204,85,.5); }
+  .seat-badge.av-warn { color: #ffcc55; border-color: rgba(255,204,85,.5); }
+  .seat-badge.av-err  { color: #ff8080; border-color: rgba(255,95,95,.5); }
+  .seat-badge.empty-hint { color: var(--text-muted); border-style: dashed; }
+  .seat-row .scull-chip {
+    font-size: 10.5px; font-weight: 700; color: var(--text-dim);
+    padding: 4px 9px; border: 1px solid var(--border); border-radius: 999px;
+  }
+
+  /* ---- Mobile polish for the lineup builder (v1.12) ---- */
+  @media (max-width: 560px) {
+    .seat-row { grid-template-columns: 50px 1fr; }
+    .seat-row .seat-side { grid-column: 1 / -1; justify-content: flex-start; }
+    .readiness .rd-head { gap: 6px; }
+    .rd-issue { font-size: 11.5px; }
+    #lineupModal .modal-buttons { flex-wrap: wrap; }
+    #lineupModal .modal-buttons button { flex: 1 1 auto; }
   }
 
   /* Athlete-editor "Teams" multi-check row */
@@ -3829,11 +3896,12 @@
       <label class="lm-field">
         <span class="lm-label">Default side</span>
         <select id="athleteSide">
-          <option value="any">Any / Both</option>
-          <option value="port">Port</option>
-          <option value="starboard">Starboard</option>
+          <option value="port">Port (P)</option>
+          <option value="starboard">Starboard (S)</option>
+          <option value="both">Both sides (P/S)</option>
           <option value="scull">Sculler</option>
           <option value="cox">Coxswain</option>
+          <option value="any">Any / unsure</option>
         </select>
       </label>
       <label class="lm-field">
@@ -4621,7 +4689,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.11.4";
+const APP_VERSION = "1.12.0";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 const SESSION_SCHEMA_VERSION = 2;
@@ -7540,6 +7608,160 @@ const BOAT_CLASSES = {
 };
 const BOAT_CLASS_KEYS = ["1x","2x","2-","2+","4x","4-","4+","8+"];
 
+// =====================================================================
+// Rowing notation + lineup-readiness engine (v1.12.0)
+// Compact side notation is used everywhere in the lineup UI:
+//   Port = P · Starboard = S · Both sides = P/S · Scull · Cox · Any.
+// Full words are kept only for title/aria labels (accessibility).
+// =====================================================================
+const SIDE_TOKENS = { port: "P", starboard: "S", both: "P/S", scull: "Scull", cox: "Cox", any: "Any" };
+const SIDE_FULL   = { port: "Port", starboard: "Starboard", both: "Bisweptual (rows P & S)",
+                      scull: "Sculler", cox: "Coxswain", any: "Any side" };
+function sideToken(side) { return SIDE_TOKENS[side] || "Any"; }
+function sideFull(side)  { return SIDE_FULL[side]  || "Any side"; }
+// A rower has a *fixed* sweep side only if declared port/starboard.
+// both / any / scull / cox never trigger a side-mismatch.
+function fixedSweepSide(a) { return a && (a.side === "port" || a.side === "starboard") ? a.side : null; }
+// Seat role within the boat: stroke = highest seat #, bow = 1, else the number.
+function seatRole(seatNum, bc) {
+  if (bc && seatNum === bc.seats) return "Stroke";
+  if (seatNum === 1) return "Bow";
+  return String(seatNum);
+}
+// Natural phrase for athlete-facing copy: "Stroke seat", "Bow seat", "6-seat".
+function seatPhrase(seatNum, bc) {
+  const r = seatRole(seatNum, bc);
+  return (r === "Stroke" || r === "Bow") ? r + " seat" : r + "-seat";
+}
+
+// Pure, DOM-free lineup-readiness engine — the single source of truth for
+// the builder panel, the lineup-list chip, copy/export, and the athlete view.
+// It never throws on partial data and never mutates its inputs.
+//
+//   lineup: { id, name, boatClass, seats:[{seat,athleteId,side}], coxId,
+//             shellId, oarSetId, notes, status, date }
+//   ctx:    { athletes, shells, oarSets, lineups, boatClasses? }
+//   →  { level:'ready'|'attention'|'blocked', summary, issues:[{severity,code,text}],
+//        counts:{port,starboard,filled,empty,seats}, sweep, cox }
+function evaluateLineupReadiness(lineup, ctx) {
+  lineup = lineup || {};
+  ctx = ctx || {};
+  const BC       = ctx.boatClasses || (typeof BOAT_CLASSES !== "undefined" ? BOAT_CLASSES : {});
+  const AVAIL    = (typeof AVAILABILITY !== "undefined") ? AVAILABILITY : {};
+  const athletes = ctx.athletes || [];
+  const shells   = ctx.shells   || [];
+  const oarSets  = ctx.oarSets  || [];
+  const lineups  = ctx.lineups  || [];
+  const find = (arr, id) => arr.find(x => x && x.id === id) || null;
+  const ath  = (id) => find(athletes, id);
+  const clsLabel   = (k) => (BC[k] && BC[k].label) || k || "";
+  const availLabel = (s) => (AVAIL[s] && AVAIL[s].label) || s;
+
+  const bc = BC[lineup.boatClass] ||
+             { label: lineup.boatClass || "boat", seats: 0, cox: false, sweep: false };
+  const seats = Array.isArray(lineup.seats) ? lineup.seats : [];
+  const issues = [];
+  const add = (severity, code, text) => issues.push({ severity, code, text });
+
+  // ---- seat completeness -------------------------------------------
+  const filled = seats.filter(s => s && s.athleteId).length;
+  const empty  = Math.max(0, bc.seats - filled);
+  if (empty > 0)
+    add("warn", "empty-seats", `${empty} empty seat${empty === 1 ? "" : "s"} — a ${bc.label} needs ${bc.seats}.`);
+
+  // ---- coxswain -----------------------------------------------------
+  if (bc.cox && !lineup.coxId) add("warn", "no-cox", "No coxswain assigned.");
+  if (bc.cox && lineup.coxId && seats.some(s => s && s.athleteId === lineup.coxId))
+    add("block", "cox-also-rowing", `${ath(lineup.coxId)?.name || "Cox"} is set as both Cox and a rowing seat.`);
+
+  // ---- duplicate athletes in this boat ------------------------------
+  const seen = new Map();
+  for (const s of seats) if (s && s.athleteId) seen.set(s.athleteId, (seen.get(s.athleteId) || 0) + 1);
+  for (const [aid, n] of seen) if (n > 1)
+    add("block", "duplicate", `${ath(aid)?.name || "Athlete"} is in ${n} seats of this boat.`);
+
+  // ---- cross-lineup conflicts (same day, active lineups) ------------
+  const shell = find(shells, lineup.shellId);
+  const oar   = find(oarSets, lineup.oarSetId);
+  const mine = new Set(seats.map(s => s && s.athleteId).filter(Boolean));
+  if (lineup.coxId) mine.add(lineup.coxId);
+  if (lineup.date) {
+    for (const other of lineups) {
+      if (!other || other.id === lineup.id || other.status === "done" || other.date !== lineup.date) continue;
+      const people = new Set((other.seats || []).map(s => s && s.athleteId).filter(Boolean));
+      if (other.coxId) people.add(other.coxId);
+      for (const aid of mine) if (people.has(aid))
+        add("block", "double-booked", `${ath(aid)?.name || "Athlete"} is also in "${other.name || "another lineup"}" on ${other.date}.`);
+      if (lineup.shellId && other.shellId === lineup.shellId)
+        add("block", "shell-booked", `Shell "${shell?.name || ""}" is already booked for "${other.name}" on ${other.date}.`);
+      if (lineup.oarSetId && other.oarSetId === lineup.oarSetId)
+        add("block", "oars-booked", `Oars "${oar?.name || ""}" already booked for "${other.name}" on ${other.date}.`);
+    }
+  }
+
+  // ---- availability -------------------------------------------------
+  const checkAvail = (aid, role) => {
+    const a = ath(aid); if (!a) return;
+    const st = a.availability || "available";
+    if (st === "available") return;
+    if (st === "injured") add("block", "injured", `${a.name} (${role}) is marked Injured.`);
+    else add("warn", "availability", `${a.name} (${role}) is marked ${availLabel(st)}.`);
+  };
+  for (const s of seats) if (s && s.athleteId) checkAvail(s.athleteId, seatRole(s.seat, bc));
+  if (lineup.coxId) checkAvail(lineup.coxId, "Cox");
+
+  // ---- side checks — SWEEP ONLY (sculling has no rig side) ----------
+  let port = 0, starboard = 0;
+  if (bc.sweep) {
+    for (const s of seats) {
+      if (!s || !s.athleteId) continue;
+      if (s.side === "port") port++; else if (s.side === "starboard") starboard++;
+      const a = ath(s.athleteId);
+      const fx = fixedSweepSide(a);
+      if (fx && s.side && s.side !== "any" && fx !== s.side)
+        add("warn", "side-mismatch", `${a.name}: ${sideToken(fx)} rower in a ${sideToken(s.side)} seat.`);
+    }
+    const need = bc.seats / 2;
+    if (filled === bc.seats && (port !== need || starboard !== need))
+      add("warn", "side-imbalance", `Side imbalance: ${port} P / ${starboard} S (need ${need} of each).`);
+  }
+
+  // ---- equipment intelligence --------------------------------------
+  if (!lineup.shellId) add("warn", "no-shell", "No shell selected.");
+  else if (shell && shell.boatClass && shell.boatClass !== lineup.boatClass)
+    add("block", "shell-class", `Shell "${shell.name}" is a ${clsLabel(shell.boatClass)}, not a ${bc.label}.`);
+  const expectOar = bc.sweep ? "sweep" : "scull";
+  if (!lineup.oarSetId) add("warn", "no-oars", "No oar set selected.");
+  else if (oar) {
+    if (oar.type && oar.type !== expectOar)
+      add("block", "oar-type", `${oar.name} is ${oar.type} oars — a ${bc.label} needs ${expectOar} oars.`);
+    else if (oar.boatClass && oar.boatClass !== lineup.boatClass)
+      add("warn", "oar-class", `${oar.name} is rigged for a ${clsLabel(oar.boatClass)} (compatible, different class).`);
+  }
+
+  // ---- workflow niceties (informational, never downgrade readiness) -
+  if (!lineup.notes || !String(lineup.notes).trim()) add("info", "no-notes", "No coach notes yet.");
+  if (!lineup.status) add("info", "no-status", "No status set (defaults to Planned).");
+
+  // ---- level + human summary ---------------------------------------
+  const hasBlock = issues.some(i => i.severity === "block");
+  const hasWarn  = issues.some(i => i.severity === "warn");
+  const level = hasBlock ? "blocked" : (hasWarn ? "attention" : "ready");
+  const actionable = issues.filter(i => i.severity !== "info");
+  let summary;
+  if (level === "ready") summary = "Ready to launch.";
+  else {
+    const head = level === "blocked" ? "Blocked" : "Needs attention";
+    const brief = actionable.slice(0, 2).map(i => i.text.replace(/\.$/, "")).join(", ");
+    summary = `${head} — ${actionable.length} issue${actionable.length === 1 ? "" : "s"}${brief ? ": " + brief : ""}.`;
+  }
+  return {
+    level, summary, issues,
+    counts: { port, starboard, filled, empty, seats: bc.seats },
+    sweep: !!bc.sweep, cox: !!bc.cox,
+  };
+}
+
 function clubKey(userId)   { return `pm5_club_${userId || state.user.id}`; }
 
 function loadClub() {
@@ -8583,12 +8805,30 @@ function renderAthleteHome() {
       else {
         al.innerHTML = "";
         for (const l of lus) {
+          const bc = BOAT_CLASSES[l.boatClass] || { seats: 0, sweep: false, cox: false };
+          const isCox = l.coxId === athleteId;
+          const seat = (l.seats || []).find(s => s.athleteId === athleteId);
+          // Rowing-specific "what am I doing" line.
+          let assign, assignTitle = "";
+          if (isCox) { assign = "Cox"; assignTitle = "Coxswain"; }
+          else if (seat) {
+            const sideBit = (bc.sweep && seat.side && seat.side !== "any") ? ` — ${sideToken(seat.side)}` : "";
+            assign = `${seatPhrase(seat.seat, bc)}${sideBit}`;
+            assignTitle = (bc.sweep && seat.side && seat.side !== "any") ? sideFull(seat.side) : "";
+          } else assign = "In this boat";
+          const strokeSeat = (l.seats || []).find(s => s.seat === bc.seats);
+          const strokeA = strokeSeat ? findAthlete(strokeSeat.athleteId) : null;
+          const cox = l.coxId ? findAthlete(l.coxId) : null;
+          const meta = [`<b>You're rowing:</b> <span title="${fbEsc(assignTitle)}">${fbEsc(assign)}</span>`];
+          if (strokeA && !isCox) meta.push(`Stroke seat: ${fbEsc(strokeA.name)}`);
+          if (bc.cox) meta.push(`Cox: ${cox ? fbEsc(cox.name) : "TBD"}`);
+          if (l.notes && String(l.notes).trim()) meta.push(`Coach note: ${fbEsc(String(l.notes).trim())}`);
           const row = document.createElement("div");
           row.className = "club-row";
           row.innerHTML = `
             <div class="cr-main">
-              <div class="cr-title">${fbEsc(l.name || fbBoatLabel(l))}</div>
-              <div class="cr-sub">${fbEsc(l.date || "")}${l.date ? " · " : ""}${fbEsc(fbSeatLabelFor(l, athleteId))}</div>
+              <div class="cr-title">${fbEsc(l.name || fbBoatLabel(l))}${l.date ? ` · <span style="font-weight:400;color:var(--text-dim);">${fbEsc(l.date)}</span>` : ""}</div>
+              <div class="cr-sub">${meta.join("<br>")}</div>
             </div>`;
           al.appendChild(row);
         }
@@ -8903,6 +9143,8 @@ function renderLineupList() {
     const filled = (l.seats || []).filter(s => s.athleteId).length;
     const total  = bc.seats || 0;
     const statusMap = { planned: "PLANNED", confirmed: "CONFIRMED", done: "DONE" };
+    const rd = evaluateLineupReadiness(l, lineupReadinessCtx());
+    const rdLabel = rd.level === "ready" ? "Ready" : rd.level === "blocked" ? "Blocked" : "Attention";
     row.innerHTML = `
       <div class="cr-icon">🛶</div>
       <div class="cr-main">
@@ -8915,6 +9157,7 @@ function renderLineupList() {
           ${l.date ? " · " + l.date : ""}
         </div>
       </div>
+      <span class="rd-chip ${rd.level}" title="${fbEsc(rd.summary)}">${rdLabel}</span>
       <span class="cr-tag">${statusMap[l.status] || "PLANNED"}</span>
       <div class="cr-actions">
         <button data-act="edit">Edit</button>
@@ -8950,8 +9193,8 @@ function renderRosterList() {
   }
   const sorted = state.club.athletes.slice().sort((a, b) =>
     (a.name || "").localeCompare(b.name || ""));
-  const sideIcon = { port: "◀", starboard: "▶", scull: "◀▶", cox: "🎤", any: "·" };
-  const sideLabel = { port: "Port", starboard: "Starboard", scull: "Sculler", cox: "Coxswain", any: "Any" };
+  const sideIcon = { port: "◀", starboard: "▶", both: "◀▶", scull: "◀▶", cox: "🎤", any: "·" };
+  const sideLabel = { port: "P", starboard: "S", both: "P/S", scull: "Scull", cox: "Cox", any: "Any" };
   for (const a of sorted) {
     const row = document.createElement("div");
     row.className = "club-row";
@@ -9636,6 +9879,14 @@ function refillSquadsForTeam(teamId, selectedId) {
   sel.value = selectedId || "";
 }
 
+// True if any active club member is linked to this athlete (Firebase mode).
+// In single-user / local mode there are no members, so this is always false
+// and the "linked member" hint simply doesn't show.
+function memberLinkedToAthlete(athleteId) {
+  return !!(state.fb && Array.isArray(state.fb.members) &&
+            state.fb.members.some(m => m && m.linkedAthleteId === athleteId && m.status !== "removed"));
+}
+
 // Re-render the seat grid + cox row from state._builderSeats /
 // state._builderCoxId. Called whenever the boat class changes or
 // any seat is reassigned.
@@ -9654,8 +9905,8 @@ function renderSeatGrid() {
     coxSel.innerHTML = `<option value="">— Pick coxswain —</option>`;
     for (const a of state.club.athletes) {
       const o = document.createElement("option");
-      o.value = a.id; o.textContent = a.name +
-        (a.side === "cox" ? " (cox)" : "");
+      o.value = a.id;
+      o.textContent = a.name + (a.side === "cox" ? " · Cox" : "");
       coxSel.appendChild(o);
     }
     coxSel.value = state._builderCoxId || "";
@@ -9664,62 +9915,85 @@ function renderSeatGrid() {
     state._builderCoxId = null;
   }
 
-  // Build seat rows. seat index 0 → stroke, etc.
+  // Scope the available athletes to the selected squad if one's picked
+  // (coaches usually build lineups one squad at a time). If no squad is
+  // picked, show everyone. Unavailable athletes stay listed with status.
+  const squadId = document.getElementById("lineupSquad")?.value || "";
+  const eligible = squadId
+    ? state.club.athletes.filter(a => (a.squadIds || []).includes(squadId))
+    : state.club.athletes;
+
+  // Build seat rows, stroke → bow (storage is already stroke-first).
   for (let i = 0; i < (state._builderSeats || []).length; i++) {
     const seat = state._builderSeats[i];
+    const assigned = seat.athleteId ? findAthlete(seat.athleteId) : null;
+    const fixed = fixedSweepSide(assigned);
+    const mismatch = bc.sweep && fixed && seat.side && seat.side !== "any" && fixed !== seat.side;
+
     const row = document.createElement("div");
-    row.className = "seat-row" + (bc.sweep ? "" : " scull");
+    row.className = "seat-row" + (bc.sweep ? "" : " scull")
+      + (assigned ? "" : " empty") + (mismatch ? " mismatch" : "");
+
+    // Seat label — stroke (accented) / bow / number.
     let seatLabel;
-    if (seat.seat === bc.seats)       seatLabel = `Stroke <span class="seat-tag">(${seat.seat})</span>`;
-    else if (seat.seat === 1)         seatLabel = `Bow <span class="seat-tag">(1)</span>`;
-    else                              seatLabel = `${seat.seat}`;
+    if (seat.seat === bc.seats) seatLabel = `<span class="stroke-mark">Stroke</span> <span class="seat-tag">(${seat.seat})</span>`;
+    else if (seat.seat === 1)   seatLabel = `Bow <span class="seat-tag">(1)</span>`;
+    else                        seatLabel = `${seat.seat}`;
 
-    // Scope the available athletes to the selected squad if one's
-    // picked (coaches usually build lineups one squad at a time).
-    // If no squad picked, show everyone in the club. Either way,
-    // unavailable athletes stay listed but get their status shown.
-    const squadId = document.getElementById("lineupSquad")?.value || "";
-    const eligible = squadId
-      ? state.club.athletes.filter(a => (a.squadIds || []).includes(squadId))
-      : state.club.athletes;
-    const selOpts = [`<option value="">— empty —</option>`];
-    for (const a of eligible) {
-      if (a.side === "cox") continue;
-      const sideTag = a.side && a.side !== "any" ? ` (${a.side.charAt(0).toUpperCase()})` : "";
+    // Athlete dropdown — compact side + availability per option.
+    const optFor = (a, extra) => {
+      const sideTag = a.side && a.side !== "any" ? ` · ${sideToken(a.side)}` : "";
       const avTag = athleteUnavailable(a)
-        ? `  · ${(AVAILABILITY[a.availability]||{}).label || a.availability}`
-        : "";
-      selOpts.push(`<option value="${a.id}" ${a.id === seat.athleteId ? "selected" : ""}>${a.name}${sideTag}${avTag}</option>`);
-    }
-    // If the currently-assigned athlete falls outside the squad
-    // filter, keep them visible (they were assigned before the filter
-    // applied) so the dropdown shows their name instead of blank.
-    if (seat.athleteId && !eligible.some(a => a.id === seat.athleteId)) {
-      const a = findAthlete(seat.athleteId);
-      if (a) {
-        const sideTag = a.side && a.side !== "any" ? ` (${a.side.charAt(0).toUpperCase()})` : "";
-        selOpts.splice(1, 0,
-          `<option value="${a.id}" selected>${a.name}${sideTag}  · outside squad</option>`);
+        ? ` · ${(AVAILABILITY[a.availability] || {}).label || a.availability}` : "";
+      return `<option value="${a.id}" ${a.id === seat.athleteId ? "selected" : ""}>${fbEsc(a.name)}${sideTag}${avTag}${extra || ""}</option>`;
+    };
+    const selOpts = [`<option value="">— empty —</option>`];
+    for (const a of eligible) { if (a.side === "cox") continue; selOpts.push(optFor(a)); }
+    // Keep an out-of-squad assignee visible so the dropdown isn't blank.
+    if (seat.athleteId && assigned && !eligible.some(a => a.id === seat.athleteId))
+      selOpts.splice(1, 0, optFor(assigned, " · outside squad"));
+
+    // Rower profile hint badges — quick coach readability.
+    let hints;
+    if (assigned) {
+      const b = [];
+      if (assigned.side && assigned.side !== "any")
+        b.push(`<span class="seat-badge side${mismatch ? " miss" : ""}" title="Prefers ${fbEsc(sideFull(assigned.side))}">${sideToken(assigned.side)}</span>`);
+      if (assigned.weight === "lwt") b.push(`<span class="seat-badge" title="Lightweight">Lwt</span>`);
+      if (athleteUnavailable(assigned)) {
+        const av = AVAILABILITY[assigned.availability] || { label: assigned.availability };
+        b.push(`<span class="seat-badge av-${assigned.availability === "injured" ? "err" : "warn"}">${fbEsc(av.label)}</span>`);
       }
+      if (memberLinkedToAthlete(assigned.id))
+        b.push(`<span class="seat-badge" title="Has a linked club account">✓ member</span>`);
+      hints = b.join("");
+    } else {
+      hints = `<span class="seat-badge empty-hint">empty</span>`;
     }
 
-    const pills = sides.map(s =>
-      `<span class="side-pill ${seat.side === s ? "active" : ""}" data-side="${s}">${s.toUpperCase()}</span>`
-    ).join("");
+    // Seat side control — P/S pills for sweep, a "Scull" chip for sculling.
+    const sideControl = bc.sweep
+      ? `<div class="seat-side" data-seat-idx="${i}">` + sides.map(s =>
+          `<span class="side-pill ${seat.side === s ? "active" : ""}" data-side="${s}" title="${fbEsc(sideFull(s))}">${sideToken(s)}</span>`
+        ).join("") + `</div>`
+      : `<div class="seat-side"><span class="scull-chip" title="Sculling — no port/starboard side">Scull</span></div>`;
 
     row.innerHTML = `
       <div class="seat-num">${seatLabel}</div>
-      <select data-seat-idx="${i}">${selOpts.join("")}</select>
-      <div class="seat-side" data-seat-idx="${i}">${pills}</div>
+      <div class="seat-pick">
+        <select data-seat-idx="${i}">${selOpts.join("")}</select>
+        <div class="seat-hints">${hints}</div>
+      </div>
+      ${sideControl}
     `;
     row.querySelector("select").addEventListener("change", (e) => {
       state._builderSeats[i].athleteId = e.target.value || null;
-      renderLineupWarnings();
+      renderSeatGrid();   // refresh hints + mismatch highlight + readiness
     });
     row.querySelectorAll(".side-pill").forEach(p => {
       p.addEventListener("click", () => {
         state._builderSeats[i].side = p.dataset.side;
-        renderSeatGrid();   // re-render so the active pill flips
+        renderSeatGrid();
       });
     });
     grid.appendChild(row);
@@ -9728,125 +10002,64 @@ function renderSeatGrid() {
   renderLineupWarnings();
 }
 
-// Validate the in-progress lineup and surface any soft warnings.
+// Club-data context for the readiness engine — shared by the builder
+// panel, the lineup-list chip, and copy/export.
+function lineupReadinessCtx() {
+  return {
+    athletes:    state.club.athletes,
+    shells:      state.club.shells,
+    oarSets:     state.club.oarSets,
+    lineups:     state.club.lineups,
+    boatClasses: BOAT_CLASSES,
+  };
+}
+
+// Snapshot the in-progress builder form as a lineup-shaped object.
+function builderDraftLineup() {
+  return {
+    id:        state.editingLineupId || null,
+    name:      document.getElementById("lineupName")?.value || "",
+    boatClass: document.getElementById("lineupBoatClass").value,
+    seats:     state._builderSeats || [],
+    coxId:     state._builderCoxId || null,
+    shellId:   document.getElementById("lineupShell").value   || null,
+    oarSetId:  document.getElementById("lineupOarSet").value  || null,
+    notes:     document.getElementById("lineupNotes")?.value  || "",
+    status:    document.getElementById("lineupStatus")?.value || "",
+    date:      document.getElementById("lineupDate").value    || "",
+  };
+}
+
+// Render a readiness report as the builder panel HTML.
+function renderReadinessPanel(r) {
+  const label = r.level === "ready" ? "Ready" : r.level === "blocked" ? "Blocked" : "Needs attention";
+  const ic    = { block: "⛔", warn: "▲", info: "·" };
+  const order = { block: 0, warn: 1, info: 2 };
+  const items = r.issues.slice()
+    .sort((a, b) => order[a.severity] - order[b.severity])
+    .map(i => `<div class="rd-issue ${i.severity}"><span class="rd-ic">${ic[i.severity]}</span><span>${fbEsc(i.text)}</span></div>`)
+    .join("");
+  const sideLine = r.sweep
+    ? `Side: ${r.counts.port} P / ${r.counts.starboard} S · ${r.counts.filled}/${r.counts.seats} seats filled`
+    : `Sculling boat · ${r.counts.filled}/${r.counts.seats} seats filled`;
+  return `
+    <div class="readiness rd-${r.level}">
+      <div class="rd-head">
+        <span class="rd-badge ${r.level}">${label}</span>
+        <span class="rd-summary">${fbEsc(r.summary)}</span>
+      </div>
+      <div class="rd-side">${fbEsc(sideLine)}</div>
+      ${items ? `<div class="rd-list">${items}</div>` : ""}
+    </div>`;
+}
+
+// Re-evaluate the in-progress lineup and paint the readiness panel.
 // Doesn't block save — coaches sometimes know better than the rules.
 function renderLineupWarnings() {
   const c = document.getElementById("lineupWarnings");
   if (!c) return;
-  c.innerHTML = "";
-  const warnings = [];
-  const boatClass = document.getElementById("lineupBoatClass").value;
-  const bc = BOAT_CLASSES[boatClass] || {};
-  const seats = state._builderSeats || [];
-
-  // Coxed boat but no cox assigned
-  if (bc.cox && !state._builderCoxId) {
-    warnings.push({ kind: "warn", text: "Coxed boat with no coxswain assigned." });
-  }
-
-  // Side balance for sweep boats
-  if (bc.sweep) {
-    let port = 0, starboard = 0;
-    for (const s of seats) {
-      if (!s.athleteId) continue;
-      if (s.side === "port") port++;
-      else if (s.side === "starboard") starboard++;
-    }
-    const need = bc.seats / 2;
-    if (port + starboard === bc.seats && (port !== need || starboard !== need)) {
-      warnings.push({
-        kind: "err",
-        text: `Side imbalance: ${port} port / ${starboard} starboard ` +
-              `(need ${need} of each).`,
-      });
-    }
-  }
-
-  // Duplicate athlete in multiple seats
-  const seenAthletes = new Map();
-  for (const s of seats) {
-    if (!s.athleteId) continue;
-    seenAthletes.set(s.athleteId, (seenAthletes.get(s.athleteId) || 0) + 1);
-  }
-  for (const [aid, n] of seenAthletes) {
-    if (n > 1) {
-      const a = findAthlete(aid);
-      warnings.push({
-        kind: "err",
-        text: `${a?.name || "Athlete"} is assigned to ${n} seats.`,
-      });
-    }
-  }
-  // Cox is also a rowing-seat athlete?
-  if (state._builderCoxId && seenAthletes.has(state._builderCoxId)) {
-    const a = findAthlete(state._builderCoxId);
-    warnings.push({
-      kind: "err",
-      text: `${a?.name || "Athlete"} is set as both coxswain and a rowing seat.`,
-    });
-  }
-
-  // Athlete in a side they didn't declare
-  for (const s of seats) {
-    const a = s.athleteId ? findAthlete(s.athleteId) : null;
-    if (!a) continue;
-    if (!bc.sweep) continue;
-    if (a.side === "port" && s.side === "starboard") {
-      warnings.push({ kind: "warn",
-        text: `${a.name} is a Port rower assigned to a Starboard seat.` });
-    } else if (a.side === "starboard" && s.side === "port") {
-      warnings.push({ kind: "warn",
-        text: `${a.name} is a Starboard rower assigned to a Port seat.` });
-    }
-  }
-
-  // Availability — flag anyone in the boat who isn't "available".
-  const checkAv = (a, role) => {
-    if (!a || !athleteUnavailable(a)) return;
-    const v = AVAILABILITY[a.availability] || { label: a.availability };
-    warnings.push({
-      kind: a.availability === "injured" ? "err" : "warn",
-      text: `${a.name} (${role}) marked "${v.label}".`,
-    });
-  };
-  for (const s of seats) {
-    const a = s.athleteId ? findAthlete(s.athleteId) : null;
-    if (a) checkAv(a, s.seat === bc.seats ? "Stroke" : s.seat === 1 ? "Bow" : `seat ${s.seat}`);
-  }
-  if (state._builderCoxId) checkAv(findAthlete(state._builderCoxId), "Coxswain");
-
-  // Equipment conflicts — same shell or oar set booked for another
-  // lineup on the same date.
-  const date    = document.getElementById("lineupDate").value;
-  const shellId = document.getElementById("lineupShell").value;
-  const oarSetId = document.getElementById("lineupOarSet").value;
-  if (date) {
-    for (const other of state.club.lineups) {
-      if (other.id === state.editingLineupId) continue;
-      if (other.date !== date) continue;
-      if (shellId && other.shellId === shellId) {
-        const sh = findShell(shellId);
-        warnings.push({
-          kind: "err",
-          text: `Shell "${sh?.name || ""}" is already booked on ${date} for "${other.name}".`,
-        });
-      }
-      if (oarSetId && other.oarSetId === oarSetId) {
-        const os = findOarSet(oarSetId);
-        warnings.push({
-          kind: "err",
-          text: `Oar set "${os?.name || ""}" is already booked on ${date} for "${other.name}".`,
-        });
-      }
-    }
-  }
-
-  for (const w of warnings) {
-    const el = document.createElement("div");
-    el.className = "lw" + (w.kind === "err" ? " err" : "");
-    el.textContent = w.text;
-    c.appendChild(el);
-  }
+  const r = evaluateLineupReadiness(builderDraftLineup(), lineupReadinessCtx());
+  c.innerHTML = renderReadinessPanel(r);
 }
 
 function saveLineupFromBuilder() {
@@ -9900,41 +10113,48 @@ function deleteLineupFromBuilder() {
 }
 
 // Plain-text dump suitable for pasting into a DM, email, or whiteboard.
+// Clean, rowing-specific plain-text dump for pasting into a DM / email /
+// whiteboard. Compact side notation; seats stroke→bow; readiness warnings
+// appended so the coach sees what still needs attention.
 function lineupToText(l) {
   if (!l) return "";
-  const bc = BOAT_CLASSES[l.boatClass] || { label: l.boatClass, seats: 0, cox: false };
+  const bc = BOAT_CLASSES[l.boatClass] || { label: l.boatClass, seats: 0, cox: false, sweep: false };
   const shell = findShell(l.shellId);
   const oarSet = findOarSet(l.oarSetId);
   const team = findTeam(l.teamId);
   const squad = findSquad(l.squadId);
   const plan = state.savedPlans.find(p => p.id === l.assignedPlanId);
+  const statusCap = l.status ? l.status.charAt(0).toUpperCase() + l.status.slice(1) : "Planned";
   const lines = [];
-  lines.push((state.club.name ? state.club.name + " — " : "") + (l.name || "Lineup"));
-  if (l.date) lines.push("Date:  " + l.date + (l.kind === "race" ? "  (RACE)" : ""));
-  if (team)   lines.push("Team:  " + team.name + (squad ? " / " + squad.name : ""));
-  lines.push("Boat:  " + bc.label);
+  lines.push((l.name || "Lineup") + " — " + statusCap + (l.kind === "race" ? "  (RACE)" : ""));
+  lines.push(bc.label);
+  if (l.date) lines.push("Date: " + l.date);
+  if (team)   lines.push("Team: " + team.name + (squad ? " / " + squad.name : ""));
   lines.push("Shell: " + (shell ? shell.name : "TBD"));
-  lines.push("Oars:  " + (oarSet ? oarSet.name : "TBD"));
+  lines.push("Oars: "  + (oarSet ? oarSet.name : "TBD"));
   if (plan)   lines.push("Workout: " + (plan.title || planSummaryLine(plan)));
-  if (bc.cox) {
-    const cox = findAthlete(l.coxId);
-    lines.push("Cox:   " + (cox ? cox.name : "TBD"));
-  }
   lines.push("");
-  // Seats in stroke→bow order (already that way in storage)
+  // Seats, stroke → bow (already that order in storage).
   for (const s of (l.seats || [])) {
     const a = findAthlete(s.athleteId);
-    let label;
-    if (s.seat === bc.seats)  label = "Stroke";
-    else if (s.seat === 1)    label = "Bow   ";
-    else                      label = String(s.seat) + "     ";
-    label = label.padEnd(7, " ");
-    const sideTag = s.side && s.side !== "any" ? `  (${s.side})` : "";
-    lines.push(label + (a ? a.name : "—") + sideTag);
+    const role = seatRole(s.seat, bc);
+    const sideTag = (bc.sweep && s.side && s.side !== "any") ? " — " + sideToken(s.side) : "";
+    lines.push(`${role}: ${a ? a.name : "—"}${sideTag}`);
   }
-  if (l.notes) {
+  if (bc.cox) {
+    const cox = findAthlete(l.coxId);
+    lines.push("Cox: " + (cox ? cox.name : "TBD"));
+  }
+  if (l.notes && String(l.notes).trim()) {
     lines.push("");
-    lines.push("Notes: " + l.notes);
+    lines.push("Notes: " + String(l.notes).trim());
+  }
+  // Outstanding readiness issues (skip purely-informational ones).
+  const warns = evaluateLineupReadiness(l, lineupReadinessCtx()).issues.filter(i => i.severity !== "info");
+  if (warns.length) {
+    lines.push("");
+    lines.push("Warnings:");
+    for (const w of warns) lines.push("- " + w.text);
   }
   return lines.join("\n");
 }
@@ -13398,18 +13618,13 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("exportLineupBtn").addEventListener("click", () => {
     if (!state.editingLineupId) {
       // Unsaved draft — synthesize a temp lineup to dump.
-      const draft = {
-        name: document.getElementById("lineupName").value || "Untitled lineup",
-        date: document.getElementById("lineupDate").value,
-        kind: document.getElementById("lineupKind").value,
-        boatClass: document.getElementById("lineupBoatClass").value,
-        shellId: document.getElementById("lineupShell").value || null,
-        teamId:  document.getElementById("lineupTeam").value || null,
-        coxId:   state._builderCoxId,
-        seats:   state._builderSeats || [],
+      const draft = Object.assign(builderDraftLineup(), {
+        name:    document.getElementById("lineupName").value || "Untitled lineup",
+        kind:    document.getElementById("lineupKind").value,
+        teamId:  document.getElementById("lineupTeam").value  || null,
+        squadId: document.getElementById("lineupSquad").value || null,
         assignedPlanId: document.getElementById("lineupPlan").value || null,
-        notes:   document.getElementById("lineupNotes").value,
-      };
+      });
       navigator.clipboard?.writeText(lineupToText(draft)).then(
         () => setToast("Copied draft lineup to clipboard", "ok"),
         () => setToast("Could not copy to clipboard", "err"),

@@ -99,6 +99,10 @@ function load() {
     // v1.12 — rowing lineup-readiness engine
     "evaluateLineupReadiness", "emptySeatsFor", "BOAT_CLASSES", "AVAILABILITY",
     "sideToken", "seatRole",
+    // v1.13 — workout assignments
+    "athleteSeesAssignment", "assignmentsForAthlete", "assignmentsForLineup",
+    "formatAssignmentAthlete", "assignmentWorkoutText", "assignmentTargetLabel",
+    "WORKOUT_TYPES",
   ];
   const shim = "\n;globalThis.__APP = {" +
     exposed.map((n) => `${n}: (typeof ${n}!=="undefined"?${n}:undefined)`).join(",") +

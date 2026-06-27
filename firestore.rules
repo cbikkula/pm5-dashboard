@@ -150,6 +150,19 @@ service cloud.firestore {
         allow create, update, delete: if hasRole(clubId, ['owner', 'admin', 'coach']) || isOwner(clubId);
       }
 
+      // ---- workout assignments (v1.13.0) -----------------------------
+      // What a lineup / team / squad / club / athlete is asked to do at a
+      // practice. Same access shape as lineups: any ACTIVE member may read
+      // (athletes see only their own via client-side filtering, exactly
+      // like lineups), and only coach+ may write. Suspended/removed members
+      // fail isActiveMember and lose all access; non-members are denied.
+      // These docs carry NO personal PM5 history — only a saved-plan
+      // reference or free text, targets, and coach/athlete notes.
+      match /workoutAssignments/{assignmentId} {
+        allow read, list: if isOwner(clubId) || isActiveMember(clubId);
+        allow create, update, delete: if hasRole(clubId, ['owner', 'admin', 'coach']) || isOwner(clubId);
+      }
+
       // ---- availability (date/practice overrides) --------------------
       // Coaches+ may set anyone's availability. An athlete may touch
       // ONLY rows that belong to their linked athlete — and only if

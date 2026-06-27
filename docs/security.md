@@ -57,6 +57,8 @@ allow create: if signedIn() && uid() == memberUid && (
 
 **Availability** can be written by coaches+ for anyone, or by an athlete for *only* their own linked athlete — and the update/delete rules check the *existing* document's owner (`resource.data`), not just the incoming value, so you can't overwrite someone else's row by supplying your own id in the payload.
 
+**Workout assignments** *(v1.13)* use the same access shape as lineups: any **active** member may read, only **coach+** may write. Suspended/removed members fail `isActiveMember` and lose access; non-members are denied. Athletes never get write access, so they can view but never create/edit/delete an assignment. Two deliberate boundaries: (1) **athlete-relevance is filtered client-side, not at the rules layer** — like lineups, every active member can technically read all of their club's assignments, and `athleteSeesAssignment()` narrows the *display* to the ones that target them; tightening this to per-doc rules would need each assignment to re-`get()` the athlete's lineups/teams, which Spark-plan rules can't do cheaply. (2) The **private `coachNote` is not protected by rules** — it's a field on a doc all members can read, so confidentiality is enforced by the client only stripping it in `formatAssignmentAthlete()`. A determined athlete reading raw Firestore could see it; for genuinely private coach notes, a paid plan + a callable that returns an athlete-safe projection would be the fix.
+
 ---
 
 ## Adversarial reviews

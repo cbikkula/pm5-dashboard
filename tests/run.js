@@ -248,6 +248,71 @@ if (app.evaluateLineupReadiness && app.emptySeatsFor && app.BOAT_CLASSES) {
 }
 
 // ---------------------------------------------------------------------
+// 10. Workout assignments (v1.13) — pure targeting + athlete-safe display.
+// ---------------------------------------------------------------------
+group("workout assignments");
+if (app.athleteSeesAssignment && app.assignmentsForAthlete && app.formatAssignmentAthlete) {
+  const lineups = [
+    { id: "lu1", name: "Demo 8+", boatClass: "8+", shellId: "sh1", oarSetId: "o1", coxId: "cox",
+      seats: [{ seat: 8, side: "port", athleteId: "alex" }, { seat: 7, side: "starboard", athleteId: "jordan" }] },
+    { id: "lu2", name: "Resolute 4+", boatClass: "4+", coxId: null,
+      seats: [{ seat: 4, side: "port", athleteId: "taylor" }] },
+  ];
+  const athletes = [
+    { id: "alex",   name: "Alex",   teamIds: ["tV"], squadIds: ["sH"] },
+    { id: "jordan", name: "Jordan", teamIds: ["tV"], squadIds: [] },
+    { id: "taylor", name: "Taylor", teamIds: ["tJ"], squadIds: [] },
+    { id: "morgan", name: "Morgan", teamIds: [],     squadIds: [] },
+  ];
+  const ctx = (extra) => Object.assign({
+    lineups, athletes, shells: [{ id: "sh1", name: "Demo 8+" }], oarSets: [{ id: "o1", name: "Sweep Set A" }],
+    teams: [{ id: "tV", name: "Varsity" }], squads: [{ id: "sH", name: "Heavy" }],
+    savedPlans: [], boatClasses: app.BOAT_CLASSES,
+  }, extra || {});
+
+  const aLineup = { id: "a1", title: "AM row", targetType: "lineup", targetId: "lu1", status: "planned",
+                    athleteNote: "clean catches", coachNote: "SECRET selection notes", embeddedWorkout: "8×250m" };
+  const aTeam   = { id: "a2", title: "Team erg",  targetType: "team",    targetId: "tV", status: "planned" };
+  const aSquad  = { id: "a3", title: "Squad row", targetType: "squad",   targetId: "sH", status: "planned" };
+  const aSolo   = { id: "a4", title: "Solo",      targetType: "athlete", targetId: "taylor", status: "planned" };
+  const aClub   = { id: "a5", title: "All-club",  targetType: "club",    targetId: null, status: "planned" };
+  const aArch   = { id: "a6", title: "Old",       targetType: "lineup",  targetId: "lu1", status: "archived" };
+
+  // target resolution for a lineup
+  ok("seated athlete sees lineup assignment",     app.athleteSeesAssignment(aLineup, "alex", ctx()) === true);
+  ok("cox sees lineup assignment",                app.athleteSeesAssignment(aLineup, "cox", ctx()) === true);
+  ok("non-seated athlete does NOT see it",        app.athleteSeesAssignment(aLineup, "morgan", ctx()) === false);
+  // team / squad / athlete / club targeting
+  ok("team member sees team assignment",          app.athleteSeesAssignment(aTeam, "alex", ctx()) === true);
+  ok("non-team member does NOT see team assign",  app.athleteSeesAssignment(aTeam, "taylor", ctx()) === false);
+  ok("squad member sees squad assignment",        app.athleteSeesAssignment(aSquad, "alex", ctx()) === true);
+  ok("athlete-target sees own assignment",        app.athleteSeesAssignment(aSolo, "taylor", ctx()) === true);
+  ok("athlete-target not seen by others",         app.athleteSeesAssignment(aSolo, "alex", ctx()) === false);
+  ok("club assignment seen by everyone",          app.athleteSeesAssignment(aClub, "morgan", ctx()) === true);
+  ok("archived assignment is hidden",             app.athleteSeesAssignment(aArch, "alex", ctx()) === false);
+
+  // aggregation + sort, and lineup filtering
+  const forAlex = app.assignmentsForAthlete("alex", ctx({ workoutAssignments: [aLineup, aTeam, aArch, aClub] }));
+  ok("assignmentsForAthlete aggregates, drops archived", forAlex.length === 3);
+  const byLineup = app.assignmentsForLineup("lu1", ctx({ workoutAssignments: [aLineup, aTeam, aArch] }));
+  ok("assignmentsForLineup = active lineup-targeted only", byLineup.length === 1 && byLineup[0].id === "a1");
+
+  // athlete-safe display: athleteNote shown, coachNote NEVER leaked
+  const f = app.formatAssignmentAthlete(aLineup, ctx({ viewerAthleteId: "alex" }));
+  ok("formatted note is the athlete note",        f.note === "clean catches");
+  ok("coach note is NEVER exposed to athletes",   JSON.stringify(f).indexOf("SECRET") === -1);
+  ok("formatted context names the lineup",        /Demo 8\+/.test(f.context));
+  ok("formatted pulls shell from the lineup",     f.shell === "Demo 8+");
+
+  // no personal PM5 history is copied into club assignment docs
+  const k1 = Object.keys(aLineup), k2 = Object.keys(f);
+  ok("assignment doc carries no history fields",
+     !k1.includes("history") && !k1.includes("results") && !k1.includes("totals"));
+  ok("formatted assignment carries no history fields",
+     !k2.includes("history") && !k2.includes("results") && !k2.includes("totals"));
+}
+
+// ---------------------------------------------------------------------
 // 8. Bundle-size guard (#25) — keep the single file under budget.
 // ---------------------------------------------------------------------
 group("bundle size");

@@ -14,7 +14,7 @@
  * everything else, so authenticated Drive calls etc. always go live.
  */
 // Bump this when you redeploy to force a fresh shell on every client.
-const CACHE_VERSION = "pm5-v36";
+const CACHE_VERSION = "pm5-v37";
 const SHELL = [
   "./manifest.json",
   "./icon-192.png",

@@ -37,6 +37,7 @@ To pull the next item: open a chat with me and say `do backlog #N`. I'll build i
 | 29 | ✅ done v1.7.0 | Session history filters                | Date range, distance, PR-only, has-HR, has-force-curve |
 | 30 | ✅ done v1.7.0 | Export raw JSON                        | Single-session JSON with full metadata + force curves |
 | 31 | ✅ done v1.12.0 | Lineup readiness + rowing intelligence | Pure readiness engine (Ready / Needs attention / Blocked), upgraded stroke→bow seat map, equipment validation (sweep/scull + boat class), compact P/S notation, rowing-specific copy/export + athlete view. *Partial down-payment on L9 (crew compatibility) and L11 (rigging).* |
+| 32 | ✅ done v1.13.0 | Workout assignment to lineups          | Assign a practice workout to a lineup / team / squad / club / athlete (saved plan or free text, rate/split/HR targets, focus tags, coach-private + athlete-visible notes). New `workoutAssignments` subcollection + rules; athlete *Today's assignment* view; no personal history copied into club data. |
 
 ## Long-term roadmap
 
@@ -44,7 +45,7 @@ Bigger items that don't fit in a single session — multi-session features, exte
 
 | #   | Status | Feature                                | Notes |
 |----:|:---:|----------------------------------------|-------|
-| L1  | ✅ client shipped v1.11.0 | Multi-coach Firebase mode              | Roles, invite links, join/approval, members panel, audit log, athlete view — all live. Remaining: real-time presence (deferred), workout assignment (v1.13.0), viewer role (v1.14.0). |
+| L1  | ✅ client shipped v1.11.0 | Multi-coach Firebase mode              | Roles, invite links, join/approval, members panel, audit log, athlete view, **workout assignment (v1.13.0)** — all live. Remaining: real-time presence (deferred), viewer role (v1.14.0). |
 | L2  |        | Multi-erg synchronization              | Winter training: 8 ergs paired to one coach screen with WebRTC peer-to-peer sync. Crew rhythm + drive timing alignment. |
 | L3  |        | AI technique analysis                  | Peak-timing trends across many sessions, fatigue patterns, "you tend to shorten the drive after stroke 200" callouts. |
 | L4  | ✅ done v1.6.0 | Race prediction                        | Extrapolate current pace + HR drift to a finish-line projection. |

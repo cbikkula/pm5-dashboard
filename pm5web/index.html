@@ -1736,6 +1736,42 @@
     #lineupModal .modal-buttons button { flex: 1 1 auto; }
   }
 
+  /* ---- Workout assignments (v1.13.0) ---- */
+  .asg-badge {
+    display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .4px;
+    color: var(--accent); border: 1px solid var(--accent); border-radius: 999px;
+    padding: 1px 7px; white-space: nowrap;
+  }
+  .asg-line { margin-top: 4px; font-size: 11.5px; color: var(--text-dim); }
+  .lineup-assignment {
+    margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    background: rgba(96, 165, 250, .08); border: 1px solid rgba(96, 165, 250, .35);
+    border-radius: 8px; padding: 7px 12px;
+  }
+  .lineup-assignment .asg-meta { font-size: 12px; color: var(--text); }
+  .athlete-assignment {
+    background: var(--bg-base); border: 1px solid var(--border-bright);
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+  }
+  .athlete-assignment .asg-title { font-weight: 700; font-size: 15px; color: var(--text); }
+  .athlete-assignment .asg-ctx   { color: var(--accent); font-size: 12.5px; font-weight: 600; margin-top: 2px; }
+  .athlete-assignment .asg-row   { font-size: 12.5px; color: var(--text); margin-top: 6px; }
+  .athlete-assignment .asg-k     { color: var(--text-muted); font-weight: 600; }
+  .athlete-assignment .asg-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+  .athlete-assignment .asg-chip {
+    font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+    background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-dim);
+  }
+  .athlete-assignment .asg-foot  { font-size: 11.5px; color: var(--text-muted); margin-top: 8px; }
+  .asg-status { font-weight: 700; }
+  .asg-status.asg-planned   { color: var(--text-dim); }
+  .asg-status.asg-active    { color: #66d39a; }
+  .asg-status.asg-completed { color: var(--text-muted); }
+  .asg-status.asg-archived  { color: var(--text-muted); }
+  @media (max-width: 480px) {
+    #assignmentModal .lineup-meta { grid-template-columns: 1fr; }
+  }
+
   /* Athlete-editor "Teams" multi-check row */
   .check-row {
     display: flex;
@@ -3284,6 +3320,10 @@
 
         <!-- Athlete self-service card — only shown to athlete members. -->
         <div class="athlete-home-card" id="athleteHomeCard" style="display:none;">
+          <div class="ahc-assignments" style="grid-column: 1 / -1;">
+            <div class="ahc-section-title">Today's assignment</div>
+            <div id="athleteAssignments"></div>
+          </div>
           <div>
             <div class="ahc-section-title">My lineups</div>
             <div class="lineup-list" id="athleteAssignedLineups"></div>
@@ -3911,11 +3951,91 @@
     <!-- Conflict / warning area, populated by validateLineup() -->
     <div class="lineup-warnings" id="lineupWarnings"></div>
 
+    <!-- Assigned-workout badge (shows when this lineup has an assignment) -->
+    <div class="lineup-assignment" id="lineupAssignmentBadge" style="display:none;"></div>
+
     <div class="modal-buttons">
       <button id="exportLineupBtn" class="left" title="Copy a plain-text version of this lineup to share">Copy as text</button>
+      <button id="assignWorkoutBtn" class="left" style="display:none;" title="Assign a practice workout to this lineup">＋ Assign workout</button>
       <button id="deleteLineupBtn" class="left warn" style="display:none;">Delete</button>
       <button id="cancelLineupBtn">Cancel</button>
       <button class="accent" id="saveLineupBtn">Save lineup</button>
+    </div>
+  </div>
+</div>
+
+<!-- Workout assignment editor — assign a practice workout to a lineup
+     (target / team / squad / club / athlete). Coach/admin/owner only. -->
+<div class="modal-overlay" id="assignmentModal">
+  <div class="modal" style="width: 640px; max-height: 90vh; overflow:auto;">
+    <div class="row" style="justify-content: space-between; align-items: baseline;">
+      <h2 id="assignmentModalTitle">ASSIGN WORKOUT</h2>
+      <span class="h-sub" style="margin:0;">What should this boat do at practice?</span>
+    </div>
+    <div class="lineup-meta">
+      <label class="lm-field" style="grid-column: 1 / -1;">
+        <span class="lm-label">Title</span>
+        <input type="text" id="asgTitle" placeholder="e.g. Steady state 8×500m">
+      </label>
+      <label class="lm-field">
+        <span class="lm-label">Assign to</span>
+        <select id="asgTarget"></select>
+      </label>
+      <label class="lm-field">
+        <span class="lm-label">Workout type</span>
+        <select id="asgType"></select>
+      </label>
+      <label class="lm-field">
+        <span class="lm-label">Practice date</span>
+        <input type="date" id="asgDate">
+      </label>
+      <label class="lm-field">
+        <span class="lm-label">Status</span>
+        <select id="asgStatus"></select>
+      </label>
+      <label class="lm-field">
+        <span class="lm-label">Saved plan (optional)</span>
+        <select id="asgPlan"><option value="">— none —</option></select>
+      </label>
+      <label class="lm-field">
+        <span class="lm-label">…or workout text</span>
+        <input type="text" id="asgWorkout" placeholder="8×250m / 1:00 rest">
+      </label>
+      <label class="lm-field">
+        <span class="lm-label">Target rate (spm)</span>
+        <span class="row" style="gap:6px;">
+          <input type="number" id="asgRateMin" placeholder="min" min="14" max="50" style="width:100%;">
+          <input type="number" id="asgRateMax" placeholder="max" min="14" max="50" style="width:100%;">
+        </span>
+      </label>
+      <label class="lm-field">
+        <span class="lm-label">Target split / watts</span>
+        <span class="row" style="gap:6px;">
+          <input type="text" id="asgSplit" placeholder="1:45/500m" style="width:100%;">
+          <input type="text" id="asgWatts" placeholder="250W" style="width:100%;">
+        </span>
+      </label>
+      <label class="lm-field">
+        <span class="lm-label">HR zone (optional)</span>
+        <input type="text" id="asgHr" placeholder="UT2 / Z2">
+      </label>
+      <label class="lm-field" style="grid-column: 1 / -1;">
+        <span class="lm-label">Technical focus</span>
+        <div id="asgFocus" class="check-row"></div>
+      </label>
+      <label class="lm-field" style="grid-column: 1 / -1;">
+        <span class="lm-label">Coach note <span style="color:var(--text-dim);font-weight:400;">(private — coaches only)</span></span>
+        <textarea id="asgCoachNote" rows="2" placeholder="Internal note — not shown to athletes."></textarea>
+      </label>
+      <label class="lm-field" style="grid-column: 1 / -1;">
+        <span class="lm-label">Athlete note <span style="color:var(--text-dim);font-weight:400;">(visible to athletes)</span></span>
+        <textarea id="asgAthleteNote" rows="2" placeholder="e.g. Clean catches, build to rate 34, no rush."></textarea>
+      </label>
+    </div>
+    <div class="modal-buttons">
+      <button id="deleteAssignmentBtn" class="left warn" style="display:none;">Remove</button>
+      <button id="cancelAssignmentBtn">Cancel</button>
+      <button class="accent" id="saveAssignmentBtn">Save assignment</button>
     </div>
   </div>
 </div>
@@ -4312,6 +4432,28 @@ window.fbApi = {
     });
   },
 
+  // ---- Workout assignments (clubs/{id}/workoutAssignments) (v1.13.0)
+  // Coach-written practice assignments. Read = active members; write =
+  // coach+ (firestore.rules). Carries no personal PM5 history — only a
+  // saved-plan reference or free text, targets, and notes.
+  async saveAssignment(clubId, assignmentId, data, lastEditedBy) {
+    if (!_db) return;
+    const payload = { ...data, updatedAt: Date.now() };
+    if (lastEditedBy) payload.lastEditedBy = lastEditedBy;
+    await setDoc(doc(_db, "clubs", clubId, "workoutAssignments", assignmentId),
+                 payload, { merge: false });
+  },
+  async deleteAssignment(clubId, assignmentId) {
+    if (!_db) return;
+    await deleteDoc(doc(_db, "clubs", clubId, "workoutAssignments", assignmentId));
+  },
+  subscribeAssignments(clubId, callback) {
+    if (!_db) return () => {};
+    return onSnapshot(collection(_db, "clubs", clubId, "workoutAssignments"), (snap) => {
+      callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+  },
+
   // ---- Members (clubs/{id}/members/{uid}) -------------------------
   // The owner's row is written by createClubWithOwner. Everyone else
   // self-creates a 'pending' row via createJoinRequest (rules validate
@@ -4490,7 +4632,7 @@ window.fbApi = {
   // intended end state.
   async deleteClubCascade(clubId, ownerUid) {
     if (!_db) return;
-    const subs = ["members", "athletes", "lineups", "availability", "invites"];
+    const subs = ["members", "athletes", "lineups", "workoutAssignments", "availability", "invites"];
     for (const sub of subs) {
       try {
         const snap = await getDocs(collection(_db, "clubs", clubId, sub));
@@ -4725,7 +4867,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.12.1";
+const APP_VERSION = "1.13.0";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 const SESSION_SCHEMA_VERSION = 2;
@@ -4956,7 +5098,7 @@ const state = {
   //
   club: {
     name: "", subtitle: "",
-    teams: [], squads: [], athletes: [], shells: [], oarSets: [], lineups: [],
+    teams: [], squads: [], athletes: [], shells: [], oarSets: [], lineups: [], workoutAssignments: [],
   },
   // Which sub-section of the Clubs view is showing.
   clubSection: "overview",
@@ -7798,6 +7940,131 @@ function evaluateLineupReadiness(lineup, ctx) {
   };
 }
 
+// =====================================================================
+// Workout assignments (v1.13.0) — what a lineup / team / squad / club /
+// athlete is asked to do at a practice. Pure, DOM-free logic lives here;
+// the athlete-facing formatter NEVER exposes the private coachNote.
+// =====================================================================
+const WORKOUT_TYPES = {
+  steady:    "Steady state",
+  intervals: "Intervals",
+  test:      "Test piece",
+  technical: "Technical row",
+  starts:    "Starts / sprint",
+  recovery:  "Recovery",
+};
+const WORKOUT_TYPE_KEYS = ["steady", "intervals", "test", "technical", "starts", "recovery"];
+const FOCUS_OPTIONS = ["catches", "finishes", "ratio", "length", "suspension", "rhythm", "starts", "sprint"];
+const ASSIGNMENT_STATUSES = ["planned", "active", "completed", "archived"];
+
+// Compact "6-seat — S" / "Stroke seat — P" / "Cox" for a seated athlete.
+function athleteSeatLine(l, athleteId, ctx) {
+  if (!l || !athleteId) return "";
+  const BC = (ctx && ctx.boatClasses) || (typeof BOAT_CLASSES !== "undefined" ? BOAT_CLASSES : {});
+  const bc = BC[l.boatClass] || {};
+  if (l.coxId === athleteId) return "Cox";
+  const seat = (l.seats || []).find(s => s && s.athleteId === athleteId);
+  if (!seat) return "";
+  const side = (bc.sweep && seat.side && seat.side !== "any") ? " — " + sideToken(seat.side) : "";
+  return seatPhrase(seat.seat, bc) + side;
+}
+
+// Does this athlete see this assignment? Targeting resolves to the athlete,
+// a lineup they're seated/coxing, a team/squad they're in, or the club.
+function athleteSeesAssignment(a, athleteId, ctx) {
+  ctx = ctx || {};
+  if (!a || !athleteId || a.status === "archived") return false;
+  switch (a.targetType) {
+    case "club":    return true;
+    case "athlete": return a.targetId === athleteId;
+    case "lineup": {
+      const lu = (ctx.lineups || []).find(l => l && l.id === a.targetId);
+      return !!lu && (lu.coxId === athleteId || (lu.seats || []).some(s => s && s.athleteId === athleteId));
+    }
+    case "team": {
+      const ath = (ctx.athletes || []).find(x => x && x.id === athleteId);
+      return !!ath && (ath.teamIds || []).includes(a.targetId);
+    }
+    case "squad": {
+      const ath = (ctx.athletes || []).find(x => x && x.id === athleteId);
+      return !!ath && (ath.squadIds || []).includes(a.targetId);
+    }
+    default: return false;
+  }
+}
+
+// Every assignment an athlete should see, newest practice date first.
+function assignmentsForAthlete(athleteId, ctx) {
+  ctx = ctx || {};
+  return (ctx.workoutAssignments || ctx.assignments || [])
+    .filter(a => athleteSeesAssignment(a, athleteId, ctx))
+    .sort((x, y) => (y.date || "").localeCompare(x.date || ""));
+}
+
+// Active assignments targeting a specific lineup (drives the "Workout
+// assigned" badge on lineup cards + the builder).
+function assignmentsForLineup(lineupId, ctx) {
+  ctx = ctx || {};
+  return (ctx.workoutAssignments || ctx.assignments || [])
+    .filter(a => a && a.targetType === "lineup" && a.targetId === lineupId && a.status !== "archived")
+    .sort((x, y) => (y.date || "").localeCompare(x.date || ""));
+}
+
+// Workout text — a referenced saved plan's summary, else the free-text.
+function assignmentWorkoutText(a, ctx) {
+  ctx = ctx || {};
+  if (!a) return "";
+  if (a.workoutPlanId) {
+    const p = (ctx.savedPlans || []).find(x => x && x.id === a.workoutPlanId);
+    if (p) return p.title || (typeof planSummaryLine === "function" ? planSummaryLine(p) : "Workout");
+  }
+  return a.embeddedWorkout || "";
+}
+
+// Human label for an assignment's target.
+function assignmentTargetLabel(a, ctx) {
+  ctx = ctx || {};
+  const find = (arr, id) => (arr || []).find(x => x && x.id === id);
+  switch (a.targetType) {
+    case "club":    return "Whole club";
+    case "team":    { const t = find(ctx.teams,  a.targetId); return t ? `${t.name} (team)`  : "Team"; }
+    case "squad":   { const s = find(ctx.squads, a.targetId); return s ? `${s.name} (squad)` : "Squad"; }
+    case "lineup":  { const l = find(ctx.lineups, a.targetId); return l ? (l.name || "Lineup") : "Lineup"; }
+    case "athlete": { const x = find(ctx.athletes, a.targetId); return x ? x.name : "Athlete"; }
+    default: return "";
+  }
+}
+
+// Athlete-facing projection of an assignment. NEVER includes coachNote —
+// only the explicitly athlete-visible note + practice details. This is the
+// safe shape to render in the athlete view.
+function formatAssignmentAthlete(a, ctx) {
+  ctx = ctx || {};
+  if (!a) return null;
+  const lu = a.targetType === "lineup" ? (ctx.lineups || []).find(x => x && x.id === a.targetId) : null;
+  let context = assignmentTargetLabel(a, ctx);
+  if (lu && ctx.viewerAthleteId) {
+    const seat = athleteSeatLine(lu, ctx.viewerAthleteId, ctx);
+    context = (lu.name || "Lineup") + (seat ? " — " + seat : "");
+  }
+  const shell = lu ? (ctx.shells || []).find(s => s && s.id === lu.shellId) : null;
+  const oar   = lu ? (ctx.oarSets || []).find(o => o && o.id === lu.oarSetId) : null;
+  const rate = a.targetRate && (a.targetRate.min || a.targetRate.max)
+    ? `rate ${a.targetRate.min || "?"}–${a.targetRate.max || "?"}` : "";
+  return {
+    title:   a.title || (WORKOUT_TYPES[a.workoutType] || "Workout"),
+    context, workout: assignmentWorkoutText(a, ctx),
+    type:    WORKOUT_TYPES[a.workoutType] || "",
+    rate, split: a.targetSplit || "", watts: a.targetWatts || "", hr: a.targetHrZone || "",
+    focus:   Array.isArray(a.focus) ? a.focus : [],
+    note:    a.athleteNote || "",              // athlete-visible note ONLY
+    shell:   shell ? shell.name : "",
+    oars:    oar ? oar.name : "",
+    status:  a.status || "planned",
+    date:    a.date || "",
+  };
+}
+
 function clubKey(userId)   { return `pm5_club_${userId || state.user.id}`; }
 
 function loadClub() {
@@ -7809,7 +8076,7 @@ function loadClub() {
       state.club = Object.assign(
         {
           name: "", subtitle: "",
-          teams: [], squads: [], athletes: [], shells: [], oarSets: [], lineups: [],
+          teams: [], squads: [], athletes: [], shells: [], oarSets: [], lineups: [], workoutAssignments: [],
         },
         parsed,
       );
@@ -7823,7 +8090,7 @@ function loadClub() {
   } catch (e) {}
   state.club = {
     name: "", subtitle: "",
-    teams: [], squads: [], athletes: [], shells: [], oarSets: [], lineups: [],
+    teams: [], squads: [], athletes: [], shells: [], oarSets: [], lineups: [], workoutAssignments: [],
   };
 }
 
@@ -8084,6 +8351,7 @@ function backfillClubDefaults() {
   if (!Array.isArray(c.squads))  c.squads  = [];
   if (!Array.isArray(c.oarSets)) c.oarSets = [];
   if (!Array.isArray(c.lineups)) c.lineups = [];
+  if (!Array.isArray(c.workoutAssignments)) c.workoutAssignments = [];
 }
 
 // Write the club to localStorage only (no Firestore echo).
@@ -8143,6 +8411,25 @@ async function fbDeleteLineupRemote(lineupId) {
   catch (e) { console.warn("Firestore lineup delete failed:", e); }
 }
 
+// Workout-assignment writers (mirror the lineup writers; v1.13.0).
+async function fbPushAssignment(a) {
+  if (!fbActive() || !fbCan("editAssignments") || !a) return;
+  try {
+    await window.fbApi.saveAssignment(
+      state.fb.clubId, a.id, a,
+      state.fb.user.displayName || state.fb.user.email || ""
+    );
+  } catch (e) {
+    console.warn("Firestore assignment write failed:", e);
+    setToast("Cloud assignment write failed: " + (e.message || e), "err");
+  }
+}
+async function fbDeleteAssignmentRemote(assignmentId) {
+  if (!fbActive()) return;
+  try { await window.fbApi.deleteAssignment(state.fb.clubId, assignmentId); }
+  catch (e) { console.warn("Firestore assignment delete failed:", e); }
+}
+
 // =====================================================================
 // MULTI-COACH CLUB CLIENT (v1.11.0)
 // Role engine, membership lifecycle, invites, join/approval, audit,
@@ -8175,6 +8462,7 @@ function fbCan(action) {
   const adminPlus = role === "owner" || role === "admin";
   switch (action) {
     case "editRoster":                     // athletes subcollection (coach+)
+    case "editAssignments":                // workoutAssignments subcollection (coach+)
     case "editLineups":  return coachPlus;
     case "editClub":                       // club-doc fields: teams/squads/shells/oars/name
     case "manageMembers":
@@ -8208,10 +8496,12 @@ function fbAttachFullSubscriptions(clubId) {
     if (!snap) return;
     const localLineups  = state.club.lineups  || [];
     const localAthletes = state.club.athletes || [];
+    const localAssigns  = state.club.workoutAssignments || [];
     const next = Object.assign({}, snap);
     delete next.id;
     next.lineups  = localLineups;
     next.athletes = localAthletes;
+    next.workoutAssignments = localAssigns;
     if (snap.ownerId && state.fb.user) {
       state.fb.isOwner = (snap.ownerId === state.fb.user.uid);
     }
@@ -8226,6 +8516,11 @@ function fbAttachFullSubscriptions(clubId) {
   });
   state.fb.unsubLineups = api.subscribeLineups(clubId, (lineups) => {
     state.club.lineups = lineups;
+    persistClubLocalOnly();
+    if (state.view === "clubs") renderClubsView();
+  });
+  state.fb.unsubAssignments = api.subscribeAssignments(clubId, (assignments) => {
+    state.club.workoutAssignments = assignments;
     persistClubLocalOnly();
     if (state.view === "clubs") renderClubsView();
   });
@@ -8264,7 +8559,7 @@ function fbAttachFullSubscriptions(clubId) {
 }
 
 function fbDetachFullSubscriptions() {
-  for (const k of ["unsubClub", "unsubLineups", "unsubAthletes",
+  for (const k of ["unsubClub", "unsubLineups", "unsubAssignments", "unsubAthletes",
                    "unsubMembers", "unsubAvailability",
                    "unsubInvites", "unsubAudit"]) {
     if (state.fb[k]) { state.fb[k](); state.fb[k] = null; }
@@ -8790,6 +9085,8 @@ function fbAuditLabel(a) {
     "member.reactivate": "Reactivated member", "member.remove": "Removed member",
     "member.link": "Linked athlete", "invite.create": "Created invite",
     "invite.revoke": "Revoked invite",
+    "assignment.create": "Assigned workout", "assignment.edit": "Edited workout assignment",
+    "assignment.remove": "Removed workout assignment",
   };
   let s = map[a.action] || a.action;
   const who = a.after && a.after.name;
@@ -8821,6 +9118,48 @@ function renderActivityPane() {
   }
 }
 
+// Athlete-facing "Today's assignment" — the safe, athlete-visible
+// projection (never the private coachNote) of every assignment the
+// athlete is targeted by, planned/active only.
+function renderAthleteAssignments(athleteId) {
+  const wrap = document.getElementById("athleteAssignments");
+  if (!wrap) return;
+  if (!athleteId) {
+    wrap.innerHTML = `<div class="cr-empty">A coach hasn't linked you to a roster athlete yet.</div>`;
+    return;
+  }
+  const ctx = assignmentCtx(athleteId);
+  const asgs = assignmentsForAthlete(athleteId, ctx).filter(a => a.status !== "completed");
+  if (!asgs.length) {
+    wrap.innerHTML = `<div class="cr-empty">No workout assigned yet — check back before practice.</div>`;
+    return;
+  }
+  wrap.innerHTML = "";
+  for (const a of asgs.slice(0, 4)) {
+    const f = formatAssignmentAthlete(a, ctx);
+    const chips = [];
+    if (f.type)  chips.push(f.type);
+    if (f.rate)  chips.push(f.rate);
+    if (f.split) chips.push(f.split);
+    if (f.watts) chips.push(f.watts);
+    if (f.hr)    chips.push("HR " + f.hr);
+    const statusCap = f.status.charAt(0).toUpperCase() + f.status.slice(1);
+    const el = document.createElement("div");
+    el.className = "athlete-assignment";
+    el.innerHTML = `
+      <div class="asg-title">${fbEsc(f.title)}</div>
+      <div class="asg-ctx">${fbEsc(f.context)}</div>
+      ${f.workout ? `<div class="asg-row"><span class="asg-k">Workout:</span> ${fbEsc(f.workout)}</div>` : ""}
+      ${chips.length ? `<div class="asg-chips">${chips.map(c => `<span class="asg-chip">${fbEsc(c)}</span>`).join("")}</div>` : ""}
+      ${f.focus.length ? `<div class="asg-row"><span class="asg-k">Focus:</span> ${f.focus.map(x => fbEsc(x)).join(", ")}</div>` : ""}
+      ${f.note ? `<div class="asg-row"><span class="asg-k">Coach note:</span> ${fbEsc(f.note)}</div>` : ""}
+      <div class="asg-foot">
+        ${f.shell ? `Shell: ${fbEsc(f.shell)} · ` : ""}${f.oars ? `Oars: ${fbEsc(f.oars)} · ` : ""}<span class="asg-status asg-${fbEsc(f.status)}">${fbEsc(statusCap)}</span>${f.date ? " · " + fbEsc(f.date) : ""}
+      </div>`;
+    wrap.appendChild(el);
+  }
+}
+
 function renderAthleteHome() {
   const card = document.getElementById("athleteHomeCard");
   if (!card) return;
@@ -8831,6 +9170,7 @@ function renderAthleteHome() {
   if (!isAthlete) return;
 
   const athleteId = state.fb.membership && state.fb.membership.linkedAthleteId;
+  renderAthleteAssignments(athleteId);
   const al = document.getElementById("athleteAssignedLineups");
   if (al) {
     if (!athleteId) {
@@ -9181,6 +9521,7 @@ function renderLineupList() {
     const statusMap = { planned: "PLANNED", confirmed: "CONFIRMED", done: "DONE" };
     const rd = evaluateLineupReadiness(l, lineupReadinessCtx());
     const rdLabel = rd.level === "ready" ? "Ready" : rd.level === "blocked" ? "Blocked" : "Attention";
+    const asg = assignmentsForLineup(l.id, assignmentCtx())[0];
     row.innerHTML = `
       <div class="cr-icon">🛶</div>
       <div class="cr-main">
@@ -9192,16 +9533,20 @@ function renderLineupList() {
           ${team ? " · " + team.name : ""}
           ${l.date ? " · " + l.date : ""}
         </div>
+        ${asg ? `<div class="asg-line"><span class="asg-badge">📋 Workout</span> ${fbEsc(asg.title)}${asg.date ? " · " + fbEsc(asg.date) : ""} · ${fbEsc(asg.status || "planned")}</div>` : ""}
       </div>
       <span class="rd-chip ${rd.level}" title="${fbEsc(rd.summary)}">${rdLabel}</span>
       <span class="cr-tag">${statusMap[l.status] || "PLANNED"}</span>
       <div class="cr-actions">
         <button data-act="edit">Edit</button>
+        ${fbCan("editAssignments") ? `<button data-act="assign" title="Assign or edit a practice workout">${asg ? "Workout" : "Assign"}</button>` : ``}
         <button data-act="copy" title="Copy lineup as text">Copy</button>
         <button data-act="del" class="delete-x" title="Delete">✕</button>
       </div>
     `;
     row.querySelector('[data-act="edit"]').addEventListener("click", () => openLineupBuilder(l.id));
+    const _asgBtn = row.querySelector('[data-act="assign"]');
+    if (_asgBtn) _asgBtn.addEventListener("click", () => openAssignmentModal("lineup", l.id, asg ? asg.id : null));
     row.querySelector('[data-act="copy"]').addEventListener("click", () => copyLineupToClipboard(l.id));
     row.querySelector('[data-act="del"]').addEventListener("click", () => {
       if (confirm(`Delete lineup "${l.name || "Untitled"}"?`)) {
@@ -9844,6 +10189,7 @@ function openLineupBuilder(id) {
   renderSeatGrid();
 
   document.getElementById("deleteLineupBtn").style.display = id ? "" : "none";
+  renderLineupAssignmentBadge();
   document.getElementById("lineupModal").classList.add("open");
 }
 
@@ -10212,6 +10558,166 @@ async function copyLineupToClipboard(id) {
     catch (e2) { setToast("Could not access clipboard.", "err"); }
     document.body.removeChild(ta);
   }
+}
+
+// =====================================================================
+// Workout assignment UI (v1.13.0) — coach assigns a practice workout to a
+// lineup / team / squad / club / athlete. Athletes view, never edit.
+// =====================================================================
+function assignmentCtx(viewerAthleteId) {
+  return {
+    athletes: state.club.athletes || [],
+    lineups:  state.club.lineups  || [],
+    teams:    state.club.teams    || [],
+    squads:   state.club.squads   || [],
+    shells:   state.club.shells   || [],
+    oarSets:  state.club.oarSets  || [],
+    savedPlans: state.savedPlans  || [],
+    workoutAssignments: state.club.workoutAssignments || [],
+    boatClasses: BOAT_CLASSES,
+    viewerAthleteId: viewerAthleteId || null,
+  };
+}
+
+let _editingAssignmentId = null;
+
+function openAssignmentModal(targetType, targetId, assignmentId) {
+  if (!fbCan("editAssignments")) { setToast("Only coaches and admins can assign workouts.", "warn"); return; }
+  _editingAssignmentId = assignmentId || null;
+  const a = assignmentId ? (state.club.workoutAssignments || []).find(x => x.id === assignmentId) : null;
+  const tt = a ? a.targetType : (targetType || "lineup");
+  const tid = a ? a.targetId : targetId;
+  document.getElementById("assignmentModalTitle").textContent = a ? "EDIT ASSIGNMENT" : "ASSIGN WORKOUT";
+
+  // Target picker — lineups, teams, squads, athletes, then whole club.
+  const tSel = document.getElementById("asgTarget");
+  tSel.innerHTML = "";
+  const addOpt = (val, label) => { const o = document.createElement("option"); o.value = val; o.textContent = label; tSel.appendChild(o); };
+  for (const l of (state.club.lineups || []))   addOpt("lineup:" + l.id,  (l.name || "Lineup") + " (lineup)");
+  for (const t of (state.club.teams || []))     addOpt("team:" + t.id,    t.name + " (team)");
+  for (const s of (state.club.squads || []))    addOpt("squad:" + s.id,   s.name + " (squad)");
+  for (const x of (state.club.athletes || []))  addOpt("athlete:" + x.id, x.name + " (athlete)");
+  addOpt("club:_all", "Whole club");
+  tSel.value = tt + ":" + (tt === "club" ? "_all" : (tid || ""));
+
+  const fillSel = (id, keys, labelFn, val) => {
+    const sel = document.getElementById(id); sel.innerHTML = "";
+    for (const k of keys) { const o = document.createElement("option"); o.value = k; o.textContent = labelFn(k); sel.appendChild(o); }
+    sel.value = val;
+  };
+  fillSel("asgType", WORKOUT_TYPE_KEYS, k => WORKOUT_TYPES[k], (a && a.workoutType) || "steady");
+  fillSel("asgStatus", ASSIGNMENT_STATUSES, k => k.charAt(0).toUpperCase() + k.slice(1), (a && a.status) || "planned");
+
+  const plS = document.getElementById("asgPlan");
+  plS.innerHTML = '<option value="">— none —</option>';
+  for (const p of (state.savedPlans || [])) { const o = document.createElement("option"); o.value = p.id; o.textContent = p.title || planSummaryLine(p); plS.appendChild(o); }
+  plS.value = (a && a.workoutPlanId) || "";
+
+  const fW = document.getElementById("asgFocus"); fW.innerHTML = "";
+  const cur = new Set((a && a.focus) || []);
+  for (const f of FOCUS_OPTIONS) {
+    const lab = document.createElement("label"); lab.className = "chk";
+    lab.innerHTML = `<input type="checkbox" value="${f}" ${cur.has(f) ? "checked" : ""}><span>${f}</span>`;
+    fW.appendChild(lab);
+  }
+
+  const dl = findLineup(tid);
+  document.getElementById("asgTitle").value      = (a && a.title) || "";
+  document.getElementById("asgDate").value       = (a && a.date) || (dl && dl.date) || todayISODate();
+  document.getElementById("asgWorkout").value    = (a && a.embeddedWorkout) || "";
+  document.getElementById("asgRateMin").value    = (a && a.targetRate && a.targetRate.min) || "";
+  document.getElementById("asgRateMax").value    = (a && a.targetRate && a.targetRate.max) || "";
+  document.getElementById("asgSplit").value      = (a && a.targetSplit) || "";
+  document.getElementById("asgWatts").value      = (a && a.targetWatts) || "";
+  document.getElementById("asgHr").value         = (a && a.targetHrZone) || "";
+  document.getElementById("asgCoachNote").value  = (a && a.coachNote) || "";
+  document.getElementById("asgAthleteNote").value = (a && a.athleteNote) || "";
+
+  document.getElementById("deleteAssignmentBtn").style.display = a ? "" : "none";
+  document.getElementById("assignmentModal").classList.add("open");
+}
+
+function closeAssignmentModal() {
+  document.getElementById("assignmentModal").classList.remove("open");
+  _editingAssignmentId = null;
+}
+
+function saveAssignmentFromModal() {
+  if (!fbCan("editAssignments")) return;
+  const title = document.getElementById("asgTitle").value.trim();
+  if (!title) { setToast("Give the assignment a title.", "warn"); return; }
+  const parts = (document.getElementById("asgTarget").value || "lineup:").split(":");
+  const tt = parts[0], tid = parts.slice(1).join(":");
+  if (!tt || (tt !== "club" && !tid)) { setToast("Pick what to assign to.", "warn"); return; }
+  const rateMin = parseInt(document.getElementById("asgRateMin").value, 10);
+  const rateMax = parseInt(document.getElementById("asgRateMax").value, 10);
+  const focus = Array.from(document.querySelectorAll("#asgFocus input:checked")).map(c => c.value);
+  const existing = _editingAssignmentId ? (state.club.workoutAssignments || []).find(x => x.id === _editingAssignmentId) : null;
+  const a = {
+    id: _editingAssignmentId || uid(),
+    title,
+    workoutType: document.getElementById("asgType").value,
+    targetType: tt,
+    targetId: tt === "club" ? null : tid,
+    workoutPlanId: document.getElementById("asgPlan").value || null,
+    embeddedWorkout: document.getElementById("asgWorkout").value.trim(),
+    date: document.getElementById("asgDate").value || "",
+    status: document.getElementById("asgStatus").value || "planned",
+    targetRate: (rateMin || rateMax) ? { min: rateMin || null, max: rateMax || null } : null,
+    targetSplit: document.getElementById("asgSplit").value.trim(),
+    targetWatts: document.getElementById("asgWatts").value.trim(),
+    targetHrZone: document.getElementById("asgHr").value.trim(),
+    focus,
+    coachNote: document.getElementById("asgCoachNote").value.trim(),
+    athleteNote: document.getElementById("asgAthleteNote").value.trim(),
+    createdBy: existing ? existing.createdBy : (fbActive() ? state.fb.user.uid : "local"),
+    createdAt: existing ? existing.createdAt : new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  if (!Array.isArray(state.club.workoutAssignments)) state.club.workoutAssignments = [];
+  if (existing) Object.assign(existing, a);
+  else state.club.workoutAssignments.push(a);
+  persistClubLocalOnly();
+  if (fbActive()) {
+    fbPushAssignment(a);
+    fbAudit(existing ? "assignment.edit" : "assignment.create", "assignment", a.id, null,
+            { title: a.title, date: a.date, targetType: a.targetType });
+  } else { persistClub(); }
+  closeAssignmentModal();
+  renderClubsView();
+  if (document.getElementById("lineupModal").classList.contains("open")) renderLineupAssignmentBadge();
+  setToast(existing ? "Assignment updated." : "Workout assigned.", "ok");
+}
+
+function deleteAssignmentFromModal() {
+  if (!_editingAssignmentId) return;
+  const a = (state.club.workoutAssignments || []).find(x => x.id === _editingAssignmentId);
+  if (!a) return;
+  if (!confirm(`Remove the assignment "${a.title}"?`)) return;
+  state.club.workoutAssignments = (state.club.workoutAssignments || []).filter(x => x.id !== a.id);
+  persistClubLocalOnly();
+  if (fbActive()) { fbDeleteAssignmentRemote(a.id); fbAudit("assignment.remove", "assignment", a.id, { title: a.title }, null); }
+  else { persistClub(); }
+  closeAssignmentModal();
+  renderClubsView();
+  if (document.getElementById("lineupModal").classList.contains("open")) renderLineupAssignmentBadge();
+}
+
+// Show the assigned-workout badge + toggle the Assign button in the builder.
+function renderLineupAssignmentBadge() {
+  const el = document.getElementById("lineupAssignmentBadge");
+  const btn = document.getElementById("assignWorkoutBtn");
+  if (!el || !btn) return;
+  const lid = state.editingLineupId;
+  if (!lid) { el.style.display = "none"; btn.style.display = "none"; return; }   // unsaved lineup → save first
+  btn.style.display = fbCan("editAssignments") ? "" : "none";
+  const asgs = assignmentsForLineup(lid, assignmentCtx());
+  if (!asgs.length) { el.style.display = "none"; btn.textContent = "＋ Assign workout"; return; }
+  const a = asgs[0];
+  btn.textContent = "Edit assignment";
+  el.style.display = "";
+  el.innerHTML = `<span class="asg-badge">📋 Workout assigned</span>` +
+    `<span class="asg-meta">${fbEsc(a.title)}${a.date ? " · " + fbEsc(a.date) : ""} · ${fbEsc(a.status || "planned")}</span>`;
 }
 
 function todayISODate() {
@@ -11110,7 +11616,7 @@ async function syncHistoryFromDrive() {
     state.club = Object.assign(
       {
         name: "", subtitle: "",
-        teams: [], squads: [], athletes: [], shells: [], oarSets: [], lineups: [],
+        teams: [], squads: [], athletes: [], shells: [], oarSets: [], lineups: [], workoutAssignments: [],
       },
       data.club,
     );
@@ -12370,7 +12876,7 @@ function confirmJoinClub() {
   state.club = Object.assign(
     {
       name: "", subtitle: "",
-      teams: [], squads: [], athletes: [], shells: [], oarSets: [], lineups: [],
+      teams: [], squads: [], athletes: [], shells: [], oarSets: [], lineups: [], workoutAssignments: [],
     },
     club,
   );
@@ -13669,6 +14175,15 @@ document.addEventListener("DOMContentLoaded", () => {
       copyLineupToClipboard(state.editingLineupId);
     }
   });
+  // Workout assignment (v1.13.0)
+  document.getElementById("assignWorkoutBtn").addEventListener("click", () => {
+    if (!state.editingLineupId) { setToast("Save the lineup first, then assign a workout.", "warn"); return; }
+    const asgs = assignmentsForLineup(state.editingLineupId, assignmentCtx());
+    openAssignmentModal("lineup", state.editingLineupId, asgs.length ? asgs[0].id : null);
+  });
+  document.getElementById("saveAssignmentBtn").addEventListener("click", saveAssignmentFromModal);
+  document.getElementById("cancelAssignmentBtn").addEventListener("click", closeAssignmentModal);
+  document.getElementById("deleteAssignmentBtn").addEventListener("click", deleteAssignmentFromModal);
 
   // Athlete / shell / team editor modals
   document.getElementById("saveAthleteBtn")  .addEventListener("click", saveAthleteFromForm);

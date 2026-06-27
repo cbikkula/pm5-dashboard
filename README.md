@@ -21,7 +21,7 @@
 
 > Open in Chrome or Edge on a desktop or Android phone. Click **Connect**, pair the PM5 over Bluetooth, and row.
 
-**Current release: `v1.12.1`** ([changelog](CHANGELOG.md)) · single 542 KB `index.html`, no framework, no build step.
+**Current release: `v1.13.0`** ([changelog](CHANGELOG.md)) · single 568 KB `index.html`, no framework, no build step.
 
 ---
 
@@ -138,6 +138,11 @@ The part I'd want a reviewer to see first:
 ![Lineup seat map — stroke→bow with per-seat side badges](docs/screenshots/lineup-seat-map.png)
 ![Lineup readiness — Ready / Needs attention / Blocked with an issue checklist](docs/screenshots/lineup-readiness.png)
 
+**Workout assignment** *(v1.13)* — assign a practice workout to a lineup (or team / squad / club / individual athlete) with a saved plan or free text, target rate / split / watts / HR, technical-focus tags, and **separate coach-private and athlete-visible notes**. Lineup cards get a *📋 Workout assigned* badge; athletes get a rowing-specific *Today's assignment* card — and the private coach note is **never** shown to them.
+
+![Coach assigns a workout to a lineup](docs/screenshots/workout-assignment-coach.png)
+![Athlete's "Today's assignment" view](docs/screenshots/workout-assignment-athlete.png)
+
 **Invite & approval flow** — generate a role-scoped share link or join code with an expiry. New members join as **pending** and must be approved before they can read anything; invites are listed for management and can be revoked at any time. Invite validity is re-checked by the Firestore rules *on the join write itself* — the client can't bypass it.
 
 ![Invite and approval flow](docs/screenshots/club-invite-flow.png)
@@ -165,7 +170,7 @@ The part I'd want a reviewer to see first:
 |                                  |               |
 |----------------------------------|---------------|
 | Lines of code (web app)          | **~13,600** (single `index.html`) |
-| Shipped bundle                   | **542 KB**    |
+| Shipped bundle                   | **568 KB**    |
 | Live metrics                     | **48**        |
 | Of those, heart-rate metrics     | **20**        |
 | Focus presets                    | **6**         |
@@ -178,7 +183,7 @@ The part I'd want a reviewer to see first:
 | Render time (mid-tier hardware)  | < 10 ms       |
 | Offline-capable                  | yes (after first load) |
 | Crash-resistant                  | yes (auto-save recovery every 5 s) |
-| Released versions                | **18** (v1.0.0 → v1.12.1; [changelog](CHANGELOG.md)) · 7 git tags |
+| Released versions                | **19** (v1.0.0 → v1.13.0; [changelog](CHANGELOG.md)) · 7 git tags |
 | Total commits                    | **48** ([activity](https://github.com/cbikkula/pm5-dashboard/commits/main)) |
 | Server I run                     | **none** — serverless by design (Firebase Spark, **$0/mo**) |
 

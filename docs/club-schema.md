@@ -64,6 +64,22 @@ Access: read = active members · write = owner/admin/coach.
 
 **Lineup readiness** *(v1.12 — computed, not stored):* `evaluateLineupReadiness(lineup, ctx)` is a pure function over the club's athletes / shells / oarSets / lineups returning a **Ready / Needs attention / Blocked** verdict plus an issue list (cox present, seat count, duplicate athletes, same-day double-booking across active lineups, availability, side mismatch + sweep balance, shell-class, oar sweep/scull + class). It adds **no persisted fields**, so the Firestore rules are unchanged.
 
+### `clubs/{clubId}/workoutAssignments/{assignmentId}` *(v1.13)*
+```
+title
+workoutType:  steady | intervals | test | technical | starts | recovery
+targetType:   club | team | squad | lineup | athlete
+targetId:     id of the target (null for club)
+workoutPlanId | embeddedWorkout   // a saved-plan reference OR free text — NOT history
+date, status: planned | active | completed | archived
+targetRate: { min, max } | targetSplit | targetWatts | targetHrZone
+focus: [catches | finishes | ratio | length | suspension | rhythm | starts | sprint]
+coachNote     // PRIVATE — coaches only, never sent to the athlete view
+athleteNote   // athlete-visible
+createdBy, createdAt, updatedAt
+```
+Access: read = active members · write = owner/admin/coach (athletes view, never edit). **Carries no personal PM5 history** — only a saved-plan reference or free text. Athlete relevance (seated in the lineup / in the team or squad / targeted directly / whole club) is resolved **client-side** by `athleteSeesAssignment()`, exactly as athletes already read all club lineups; the athlete-facing projection `formatAssignmentAthlete()` strips `coachNote`.
+
 ### `clubs/{clubId}/availability/{entryId}`
 ```
 date:      string (or practiceId)

@@ -6,10 +6,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-- Workout assignment to lineups (v1.13.0)
 - Viewer role + read-only session sharing (v1.14.0)
 - Session replay
 - AI technique analysis (peak-timing trends)
+
+## [v1.13.0] — June 2026 — Workout Assignment to Lineups
+
+Coaches can now assign a practice workout to a lineup (or team / squad / club / individual athlete), and athletes see exactly what they're expected to do before practice — rowing-specific, not a generic calendar event.
+
+- **Assignment model** — a new `clubs/{id}/workoutAssignments` subcollection: title, workout type (steady state / intervals / test piece / technical / starts-sprint / recovery), a saved-plan reference *or* free workout text, practice date, status, target rate range / split / watts / HR zone, technical-focus tags (catches, finishes, ratio, length, suspension, rhythm, starts, sprint), and **two separate notes — a private coach note and an athlete-visible note.** Carries **no personal PM5 history**; completion tracking is lightweight only.
+- **Coach flow** — *Assign workout* from any saved lineup (button on the lineup card and in the builder). Lineup cards + the builder show a **📋 Workout assigned** badge with title / date / status.
+- **Athlete view** — a *Today's assignment* card: e.g. *"Varsity 8+ — Stroke seat — P · 8×250m / 1:00 rest · rate 36–40 · Focus: catches, ratio · Shell: Demo 8+ · Active."* The **private coach note is never shown to athletes** (verified by tests).
+- **Security** — `workoutAssignments` rules mirror lineups: any **active** member may read, only **coach+** may write; suspended/removed members and non-members are denied. Audit-logged (assignment created / edited / removed). **⚠ Firestore rules changed — the new rules must be published to the Firebase Console.**
+- **Tests** — 18 new assertions for the pure targeting + athlete-safe formatting (62 total, all green).
 
 ## [v1.12.1] — June 2026 — Mobile polish + rowing UI cleanup
 

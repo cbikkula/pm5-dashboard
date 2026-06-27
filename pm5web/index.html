@@ -1380,6 +1380,52 @@
   }
   .avail-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
+  /* Delete-club gauntlet */
+  .fc-mini-btn.fc-danger {
+    color: #ff8a8a;
+    border-color: rgba(255,122,122,0.4);
+  }
+  .fc-mini-btn.fc-danger:hover {
+    border-color: rgba(255,122,122,0.8);
+    background: rgba(255,122,122,0.08);
+  }
+  .delete-warn {
+    margin-top: 10px;
+    border: 1px solid rgba(255,122,122,0.4);
+    background: rgba(255,122,122,0.07);
+    border-radius: 10px;
+    padding: 16px 18px;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .delete-warn b { color: #ff9b9b; }
+  .delete-progress {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .delete-progress .dot {
+    flex: 1;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--border);
+  }
+  .delete-progress .dot.on { background: #ff7a7a; }
+  button.danger-btn {
+    background: #c0392b;
+    border: 1px solid #c0392b;
+    color: #fff;
+    font-weight: 700;
+  }
+  button.danger-btn:hover { background: #e04434; border-color: #e04434; }
+  button.danger-btn:disabled {
+    background: var(--bg-base);
+    border-color: var(--border);
+    color: var(--text-dim);
+    cursor: not-allowed;
+  }
+
   /* Squads visually nest under their team in the Teams pane. */
   .team-block { display: flex; flex-direction: column; gap: 4px; }
   .squad-sublist {
@@ -3033,6 +3079,8 @@
                   title="Copy this club's data as JSON so you can hand it to another coach">Export</button>
           <button id="switchClubBtn" class="fc-mini-btn"
                   title="Create a new club or join a different one">Switch</button>
+          <button id="deleteClubBtn" class="fc-mini-btn fc-danger"
+                  title="Permanently delete this club">Delete</button>
         </div>
       </div>
       <div class="club-tabs">
@@ -3452,6 +3500,30 @@
 </div>
 
 <!-- Club chooser — gates first-time entry into the clubs view -->
+<!-- Delete club — deliberately a 5-step gauntlet for an irreversible,
+     multi-user-affecting action. The final step requires typing the
+     club name. -->
+<div class="modal-overlay" id="deleteClubModal">
+  <div class="modal" style="width: 520px;">
+    <div class="row" style="justify-content: space-between; align-items: baseline;">
+      <h2 id="deleteClubTitle">DELETE CLUB</h2>
+      <span class="h-sub" id="deleteClubStep" style="margin:0;">Step 1 of 5</span>
+    </div>
+    <div class="delete-progress" id="deleteClubDots"></div>
+    <div class="delete-warn" id="deleteClubMessage"></div>
+    <div id="deleteClubConfirmRow" style="display:none; margin-top:12px;">
+      <label class="lm-field">
+        <span class="lm-label">Type the club name to confirm</span>
+        <input type="text" id="deleteClubConfirmInput" autocomplete="off" spellcheck="false">
+      </label>
+    </div>
+    <div class="modal-buttons">
+      <button id="deleteClubCancelBtn">Cancel</button>
+      <button class="danger-btn" id="deleteClubNextBtn">Continue</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="clubChooserModal">
   <div class="modal" style="width: 640px;">
     <div class="row" style="justify-content: space-between; align-items: baseline;">
@@ -4251,6 +4323,36 @@ window.fbApi = {
                    { clubIds: [...existing, clubId] }, { merge: true });
     } catch (e) { /* best-effort */ }
   },
+  async removeUserClub(userUid, clubId) {
+    if (!_db) return;
+    try {
+      const existing = await this.getUserClubs(userUid);
+      if (!existing.includes(clubId)) return;
+      await setDoc(doc(_db, "users", userUid),
+                   { clubIds: existing.filter(x => x !== clubId) }, { merge: true });
+    } catch (e) { /* best-effort */ }
+  },
+
+  // Delete a whole club (owner only). Spark has no server-side cascade,
+  // so we delete every subcollection doc client-side, then the club
+  // doc. auditLogs are append-only (rules forbid delete) — they orphan
+  // under the removed club doc and become unreadable, which is the
+  // intended end state.
+  async deleteClubCascade(clubId, ownerUid) {
+    if (!_db) return;
+    const subs = ["members", "athletes", "lineups", "availability", "invites"];
+    for (const sub of subs) {
+      try {
+        const snap = await getDocs(collection(_db, "clubs", clubId, sub));
+        for (const d of snap.docs) {
+          try { await deleteDoc(doc(_db, "clubs", clubId, sub, d.id)); }
+          catch (e) { /* keep going */ }
+        }
+      } catch (e) { /* keep going */ }
+    }
+    await deleteDoc(doc(_db, "clubs", clubId));
+    if (ownerUid) await this.removeUserClub(ownerUid, clubId);
+  },
 };
 
 // Tell the main script the API is ready in case it's listening.
@@ -4381,7 +4483,8 @@ service cloud.firestore {
                 && request.resource.data.role != 'admin'))
         );
         allow delete: if isOwner(clubId)
-                      || (hasRole(clubId, ['admin']) && memberUid != clubData(clubId).ownerId);
+                      || (hasRole(clubId, ['admin']) && memberUid != clubData(clubId).ownerId)
+                      || (signedIn() && uid() == memberUid);
       }
 
       match /athletes/{athleteId} {
@@ -4472,7 +4575,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.11.2";
+const APP_VERSION = "1.11.3";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 const SESSION_SCHEMA_VERSION = 2;
@@ -8261,6 +8364,15 @@ function applyClubRoleGating() {
   show("newTeamBtn", canClub);
   show("inviteMembersBtn", fb && fbCan("manageMembers"));
 
+  // Delete vs Leave: only an owner (or a local single-user club) can
+  // delete the whole club; a cloud member leaves instead.
+  const delBtn = document.getElementById("deleteClubBtn");
+  if (delBtn) {
+    const isMemberNotOwner = fb && !state.fb.isOwner;
+    delBtn.textContent = isMemberNotOwner ? "Leave" : "Delete";
+    delBtn.title = isMemberNotOwner ? "Leave this club" : "Permanently delete this club";
+  }
+
   const nameEl = document.getElementById("clubName");
   const subEl  = document.getElementById("clubSubtitle");
   if (nameEl) nameEl.readOnly = fb && !canClub;
@@ -8463,6 +8575,127 @@ function renderAthleteHome() {
       }
     }
   }
+}
+
+// ---- Delete club — deliberate 5-step gauntlet ------------------------
+// Irreversible and (for a cloud club) multi-user-affecting, so the UI
+// makes you walk through five escalating warnings and type the club
+// name. Non-owner members can't delete the club — they "leave" instead.
+let _deleteClubSteps = [];
+let _deleteClubStep = 0;
+
+function buildDeleteClubSteps() {
+  const cloudOwner = fbActive() && state.fb.isOwner;
+  const name = fbEsc(state.club.name || "this club");
+  const driveNote = (state.user && state.user.signedIn && state.googleAccessToken)
+    ? " and your Google Drive copy" : "";
+  return [
+    `Delete <b>${name}</b>? This permanently erases the club and everything in it — roster, lineups, shells, oars, and teams.`,
+    `This <b>cannot be undone.</b> There is no trash, no backup, and no way to get it back once it's gone.`,
+    cloudOwner
+      ? `<b>Everyone else loses access.</b> Every coach and athlete you invited is removed from the club immediately, on all of their devices.`
+      : `This removes the club from this device${driveNote}.`,
+    cloudOwner
+      ? `All <b>invites, pending join requests, and the entire activity log</b> are destroyed too. Nobody can rejoin — there will be no club to rejoin.`
+      : `Every lineup, athlete, shell, oar set, and team you added is erased along with it.`,
+    "__CONFIRM__",   // sentinel → final type-the-name step
+  ];
+}
+
+function openDeleteClub() {
+  // Non-owner members can't delete the club (rules) — they leave.
+  if (fbActive() && !state.fb.isOwner) { leaveClub(); return; }
+  _deleteClubSteps = buildDeleteClubSteps();
+  _deleteClubStep = 0;
+  renderDeleteClubStep();
+  document.getElementById("deleteClubModal").classList.add("open");
+}
+function closeDeleteClub() {
+  document.getElementById("deleteClubModal").classList.remove("open");
+  _deleteClubStep = 0;
+}
+function renderDeleteClubStep() {
+  const steps = _deleteClubSteps;
+  const i = _deleteClubStep;
+  const isFinal = steps[i] === "__CONFIRM__";
+  document.getElementById("deleteClubTitle").textContent = isFinal ? "LAST CHANCE" : "DELETE CLUB";
+  document.getElementById("deleteClubStep").textContent = `Step ${i + 1} of ${steps.length}`;
+  const dots = document.getElementById("deleteClubDots");
+  dots.innerHTML = "";
+  for (let k = 0; k < steps.length; k++) {
+    const d = document.createElement("div");
+    d.className = "dot" + (k <= i ? " on" : "");
+    dots.appendChild(d);
+  }
+  const msg = document.getElementById("deleteClubMessage");
+  const confirmRow = document.getElementById("deleteClubConfirmRow");
+  const nextBtn = document.getElementById("deleteClubNextBtn");
+  if (isFinal) {
+    const nm = state.club.name || "";
+    msg.innerHTML = `Final step. Type the club's name <b>exactly</b> — <code>${fbEsc(nm)}</code> — to permanently delete it.`;
+    confirmRow.style.display = "";
+    const input = document.getElementById("deleteClubConfirmInput");
+    input.value = "";
+    input.placeholder = nm;
+    nextBtn.textContent = "Delete forever";
+    nextBtn.disabled = true;
+    input.oninput = () => { nextBtn.disabled = input.value.trim() !== nm.trim(); };
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 60);
+  } else {
+    msg.innerHTML = steps[i];
+    confirmRow.style.display = "none";
+    nextBtn.textContent = "Continue";
+    nextBtn.disabled = false;
+  }
+}
+function deleteClubNext() {
+  const steps = _deleteClubSteps;
+  if (steps[_deleteClubStep] !== "__CONFIRM__") {
+    _deleteClubStep++;
+    renderDeleteClubStep();
+    return;
+  }
+  const nm = (state.club.name || "").trim();
+  const typed = document.getElementById("deleteClubConfirmInput").value.trim();
+  if (typed !== nm) { setToast("That doesn't match the club name.", "warn"); return; }
+  performDeleteClub();
+}
+async function performDeleteClub() {
+  const cloudOwner = fbActive() && state.fb.isOwner;
+  const clubId = state.fb.clubId;
+  const userUid = state.fb.user ? state.fb.user.uid : null;
+  const nextBtn = document.getElementById("deleteClubNextBtn");
+  nextBtn.disabled = true; nextBtn.textContent = "Deleting…";
+  try {
+    if (cloudOwner) await window.fbApi.deleteClubCascade(clubId, userUid);
+    fbDetach();
+    if (userUid) { try { localStorage.removeItem(fbJoinedClubKey(userUid)); } catch (e) {} }
+    state.club = { name: "", subtitle: "", teams: [], squads: [], athletes: [], shells: [], oarSets: [], lineups: [] };
+    persistClub();   // fbActive() is now false → clears localStorage + Drive only
+    closeDeleteClub();
+    setToast("Club deleted.", "ok");
+    showView("home");
+  } catch (e) {
+    setToast("Delete failed: " + (e.message || e), "err");
+    nextBtn.disabled = false; nextBtn.textContent = "Delete forever";
+  }
+}
+
+// Non-owner members leave the club (a single confirm — leaving doesn't
+// remove anyone else, so it doesn't need the gauntlet).
+async function leaveClub() {
+  const clubId = state.fb.clubId;
+  const userUid = state.fb.user ? state.fb.user.uid : null;
+  if (!confirm(`Leave ${state.club.name || "this club"}? You'll lose access until a coach invites you again.`)) return;
+  try { if (userUid) await window.fbApi.removeMember(clubId, userUid); }
+  catch (e) { console.warn("Leave failed:", e); }
+  try { if (userUid) await window.fbApi.removeUserClub(userUid, clubId); } catch (e) {}
+  fbDetach();
+  if (userUid) { try { localStorage.removeItem(fbJoinedClubKey(userUid)); } catch (e) {} }
+  state.club = { name: "", subtitle: "", teams: [], squads: [], athletes: [], shells: [], oarSets: [], lineups: [] };
+  persistClub();
+  setToast("You left the club.", "ok");
+  showView("home");
 }
 
 // ----- Sync status chip in the clubs view header --------------------
@@ -13174,6 +13407,14 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("exportClubBtn").addEventListener("click", exportClubToClipboard);
   document.getElementById("switchClubBtn").addEventListener("click", switchClub);
+  document.getElementById("deleteClubBtn").addEventListener("click", openDeleteClub);
+  document.getElementById("deleteClubCancelBtn").addEventListener("click", closeDeleteClub);
+  document.getElementById("deleteClubNextBtn").addEventListener("click", deleteClubNext);
+  document.getElementById("deleteClubConfirmInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !document.getElementById("deleteClubNextBtn").disabled) {
+      e.preventDefault(); deleteClubNext();
+    }
+  });
   // Submit-on-Enter for the create-club name field.
   document.getElementById("newClubName").addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); confirmCreateClub(); }

@@ -11,6 +11,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Session replay
 - AI technique analysis (peak-timing trends)
 
+## [v1.11.3] — June 2026 — Club client polish + hardening
+
+Follow-ups on the multi-coach client:
+- **Delete club** — a deliberate 5-step confirmation gauntlet (escalating warnings + type-the-name) for an irreversible, multi-user-affecting action. Owners delete the whole club (cascading every subcollection); non-owner members get a one-confirm **Leave**. Rules now let a member delete their own membership row (leave / cancel a pending request).
+- **Firebase config moved out of the repo** into a gitignored `firebase-config.js` (template: `firebase-config.example.js`). The web apiKey is public by design — data is secured by the rules + auth domains — but it no longer sits in committed source.
+- Removed real-club / real-name example placeholders from the create-club and athlete forms.
+- "What's new" modal scrolls its list when there are more notes than fit.
+
 ## [v1.11.0] — June 2026 — Multi-coach club client (roles, invites, approvals)
 
 Full multi-user club management on top of the v1.10.0 cloud-sync foundation. Built **security-first**: the hardened, adversarially-reviewed Firestore rules came first, then the client UI against them. Everything still runs on the free Spark plan — the rules *are* the backend.

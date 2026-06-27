@@ -131,8 +131,11 @@ service cloud.firestore {
              ))
         );
 
+        // Owner/admin can remove members; anyone may delete their OWN
+        // row (= leave the club, or cancel a pending request).
         allow delete: if isOwner(clubId)
-                      || (hasRole(clubId, ['admin']) && memberUid != clubData(clubId).ownerId);
+                      || (hasRole(clubId, ['admin']) && memberUid != clubData(clubId).ownerId)
+                      || (signedIn() && uid() == memberUid);
       }
 
       // ---- athletes (rowable roster) ---------------------------------

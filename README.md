@@ -21,7 +21,7 @@
 
 > Open in Chrome or Edge on a desktop or Android phone. Click **Connect**, pair the PM5 over Bluetooth, and row.
 
-**Current release: `v1.11.3`** ([changelog](CHANGELOG.md)) · 48 commits · single 528 KB `index.html`, no framework, no build step.
+**Current release: `v1.11.4`** ([changelog](CHANGELOG.md)) · 48 commits · single 528 KB `index.html`, no framework, no build step.
 
 ---
 
@@ -111,6 +111,36 @@ The part I'd want a reviewer to see first:
 
 ---
 
+### Club system *(v1.11 — shipped)*
+
+> Full multi-coach club management — invite athletes, build lineups, track equipment, manage roles. Enforced end-to-end by Firestore Security Rules; no Cloud Functions required.
+
+**Club overview** — stat cards for teams, athletes, shells, oar sets, and lineups at a glance.
+
+![Club overview](docs/screenshots/club-overview.png)
+
+**Roster** — full athlete list with side preference (Port/Starboard/Coxswain), squad, and injury flags. Each athlete links to a club member account for approval-flow access.
+
+![Club roster](docs/screenshots/club-roster.png)
+
+**Lineups** — seat-by-seat lineup cards with status (Confirmed / Planned / Cancelled), equipment assignment, team, and scheduled date.
+
+![Club lineups](docs/screenshots/club-lineups.png)
+
+**Lineup builder** — drag-assign athletes to every seat with live conflict detection: double-assigned athletes and injury flags surface immediately in the coach notes area.
+
+![Lineup builder](docs/screenshots/club-lineup-builder.png)
+
+**Members panel** — pending join requests (Approve / Decline), active members with role badges, and per-member controls (promote to Admin, suspend, remove, link to roster athlete).
+
+![Members panel](docs/screenshots/club-members.png)
+
+**Activity log** — append-only audit trail of every administrative action (approvals, role changes, invites). Nobody — not even the owner — can edit or delete entries; enforced by the Firestore rules.
+
+![Activity log](docs/screenshots/club-activity.png)
+
+---
+
 ## By the numbers
 
 |                                  |               |
@@ -129,7 +159,7 @@ The part I'd want a reviewer to see first:
 | Render time (mid-tier hardware)  | < 10 ms       |
 | Offline-capable                  | yes (after first load) |
 | Crash-resistant                  | yes (auto-save recovery every 5 s) |
-| Released versions                | **15** (v1.0.0 → v1.11.3; [changelog](CHANGELOG.md)) · 7 git tags |
+| Released versions                | **16** (v1.0.0 → v1.11.4; [changelog](CHANGELOG.md)) · 7 git tags |
 | Total commits                    | **48** ([activity](https://github.com/cbikkula/pm5-dashboard/commits/main)) |
 | Server I run                     | **none** — serverless by design (Firebase Spark, **$0/mo**) |
 

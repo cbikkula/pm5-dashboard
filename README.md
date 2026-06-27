@@ -21,7 +21,7 @@
 
 > Open in Chrome or Edge on a desktop or Android phone. Click **Connect**, pair the PM5 over Bluetooth, and row.
 
-**Current release: `v1.13.0`** ([changelog](CHANGELOG.md)) · single 568 KB `index.html`, no framework, no build step.
+**Current release: `v1.14.0`** ([changelog](CHANGELOG.md)) · single 590 KB `index.html`, no framework, no build step.
 
 ---
 
@@ -108,12 +108,13 @@ The part I'd want a reviewer to see first:
 
 ![Demo Mode section in Settings](docs/screenshots/demo-mode-settings.png)
 
-### Performance page *(v1.3 — shipped)*
+### Performance page *(v1.14 — Phase 2)*
 
-> A real top-level analysis area answering *"what does all this data actually mean?"* — **Overview / Insights / Technique / Fitness / Goals / Compare** tabs with trends, fatigue, technique drift, and rule-based per-workout insights (*"Longest drive length in 3 weeks. Lowest HR for this pace. Stroke consistency up 6%."*).
+> A real top-level analysis area answering *"what does all this data actually mean?"* — now computed live from your saved history. The **Overview** tab rolls up 7/30-day metres, workouts, training time, average split/watts/rate/HR, your best recent session, **Personal Records** (500m → 60 min, flagged when set from a benchmark Test), and **Benchmark progress** sparklines. **Insights** surfaces rule-based per-workout observations; **Fitness** summarises fatigue and HR drift in plain English; **Technique** trends drive length, peak force, and stroke consistency. *(Shown with Demo Mode data.)*
 
-![Performance overview](docs/screenshots/performance-overview.png)
-![Performance insights](docs/screenshots/performance-insights.png)
+![Performance overview — real 7/30-day rollups + best recent session](docs/screenshots/performance-overview-real.png)
+![Personal records + benchmark-progress sparklines](docs/screenshots/performance-pr-trends.png)
+![Fatigue & heart-rate summary in plain English](docs/screenshots/performance-fatigue-technique.png)
 
 ---
 
@@ -170,7 +171,7 @@ The part I'd want a reviewer to see first:
 |                                  |               |
 |----------------------------------|---------------|
 | Lines of code (web app)          | **~13,600** (single `index.html`) |
-| Shipped bundle                   | **568 KB**    |
+| Shipped bundle                   | **590 KB**    |
 | Live metrics                     | **48**        |
 | Of those, heart-rate metrics     | **20**        |
 | Focus presets                    | **6**         |
@@ -183,7 +184,7 @@ The part I'd want a reviewer to see first:
 | Render time (mid-tier hardware)  | < 10 ms       |
 | Offline-capable                  | yes (after first load) |
 | Crash-resistant                  | yes (auto-save recovery every 5 s) |
-| Released versions                | **19** (v1.0.0 → v1.13.0; [changelog](CHANGELOG.md)) · 7 git tags |
+| Released versions                | **20** (v1.0.0 → v1.14.0; [changelog](CHANGELOG.md)) · 7 git tags |
 | Total commits                    | **48** ([activity](https://github.com/cbikkula/pm5-dashboard/commits/main)) |
 | Server I run                     | **none** — serverless by design (Firebase Spark, **$0/mo**) |
 
@@ -305,8 +306,7 @@ pm5-dashboard/
 Most of the original roadmap has shipped — PR tracking, target zones, fatigue analysis, technique insights, race mode, the Performance page, GitHub Actions CI, cloud sync, and the whole multi-coach club system are all live (see the [changelog](CHANGELOG.md)). The full tracker lives in [`docs/feature-backlog.md`](docs/feature-backlog.md). What's still ahead:
 
 **Club system (next phases):**
-- Workout assignment to lineups *(v1.13.0)*
-- Read-only **viewer** role + signed session-sharing URLs *(v1.14.0)*
+- Read-only **viewer** role + signed session-sharing URLs
 - Real-time presence — see who's online during a session
 
 **Analysis & data:**

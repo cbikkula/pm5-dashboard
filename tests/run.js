@@ -313,6 +313,78 @@ if (app.athleteSeesAssignment && app.assignmentsForAthlete && app.formatAssignme
 }
 
 // ---------------------------------------------------------------------
+// 11. Performance analytics (v1.14) — pure rollups over saved history.
+// ---------------------------------------------------------------------
+group("performance analytics");
+if (app.computePerformanceOverview && app.computePrCards && app.computeBenchmarkProgress) {
+  const NOW = Date.parse("2026-07-01T12:00:00Z");
+  const leg = (d, e, p, w, r, hr, dl) => ({ distanceM: d, elapsedS: e, paceS: p, watts: w, strokeRate: r, heartRate: hr, driveLengthM: dl });
+  const fading = [
+    leg(250,52,104,300,30,150,1.52), leg(250,52,104,298,30,152,1.51),
+    leg(250,53,106,290,30,156,1.50), leg(250,53,106,285,30,160,1.49),
+    leg(250,54,108,278,31,164,1.47), leg(250,55,110,270,31,168,1.45),
+    leg(250,56,112,262,32,172,1.43), leg(250,57,114,255,32,176,1.42),
+  ];
+  const mk = (id, daysAgo, dist, elap, watts, hr, results, plan) => ({
+    id, date: new Date(NOW - daysAgo * 86400000).toISOString().slice(0, 10),
+    title: "Demo " + id, plan: plan || null,
+    totals: { distanceM: dist, elapsedS: elap, avgWatts: watts, avgPaceS: dist > 0 ? elap / dist * 500 : null, avgHr: hr, strokes: Math.round(elap / 2) },
+    results: results || [],
+  });
+  const hist = [
+    mk("s1", 1, 8000, 1920, 200, 150, fading),
+    mk("s2", 3, 6000, 1500, 180, null, fading),
+    mk("s3", 21, 10000, 2500, 210, 145, fading),
+    mk("s4", 61, 5000, 1200, 190, 140, []),   // outside 30d
+  ];
+
+  // empty history → empty state, no invented data
+  ok("empty history → has:false", app.computePerformanceOverview([], NOW).has === false);
+  ok("empty prefs → all PR cards unset", app.computePrCards({}).every(p => p.has === false));
+  ok("empty history → no benchmark progress", app.computeBenchmarkProgress([]).length === 0);
+
+  // 7d / 30d totals
+  const ov = app.computePerformanceOverview(hist, NOW);
+  ok("overview has:true", ov.has === true);
+  ok("7d meters = 14,000", ov.d7.meters === 14000);
+  ok("7d workouts = 2", ov.d7.workouts === 2);
+  ok("30d meters = 24,000 (excludes 61-day-old)", ov.d30.meters === 24000);
+  ok("30d workouts = 3", ov.d30.workouts === 3);
+
+  // averages handle missing fields (s2 has no HR)
+  ok("30d split is distance-weighted", Math.abs(ov.d30.avgSplit - (5920 / 24000 * 500)) < 0.01);
+  ok("30d avg watts = mean(200,180,210)", Math.abs(ov.d30.avgWatts - (200 + 180 + 210) / 3) < 0.01);
+  ok("30d avg HR skips HR-less sessions", Math.abs(ov.d30.avgHr - (150 + 145) / 2) < 0.01);
+  ok("best recent picked by watts (s3)", ov.best && ov.best.id === "s3");
+
+  // PR cards format correctly
+  const pr = app.computePrCards({ benchmarks: { "2k": 420, "5k": 1100 }, benchmarkMeta: { "2k": { sessionId: "x", dateISO: "2026-06-20", paceS: 105 } } });
+  ok("PR cards = 8 keys", pr.length === 8 && pr.length === app.PR_KEYS.length);
+  const c2k = pr.find(p => p.key === "2k");
+  ok("2k PR formats time + flagged from Test", c2k.has === true && c2k.fromTest === true && /7:00/.test(c2k.resultText));
+  ok("5k PR present but not from Test (no meta)", pr.find(p => p.key === "5k").fromTest === false);
+  ok("unset PR → has:false", pr.find(p => p.key === "6k").has === false);
+
+  // benchmark attempts group + improvement/direction
+  const benchHist = [
+    mk("b1", 40, 2000, 430, 230, 150, [], { benchKey: "2k" }),
+    mk("b2", 10, 2000, 420, 240, 150, [], { benchKey: "2k" }),
+  ];
+  const prog = app.computeBenchmarkProgress(benchHist);
+  ok("2k attempts grouped (2)", prog.length === 1 && prog[0].key === "2k" && prog[0].attempts === 2);
+  ok("2k improving + positive improvement", prog[0].direction === "improving" && prog[0].improvement > 0);
+
+  // fatigue / technique / HR handle missing data
+  ok("fatigue trend over interval sessions", app.computeFatigueTrend(hist).has === true);
+  ok("fatigue trend empty w/o intervals", app.computeFatigueTrend([mk("p", 1, 5000, 1200, 190, 140, [])]).has === false);
+  ok("technique trend over interval sessions", app.computeTechniqueTrend(hist).has === true);
+  ok("technique trend empty w/o intervals", app.computeTechniqueTrend([mk("z", 1, 5000, 1200, 190, 140, [])]).has === false);
+  ok("HR summary has:true with HR", app.computeHrSummary(hist).has === true);
+  const noHr = app.computeHrSummary([mk("n", 1, 5000, 1200, 190, null, [])]);
+  ok("HR summary empty → pair-a-strap text", noHr.has === false && /pair a strap/i.test(noHr.text));
+}
+
+// ---------------------------------------------------------------------
 // 8. Bundle-size guard (#25) — keep the single file under budget.
 // ---------------------------------------------------------------------
 group("bundle size");

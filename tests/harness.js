@@ -103,6 +103,10 @@ function load() {
     "athleteSeesAssignment", "assignmentsForAthlete", "assignmentsForLineup",
     "formatAssignmentAthlete", "assignmentWorkoutText", "assignmentTargetLabel",
     "WORKOUT_TYPES",
+    // v1.14 — performance analytics
+    "computePerformanceOverview", "computePrCards", "computeBenchmarkProgress",
+    "computeFatigueTrend", "computeTechniqueTrend", "computeHrSummary",
+    "perfSessionMetrics", "sessionAvgRate", "PR_KEYS",
   ];
   const shim = "\n;globalThis.__APP = {" +
     exposed.map((n) => `${n}: (typeof ${n}!=="undefined"?${n}:undefined)`).join(",") +

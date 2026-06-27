@@ -6,9 +6,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-- Viewer role + read-only session sharing (v1.14.0)
+- Viewer role + read-only session sharing
 - Session replay
 - AI technique analysis (peak-timing trends)
+
+## [v1.14.0] — June 2026 — Performance Page Phase 2
+
+The Performance page stops being a spec preview and starts computing real analysis from your saved history (no framework, no chart library — inline SVG sparklines and CSS).
+
+- **Overview** — live 7-day / 30-day rollups: metres, workouts, training time, distance-weighted average split, and average watts / rate / HR (each gracefully omitted when the data isn't there), plus a best-recent-session line and a week-on-week volume trend.
+- **Personal records** — pulled out of Settings onto the page: 500m / 1k / 2k / 5k / 6k / 10k / 30min / 60min cards with result, pace, date, and a **🏆 from Test** vs *entered* flag. Empty cards read *"not set."*
+- **Benchmark progress** — a dependency-free sparkline per benchmark with best result, attempt count, and an improving / stable / slipping direction.
+- **Fitness** — fatigue index across recent pieces (most-even vs biggest-fade) and an HR / aerobic summary with drift, both in plain English (*"Recent fade is mostly from power fading in the back half."*). No HR data shows an explicit *"pair a strap"* prompt.
+- **Technique** — drive-length, peak-force, and stroke-consistency trends with a rowing-language diagnosis. **Insights** wires the existing rule-based engine to your real recent sessions.
+- **Goals / Compare** remain polished coming-next states. None of the logic invents data — empty history yields clean empty states, verified by tests.
+- **Tests** — 24 new assertions for the pure analytics (86 total, all green). No club / Firebase changes.
 
 ## [v1.13.0] — June 2026 — Workout Assignment to Lineups
 

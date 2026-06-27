@@ -2327,8 +2327,88 @@
 
   .perf-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 12px;
+  }
+
+  /* ---- Performance Phase 2 (v1.14.0) ---- */
+  .perf-card {
+    background: var(--bg-panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px; min-width: 0;
+  }
+  .perf-card .pc-n { font-size: 24px; font-weight: 800; color: var(--text); line-height: 1.1; }
+  .perf-card .pc-l { font-size: 11px; letter-spacing: .6px; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
+  .perf-card .pc-sub { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+  .perf-trend {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;
+    color: var(--text); background: var(--bg-base); border: 1px solid var(--border);
+    border-radius: 10px; padding: 9px 14px; margin-bottom: 12px;
+  }
+  .perf-trend .pt-icon { font-weight: 800; }
+  .pt-up { color: #66d39a; } .pt-down { color: #ff8080; } .pt-steady, .pt-new { color: var(--accent); }
+  .perf-sub { color: var(--text); font-size: 14px; font-weight: 700; letter-spacing: .4px; margin: 18px 0 8px; }
+  .perf-best {
+    margin-top: 12px; font-size: 13px; color: var(--text-dim); background: var(--bg-base);
+    border: 1px solid var(--border); border-radius: 10px; padding: 9px 14px;
+  }
+  .perf-best .pb-k { color: var(--accent); font-weight: 700; text-transform: uppercase; font-size: 10.5px; letter-spacing: .6px; margin-right: 6px; }
+  .perf-best b { color: var(--text); }
+  .perf-best .pb-date { color: var(--text-muted); font-size: 11.5px; }
+
+  .perf-pr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(116px, 1fr)); gap: 8px; }
+  .pr-card {
+    background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; min-width: 0;
+  }
+  .pr-card.empty { opacity: .55; }
+  .pr-card .pr-label { font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--text-muted); }
+  .pr-card .pr-result { font-size: 19px; font-weight: 800; color: var(--text); margin-top: 2px; }
+  .pr-card .pr-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; min-height: 14px; }
+  .pr-card .pr-flag { font-size: 10px; font-weight: 700; margin-top: 5px; }
+  .pr-card .pr-flag.test { color: #66d39a; } .pr-card .pr-flag.manual { color: var(--text-muted); }
+
+  .bp-row {
+    display: grid; grid-template-columns: 64px 1fr auto auto; align-items: center; gap: 12px;
+    background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px 14px; margin-bottom: 6px;
+  }
+  .bp-row .bp-label { font-size: 13px; font-weight: 700; color: var(--text); }
+  .bp-row .bp-spark { color: var(--text-muted); height: 26px; }
+  .bp-row .bp-spark.dir-ok { color: #66d39a; } .bp-row .bp-spark.dir-warn { color: #ff8080; }
+  .bp-row .bp-best { font-size: 13px; font-weight: 700; color: var(--text); text-align: right; white-space: nowrap; }
+  .bp-row .bp-dir { font-size: 12px; font-weight: 600; text-align: right; white-space: nowrap; }
+  .bp-row .bp-ok { color: #66d39a; } .bp-row .bp-warn { color: #ffcc55; } .bp-row .bp-muted { color: var(--text-muted); }
+  .bp-row .bp-k { display: block; font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: .4px; }
+  .spark { width: 96px; height: 26px; display: block; }
+
+  .perf-trend-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+  .tt-card {
+    background: var(--bg-panel); border: 1px solid var(--border); border-left-width: 3px;
+    border-radius: 10px; padding: 11px 14px; min-width: 0;
+  }
+  .tt-card.tt-ok   { border-left-color: #66d39a; }
+  .tt-card.tt-warn { border-left-color: #ffcc55; }
+  .tt-card.tt-bad  { border-left-color: #ff8080; }
+  .tt-card .tt-label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); }
+  .tt-card .tt-value { font-size: 22px; font-weight: 800; color: var(--text); margin-top: 3px; }
+  .tt-card .tt-value .tt-u { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-left: 3px; }
+  .tt-card .tt-note { font-size: 11.5px; color: var(--text-dim); margin-top: 3px; }
+  .perf-diagnosis {
+    margin-top: 12px; font-size: 13px; line-height: 1.6; color: var(--text);
+    background: var(--bg-base); border: 1px solid var(--border); border-radius: 10px; padding: 11px 15px;
+  }
+  .perf-mini-empty {
+    font-size: 12.5px; color: var(--text-muted); line-height: 1.6;
+    background: var(--bg-base); border: 1px dashed var(--border); border-radius: 10px; padding: 12px 15px;
+  }
+  .insight-card .ic-from { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+
+  @media (max-width: 560px) {
+    .perf-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .perf-pr-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .bp-row { grid-template-columns: 1fr auto; row-gap: 4px; }
+    .bp-row .bp-spark { grid-column: 1 / -1; width: 100%; }
+    .bp-row .bp-spark .spark { width: 100%; }
   }
   .perf-coming-soon {
     background: linear-gradient(90deg,
@@ -3083,107 +3163,34 @@
           <div class="pe-icon">📊</div>
           <div class="pe-title">No performance data yet</div>
           <div class="pe-body">
-            Complete a workout and log it, or jump into
-            <b>Settings → DEMO MODE → Start Demo Mode</b> to preview this page.
+            Complete a workout and log it, or open
+            <b>Settings → DEMO MODE → Start Demo Mode</b> to preview this page with synthetic data.
           </div>
         </div>
-        <div class="perf-cards" id="perfOverviewCards"></div>
-        <div class="perf-coming-soon">
-          <b>Phase 2 (next backlog pull):</b> live 7-day / 30-day rollups, best-recent-session card, and trend direction from your saved history.
+        <div id="perfOverviewReal" style="display:none;">
+          <div class="perf-trend" id="perfTrend"></div>
+          <div class="perf-cards" id="perfOverviewCards"></div>
+          <div id="perfBest"></div>
+          <h3 class="perf-sub">Personal records</h3>
+          <div class="perf-pr-grid" id="perfPrGrid"></div>
+          <h3 class="perf-sub">Benchmark progress</h3>
+          <div id="perfBenchProgress"></div>
         </div>
       </div>
 
       <!-- INSIGHTS TAB ----------------------------------------------- -->
       <div class="perf-pane" data-perf-pane="insights">
-        <div class="perf-section-headline">
-          The section you'll actually read.
-        </div>
-        <div class="perf-section-body">
-          Rule-based observations after every workout — no AI required.
-          Plain English, evidence-backed, never dense:
-        </div>
-        <div class="perf-insight-preview">
-          <div class="insight-card type-positive">
-            <div class="ic-badge">✓ POSITIVE</div>
-            <div class="ic-title">Best drive length in 3 weeks.</div>
-            <div class="ic-body">Your average drive length was 1.52 m, 4.1% higher than your recent average.</div>
-          </div>
-          <div class="insight-card type-warn">
-            <div class="ic-badge">⚠ WARNING</div>
-            <div class="ic-title">Late-piece fade detected.</div>
-            <div class="ic-body">Your average watts dropped 8.4% in the final quarter.</div>
-          </div>
-          <div class="insight-card type-tech">
-            <div class="ic-badge">🛠 TECHNIQUE</div>
-            <div class="ic-title">Peak force moved later.</div>
-            <div class="ic-body">Peak force position shifted from 38% to 46% of the drive by the end of the session.</div>
-          </div>
-          <div class="insight-card type-fitness">
-            <div class="ic-badge">❤ FITNESS</div>
-            <div class="ic-title">Lower heart rate for same pace.</div>
-            <div class="ic-body">Compared with similar sessions, your HR was 6 bpm lower at the same split.</div>
-          </div>
-          <div class="insight-card type-rec">
-            <div class="ic-badge">🎯 RECOMMENDATION</div>
-            <div class="ic-title">Recommended next focus.</div>
-            <div class="ic-body">Steady-state session at 18–20 spm while keeping drive length above 1.48 m.</div>
-          </div>
-        </div>
-        <div class="perf-coming-soon">
-          <b>Phase 3 (backlog pull #16 — Technique insight cards):</b> rule-based engine wired to your actual workouts. Starts with 5 triggers (drive-length drop, watts fade, HR drift, rate-without-power, peak-timing shift) and expands from there.
-        </div>
+        <div id="perfInsightsReal"></div>
       </div>
 
       <!-- TECHNIQUE TAB ---------------------------------------------- -->
       <div class="perf-pane" data-perf-pane="technique">
-        <div class="perf-section-headline">Rowing mechanics across sessions.</div>
-        <div class="perf-spec-grid">
-          <div class="ps-card">
-            <div class="ps-title">A. Force-curve comparison</div>
-            <div class="ps-body">Toggle between Average / Best / First 25% / Last 25% / Selected. See peak force, peak timing, drive length, slip (catch + release), drive ratio side-by-side.</div>
-          </div>
-          <div class="ps-card">
-            <div class="ps-title">B. Technique trend cards</div>
-            <div class="ps-body">Drive length over time (<i>1.51 m, ↑ 3.2% vs recent average</i>). Peak timing trend (<i>41%, stable</i>). Slip trend (<i>15°, ↓ improved by 2°</i>).</div>
-          </div>
-          <div class="ps-card">
-            <div class="ps-title">C. Stroke consistency</div>
-            <div class="ps-body">Coefficient-of-variation score per metric: split, watts, drive length, peak timing, and an overall consistency rollup.</div>
-          </div>
-          <div class="ps-card">
-            <div class="ps-title">D. Technique diagnosis</div>
-            <div class="ps-body">Rule-based root-cause labels: <i>"Shortening drive — length dropped 6.1%, watts dropped 7.8%, rate stable."</i> Identifies whether the issue is power, length, timing, or consistency.</div>
-          </div>
-        </div>
-        <div class="perf-coming-soon">
-          <b>Phase 4:</b> needs per-stroke history persistence (depends on backlog item #26 — versioned workout format). Force-curve overlay engine from v1.0 ports cleanly.
-        </div>
+        <div id="perfTechniqueReal"></div>
       </div>
 
       <!-- FITNESS TAB ------------------------------------------------ -->
       <div class="perf-pane" data-perf-pane="fitness">
-        <div class="perf-section-headline">Endurance, heart rate, and load.</div>
-        <div class="perf-spec-grid">
-          <div class="ps-card">
-            <div class="ps-title">A. Heart-rate zones</div>
-            <div class="ps-body">Time in zone (Z1–Z5) bar chart. Existing zone tracking from v1.0 feeds in directly.</div>
-          </div>
-          <div class="ps-card">
-            <div class="ps-title">B. Training load</div>
-            <div class="ps-body">Today / last 7 days / last 30 days TRIMP rollup. Banister-style, already computed live; just needs persistence + aggregation.</div>
-          </div>
-          <div class="ps-card">
-            <div class="ps-title">C. HR drift</div>
-            <div class="ps-body">First-half watts/HR vs second-half watts/HR ratio. Surfaces aerobic drift even when split looks identical.</div>
-          </div>
-          <div class="ps-card">
-            <div class="ps-title">D. Similar-session fitness trend</div>
-            <div class="ps-body">Only compares like-to-like: 30-min steady state vs other 30-min steady states; 2k tests vs other 2k tests. Never compares sprint to steady-state.</div>
-          </div>
-        </div>
-        <div class="perf-coming-soon">
-          <b>Phase 5:</b> mostly assembly of existing HR metrics (already tracked: zones, drift, decoupling, recovery deltas, TRIMP).
-        </div>
+        <div id="perfFitnessReal"></div>
       </div>
 
       <!-- GOALS TAB -------------------------------------------------- -->
@@ -4867,7 +4874,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.13.0";
+const APP_VERSION = "1.14.0";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 const SESSION_SCHEMA_VERSION = 2;
@@ -12777,16 +12784,405 @@ function setPerformanceTab(tabId) {
     p.classList.toggle("active", p.dataset.perfPane === tabId);
   });
 }
+// =====================================================================
+// Performance analytics (v1.14.0) — pure, DOM-free rollups over saved
+// history. Time-windowed functions take an explicit `nowMs` so tests are
+// deterministic. NONE of these invent data: empty history → empty result.
+// =====================================================================
+const PR_KEYS = ["500m", "1k", "2k", "5k", "6k", "10k", "30min", "60min"];
+
+// Session-average stroke rate — prefer interval data, else strokes/time.
+function sessionAvgRate(entry) {
+  const rows = (entry && entry.results) || [];
+  const rates = rows.map(r => r && r.strokeRate).filter(v => v > 0);
+  if (rates.length) return rates.reduce((a, b) => a + b, 0) / rates.length;
+  const T = (entry && entry.totals) || {};
+  if (T.strokes > 0 && T.elapsedS > 0) return T.strokes * 60 / T.elapsedS;
+  return null;
+}
+
+// Normalised per-session metrics used by every rollup.
+function perfSessionMetrics(entry) {
+  const T = (entry && entry.totals) || {};
+  return {
+    id: entry && entry.id, title: (entry && entry.title) || "Session",
+    date: (entry && entry.date) || "", dateMs: entry && entry.date ? Date.parse(entry.date) : NaN,
+    distanceM: T.distanceM || 0, elapsedS: T.elapsedS || 0,
+    split: (T.avgPaceS != null && T.avgPaceS > 0) ? T.avgPaceS : null,
+    watts: (T.avgWatts != null && T.avgWatts > 0) ? T.avgWatts : null,
+    hr:    (T.avgHr   != null && T.avgHr   > 0) ? T.avgHr   : null,
+    rate:  sessionAvgRate(entry),
+    benchKey: (entry && entry.plan && entry.plan.benchKey) || null,
+  };
+}
+
+// 7-day / 30-day rollup + best-recent session + week-on-week trend.
+function computePerformanceOverview(history, nowMs) {
+  const all = (history || []).map(perfSessionMetrics).filter(m => !isNaN(m.dateMs));
+  if (!all.length) return { has: false };
+  const DAY = 86400000;
+  const win = (days, fromDays) => all.filter(m => {
+    const age = nowMs - m.dateMs;
+    return age >= 0 && age < days * DAY && (fromDays == null || age >= fromDays * DAY);
+  });
+  const roll = (rows) => {
+    const withBoth = rows.filter(m => m.distanceM > 0 && m.elapsedS > 0);
+    const aggMeters = withBoth.reduce((a, m) => a + m.distanceM, 0);
+    const aggTime   = withBoth.reduce((a, m) => a + m.elapsedS, 0);
+    const mean = (k) => { const v = rows.map(m => m[k]).filter(x => x != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+    return {
+      meters:  rows.reduce((a, m) => a + m.distanceM, 0),
+      workouts: rows.length,
+      timeS:   rows.reduce((a, m) => a + m.elapsedS, 0),
+      avgSplit: aggMeters > 0 ? aggTime / aggMeters * 500 : null,   // true distance-weighted split
+      avgWatts: mean("watts"), avgRate: mean("rate"), avgHr: mean("hr"),
+    };
+  };
+  // best recent (30d): strongest by watts, else most metres.
+  let best = null;
+  for (const m of win(30)) {
+    if (!best) { best = m; continue; }
+    const better = (m.watts != null && best.watts != null) ? m.watts > best.watts
+                 : (m.watts != null && best.watts == null) ? true
+                 : (m.watts == null && best.watts != null) ? false
+                 : m.distanceM > best.distanceM;
+    if (better) best = m;
+  }
+  const thisWk = win(7).reduce((a, m) => a + m.distanceM, 0);
+  const prevWk = win(14, 7).reduce((a, m) => a + m.distanceM, 0);
+  let trend;
+  if (prevWk <= 0) trend = { dir: "new", text: thisWk > 0 ? "First week of logged training — keep it rolling." : "No sessions in the last 7 days." };
+  else {
+    const ch = (thisWk - prevWk) / prevWk * 100;
+    trend = ch > 10  ? { dir: "up",     text: `Volume up ${Math.round(ch)}% vs the previous week.` }
+          : ch < -10 ? { dir: "down",   text: `Volume down ${Math.round(-ch)}% vs the previous week.` }
+                     : { dir: "steady", text: "Training volume is steady week-on-week." };
+  }
+  return { has: true, total: all.length, d7: roll(win(7)), d30: roll(win(30)), best, trend };
+}
+
+// PR cards from saved benchmarks (NO invented values — has=false if unset).
+function computePrCards(prefs) {
+  prefs = prefs || {};
+  const bm = prefs.benchmarks || {}, meta = prefs.benchmarkMeta || {};
+  const TD = (typeof BENCH_TARGET_DIST !== "undefined") ? BENCH_TARGET_DIST : {};
+  const TT = (typeof BENCH_TARGET_TIME !== "undefined") ? BENCH_TARGET_TIME : {};
+  return PR_KEYS.map(key => {
+    const bench = BENCHMARKS.find(b => b.key === key) || { key, label: key, kind: "time" };
+    const v = bm[key], has = v != null && v > 0, m = meta[key] || {};
+    let resultText = "—", pace = null;
+    if (has) {
+      if (bench.kind === "time") { resultText = fmtTime(v); pace = m.paceS || (TD[key] ? v / (TD[key] / 500) : null); }
+      else                       { resultText = Math.round(v).toLocaleString() + " m"; pace = m.paceS || (TT[key] ? TT[key] / (v / 500) : null); }
+    }
+    return { key, label: bench.label, kind: bench.kind, value: has ? v : null, has,
+             resultText, pace, paceText: (pace && pace > 0) ? fmtPace(pace) : "—",
+             date: m.dateISO || null, fromTest: !!m.sessionId };
+  });
+}
+
+// Benchmark attempt trend from history (every saved Test of that distance).
+function computeBenchmarkProgress(history) {
+  const out = [];
+  for (const bench of BENCHMARKS) {
+    if (!PR_KEYS.includes(bench.key)) continue;
+    const attempts = (history || [])
+      .filter(h => h && h.plan && h.plan.benchKey === bench.key)
+      .map(h => ({ date: h.date || "", dateMs: Date.parse(h.date || ""), value: benchmarkAchievement(h, bench.key) }))
+      .filter(a => a.value != null && !isNaN(a.dateMs))
+      .sort((a, b) => a.dateMs - b.dateMs);
+    if (!attempts.length) continue;
+    const lower = bench.kind === "time";
+    const best = attempts.reduce((b, a) => ((lower ? a.value < b.value : a.value > b.value) ? a : b), attempts[0]);
+    const first = attempts[0], latest = attempts[attempts.length - 1];
+    let improvement = null, direction = "not-enough-data";
+    if (attempts.length >= 2) {
+      improvement = lower ? first.value - latest.value : latest.value - first.value;   // +ve = improved
+      const betterNow = lower ? latest.value < first.value : latest.value > first.value;
+      const worseNow  = lower ? latest.value > first.value : latest.value < first.value;
+      direction = betterNow ? "improving" : worseNow ? "declining" : "stable";
+    }
+    out.push({ key: bench.key, label: bench.label, kind: bench.kind, attempts: attempts.length,
+               latest: latest.value, best: best.value, first: first.value, improvement, direction,
+               series: attempts.map(a => a.value) });
+  }
+  return out;
+}
+
+// Fatigue summary across recent sessions (reuses computeFatigue).
+function computeFatigueTrend(history, max) {
+  const scored = (history || []).filter(h => h && (h.results || []).length >= 4).slice(0, max || 10)
+    .map(h => ({ entry: h, fat: computeFatigue(h) })).filter(x => x.fat);
+  if (!scored.length) return { has: false };
+  const idxs = scored.map(x => x.fat.index);
+  const avg = Math.round(idxs.reduce((a, b) => a + b, 0) / idxs.length);
+  const best  = scored.reduce((b, x) => x.fat.index > b.fat.index ? x : b, scored[0]);
+  const worst = scored.reduce((w, x) => x.fat.index < w.fat.index ? x : w, scored[0]);
+  const drivers = {};
+  for (const x of scored) {
+    const f = x.fat.fade;
+    if (f.driveLen != null && f.driveLen > 2) drivers.driveLen = (drivers.driveLen || 0) + 1;
+    if (f.watts    != null && f.watts    > 2) drivers.watts    = (drivers.watts    || 0) + 1;
+    if (f.split    != null && f.split    > 1) drivers.split    = (drivers.split    || 0) + 1;
+    if (f.hrDrift  != null && f.hrDrift  > 5) drivers.hr       = (drivers.hr       || 0) + 1;
+  }
+  const top = Object.keys(drivers).sort((a, b) => drivers[b] - drivers[a])[0];
+  const phrase = { driveLen: "drive length dropping late", watts: "power fading in the back half",
+                   split: "the split slipping over the piece", hr: "heart-rate drift" };
+  const text = avg >= 85 ? "You're pacing well — most recent pieces barely fade."
+    : top ? `Recent fade is mostly from ${phrase[top]}, in ${drivers[top]} of your last ${scored.length} pieces.`
+          : "Mixed fade pattern — no single recurring cause.";
+  return { has: true, n: scored.length, avgIndex: avg,
+           best:  { title: best.entry.title,  date: best.entry.date,  index: best.fat.index },
+           worst: { title: worst.entry.title, date: worst.entry.date, index: worst.fat.index },
+           pattern: top || null, text };
+}
+
+// Technique trend across recent sessions (drive length, peak force,
+// split consistency) — rowing language, not generic analytics.
+function computeTechniqueTrend(history, max) {
+  const qas = (history || []).filter(h => h && (h.results || []).length >= 4).slice(0, max || 10)
+    .map(h => ({ entry: h, qa: quartileAverages(h.results) })).filter(x => x.qa && x.qa.first && x.qa.last);
+  if (!qas.length) return { has: false };
+  const items = [];
+  const mean = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+  const dl = qas.map(x => x.qa.first.driveLengthM).filter(v => v != null);
+  const dlFade = qas.map(x => (x.qa.first.driveLengthM != null && x.qa.last.driveLengthM != null)
+      ? (x.qa.first.driveLengthM - x.qa.last.driveLengthM) / x.qa.first.driveLengthM * 100 : null).filter(v => v != null);
+  if (dl.length) {
+    const fade = mean(dlFade) || 0;
+    items.push({ key: "drive", label: "Drive length", value: mean(dl).toFixed(2) + " m",
+      note: fade > 2 ? `shortening ~${fade.toFixed(0)}% late` : "holding through the piece",
+      tone: fade > 2 ? "warn" : "ok" });
+  }
+  const pf = qas.map(x => x.qa.first.peakForceLbs).filter(v => v != null);
+  if (pf.length) items.push({ key: "force", label: "Peak force", value: Math.round(mean(pf)) + " lbf",
+    note: `avg first-quarter across ${pf.length} pieces`, tone: "ok" });
+  // Split consistency: average within-session CV of interval split (lower = steadier).
+  const cvs = qas.map(x => {
+    const sp = (x.entry.results || []).map(r => r.paceS).filter(v => v > 0);
+    if (sp.length < 3) return null;
+    const m = sp.reduce((a, b) => a + b, 0) / sp.length;
+    const sd = Math.sqrt(sp.reduce((a, b) => a + (b - m) * (b - m), 0) / sp.length);
+    return m > 0 ? sd / m * 100 : null;
+  }).filter(v => v != null);
+  if (cvs.length) { const cv = mean(cvs); items.push({ key: "consistency", label: "Stroke consistency",
+    value: (100 - Math.min(100, cv * 4)).toFixed(0) + "%", note: cv < 2 ? "very even splits" : "some variation piece-to-piece",
+    tone: cv < 3 ? "ok" : "warn" }); }
+  const driveItem = items.find(i => i.key === "drive");
+  const text = (driveItem && driveItem.tone === "warn")
+    ? "Drive length has shortened late in your recent longer pieces — hold the finish length as you tire."
+    : "Length and connection are holding well across recent sessions.";
+  return { has: true, n: qas.length, items, text };
+}
+
+// HR / aerobic summary — explicit no-HR empty state.
+function computeHrSummary(history, max) {
+  const withHr = (history || []).slice(0, max || 20).map(perfSessionMetrics).filter(m => m.hr != null);
+  if (!withHr.length) return { has: false, text: "No HR data yet — pair a strap to unlock HR drift and zone summaries." };
+  const avgHr = Math.round(withHr.reduce((a, m) => a + m.hr, 0) / withHr.length);
+  const drifts = (history || []).map(h => { const qa = quartileAverages(h.results);
+    return (qa && qa.first && qa.last && qa.first.heartRate != null && qa.last.heartRate != null) ? qa.last.heartRate - qa.first.heartRate : null; }).filter(v => v != null);
+  const avgDrift = drifts.length ? Math.round(drifts.reduce((a, b) => a + b, 0) / drifts.length) : null;
+  const text = (avgDrift != null && avgDrift > 6) ? `Average HR ${avgHr} bpm, with ~${avgDrift} bpm of drift over a piece — typical on long aerobic work.`
+    : (avgDrift != null) ? `Average HR ${avgHr} bpm with very little drift — a strong aerobic base.`
+    : `Average HR ${avgHr} bpm across ${withHr.length} recent sessions.`;
+  return { has: true, n: withHr.length, avgHr, avgDrift, text };
+}
+
+// Tiny dependency-free sparkline (inline SVG). "better" trends up visually.
+function sparklineSvg(values, opts) {
+  opts = opts || {};
+  const w = opts.w || 96, h = opts.h || 26, pad = 3, lower = !!opts.lowerBetter;
+  const vals = (values || []).filter(v => v != null && !isNaN(v));
+  if (vals.length < 2) return "";
+  const min = Math.min(...vals), max = Math.max(...vals), range = (max - min) || 1;
+  const pts = vals.map((v, i) => {
+    const x = pad + i * (w - 2 * pad) / (vals.length - 1);
+    const up = lower ? 1 - (v - min) / range : (v - min) / range;
+    return [x, pad + (1 - up) * (h - 2 * pad)];
+  });
+  const d = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+  const last = pts[pts.length - 1];
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">` +
+    `<path d="${d}" fill="none" stroke="currentColor" stroke-width="1.5"/>` +
+    `<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.2" fill="currentColor"/></svg>`;
+}
+
 function renderPerformanceView() {
   if (!state.performance) state.performance = { activeTab: "overview" };
   setPerformanceTab(state.performance.activeTab);
-  // Overview pane: show empty-state OR the Phase-2 "coming soon" preview
-  // depending on whether any history exists yet. Real card population
-  // lands when Phase 2 ships.
-  const emptyEl  = document.getElementById("perfOverviewEmpty");
-  const cardsEl  = document.getElementById("perfOverviewCards");
-  if (emptyEl) emptyEl.style.display = state.history.length ? "none" : "";
-  if (cardsEl) cardsEl.innerHTML = "";
+  renderPerfOverview();
+  renderPerfInsights();
+  renderPerfTechnique();
+  renderPerfFitness();
+}
+
+// ---- Performance render helpers -------------------------------------
+function fmtMeters(m) { return Math.round(m || 0).toLocaleString() + " m"; }
+function perfEmptyBlock(icon, title, bodyHtml) {
+  return `<div class="perf-empty-block"><div class="pe-icon">${icon}</div>` +
+         `<div class="pe-title">${fbEsc(title)}</div><div class="pe-body">${bodyHtml}</div></div>`;
+}
+function stripParen(s) { return String(s || "").replace(/\s*\(.*\)\s*$/, ""); }
+
+function renderPerfOverview() {
+  const empty = document.getElementById("perfOverviewEmpty");
+  const real  = document.getElementById("perfOverviewReal");
+  const ov = computePerformanceOverview(state.history, Date.now());
+  if (empty) empty.style.display = ov.has ? "none" : "";
+  if (real)  real.style.display  = ov.has ? "" : "none";
+  if (!ov.has) return;
+
+  const trendEl = document.getElementById("perfTrend");
+  if (trendEl) {
+    const arrow = ov.trend.dir === "up" ? "▲" : ov.trend.dir === "down" ? "▼" : "›";
+    trendEl.innerHTML = `<span class="pt-icon pt-${ov.trend.dir}">${arrow}</span> ${fbEsc(ov.trend.text)}`;
+  }
+
+  const cardsEl = document.getElementById("perfOverviewCards");
+  if (cardsEl) {
+    const c = ov.d30;
+    const card = (n, l, sub) => `<div class="perf-card"><div class="pc-n">${n}</div><div class="pc-l">${l}</div>${sub ? `<div class="pc-sub">${sub}</div>` : ""}</div>`;
+    cardsEl.innerHTML =
+      card(fmtMeters(ov.d30.meters), "Last 30 days", `${fmtMeters(ov.d7.meters)} in last 7d`) +
+      card(ov.d30.workouts, "Workouts", `${ov.d7.workouts} in last 7d`) +
+      card(fmtTime(ov.d30.timeS), "Training time", "last 30 days") +
+      card(c.avgSplit ? fmtPace(c.avgSplit) : "—", "Avg split", "/ 500 m") +
+      card(c.avgWatts != null ? Math.round(c.avgWatts) : "—", "Avg watts", c.avgWatts != null ? "watts" : "no data") +
+      card(c.avgRate != null ? Math.round(c.avgRate) : "—", "Avg rate", "spm") +
+      card(c.avgHr != null ? Math.round(c.avgHr) : "—", "Avg HR", c.avgHr != null ? "bpm" : "no strap");
+  }
+
+  const bestEl = document.getElementById("perfBest");
+  if (bestEl) {
+    const b = ov.best;
+    if (b) {
+      const bits = [];
+      if (b.distanceM) bits.push(fmtMeters(b.distanceM));
+      if (b.split)     bits.push(fmtPace(b.split) + "/500m");
+      if (b.watts != null) bits.push(Math.round(b.watts) + "W");
+      if (b.hr != null)    bits.push(Math.round(b.hr) + " bpm");
+      bestEl.innerHTML = `<div class="perf-best"><span class="pb-k">Best recent</span> <b>${fbEsc(b.title)}</b> · ${bits.join(" · ")}${b.date ? ` <span class="pb-date">${fbEsc(b.date)}</span>` : ""}</div>`;
+    } else bestEl.innerHTML = "";
+  }
+
+  const prEl = document.getElementById("perfPrGrid");
+  if (prEl) {
+    const cards = computePrCards({ benchmarks: (state.userPrefs || {}).benchmarks, benchmarkMeta: (state.userPrefs || {}).benchmarkMeta });
+    prEl.innerHTML = cards.map(p => `
+      <div class="pr-card ${p.has ? "" : "empty"}">
+        <div class="pr-label">${fbEsc(stripParen(p.label))}</div>
+        <div class="pr-result">${p.has ? fbEsc(p.resultText) : "—"}</div>
+        <div class="pr-sub">${p.has ? `${p.paceText !== "—" ? p.paceText + "/500m" : ""}${p.date ? (p.paceText !== "—" ? " · " : "") + fbEsc(p.date) : ""}` : "not set"}</div>
+        ${p.has ? (p.fromTest ? `<div class="pr-flag test">🏆 from Test</div>` : `<div class="pr-flag manual">entered</div>`) : ""}
+      </div>`).join("");
+  }
+
+  const bpEl = document.getElementById("perfBenchProgress");
+  if (bpEl) {
+    const progs = computeBenchmarkProgress(state.history);
+    if (!progs.length) {
+      bpEl.innerHTML = `<div class="perf-mini-empty">No benchmark Tests logged yet. From <b>Settings → Benchmarks</b>, tap <b>TEST</b> on any distance to log one.</div>`;
+    } else {
+      bpEl.innerHTML = progs.map(g => {
+        const fmtV = (v) => g.kind === "time" ? fmtTime(v) : Math.round(v).toLocaleString() + " m";
+        const dirText = { improving: "improving", declining: "slipping", stable: "stable", "not-enough-data": "1 attempt" }[g.direction];
+        const dirTone = g.direction === "improving" ? "ok" : g.direction === "declining" ? "warn" : "muted";
+        const imp = (g.improvement != null && g.improvement > 0)
+          ? (g.kind === "time" ? `−${g.improvement.toFixed(1)}s` : `+${Math.round(g.improvement)}m`) : "";
+        return `<div class="bp-row">
+          <div class="bp-label">${fbEsc(stripParen(g.label))}</div>
+          <div class="bp-spark dir-${dirTone}">${sparklineSvg(g.series, { lowerBetter: g.kind === "time" })}</div>
+          <div class="bp-best">${fmtV(g.best)}<span class="bp-k">best</span></div>
+          <div class="bp-dir bp-${dirTone}">${dirText}${imp ? ` · ${imp}` : ""}<span class="bp-k">${g.attempts} attempt${g.attempts > 1 ? "s" : ""}</span></div>
+        </div>`;
+      }).join("");
+    }
+  }
+}
+
+function renderPerfInsights() {
+  const el = document.getElementById("perfInsightsReal");
+  if (!el) return;
+  if (!state.history.length) {
+    el.innerHTML = perfEmptyBlock("💡", "No insights yet", "Log a workout with interval data — or run <b>Demo Mode</b> — and rule-based insights show up here.");
+    return;
+  }
+  const seen = new Set(); const cards = [];
+  for (const h of state.history.slice(0, 6)) {
+    for (const ins of computeInsights(h, state.history)) {
+      if (seen.has(ins.title)) continue;
+      seen.add(ins.title);
+      cards.push({ ...ins, session: h.title || "Session", date: h.date });
+      if (cards.length >= 8) break;
+    }
+    if (cards.length >= 8) break;
+  }
+  if (!cards.length) {
+    el.innerHTML = perfEmptyBlock("💡", "Nothing to flag — nice", "Your recent pieces held steady, with no fade or technique issues worth calling out.");
+    return;
+  }
+  el.innerHTML = `<div class="perf-section-body">Rule-based observations from your recent sessions — plain English, evidence-backed.</div>` +
+    `<div class="perf-insight-preview">` + cards.map(c => `
+      <div class="insight-card type-${c.type}">
+        <div class="ic-badge">${INSIGHT_BADGE[c.type] || ""}</div>
+        <div class="ic-title">${fbEsc(c.title)}</div>
+        <div class="ic-body">${fbEsc(c.body)}</div>
+        <div class="ic-from">${fbEsc(c.session)}${c.date ? ` · ${fbEsc(c.date)}` : ""}</div>
+      </div>`).join("") + `</div>`;
+}
+
+function renderPerfTechnique() {
+  const el = document.getElementById("perfTechniqueReal");
+  if (!el) return;
+  const t = computeTechniqueTrend(state.history);
+  if (!t.has) {
+    el.innerHTML = perfEmptyBlock("🛠", "Not enough technique data", "Log workouts with per-interval data (drive length, peak force) — <b>Demo Mode</b> generates it — and trends appear here.");
+    return;
+  }
+  el.innerHTML = `<div class="perf-section-headline">Rowing mechanics across your last ${t.n} pieces.</div>` +
+    `<div class="perf-trend-cards">` + t.items.map(i => `
+      <div class="tt-card tt-${i.tone}">
+        <div class="tt-label">${fbEsc(i.label)}</div>
+        <div class="tt-value">${fbEsc(i.value)}</div>
+        <div class="tt-note">${fbEsc(i.note)}</div>
+      </div>`).join("") + `</div>` +
+    `<div class="perf-diagnosis">${fbEsc(t.text)}</div>`;
+}
+
+function renderPerfFitness() {
+  const el = document.getElementById("perfFitnessReal");
+  if (!el) return;
+  const fat = computeFatigueTrend(state.history);
+  const hr  = computeHrSummary(state.history);
+  if (!fat.has && !hr.has && !state.history.length) {
+    el.innerHTML = perfEmptyBlock("❤", "No fitness data yet", "Log a workout (or run <b>Demo Mode</b>) to see fatigue, HR drift, and aerobic trends.");
+    return;
+  }
+  let html = `<div class="perf-section-headline">Fatigue &amp; pacing.</div>`;
+  if (fat.has) {
+    const tone = fat.avgIndex >= 85 ? "ok" : fat.avgIndex >= 65 ? "warn" : "bad";
+    html += `<div class="perf-trend-cards">
+      <div class="tt-card tt-${tone}"><div class="tt-label">Avg fatigue index</div><div class="tt-value">${fat.avgIndex}<span class="tt-u">/100</span></div><div class="tt-note">last ${fat.n} pieces</div></div>
+      <div class="tt-card tt-ok"><div class="tt-label">Most even</div><div class="tt-value">${fat.best.index}</div><div class="tt-note">${fbEsc(fat.best.title)}</div></div>
+      <div class="tt-card tt-warn"><div class="tt-label">Biggest fade</div><div class="tt-value">${fat.worst.index}</div><div class="tt-note">${fbEsc(fat.worst.title)}</div></div>
+    </div>
+    <div class="perf-diagnosis">${fbEsc(fat.text)}</div>`;
+  } else {
+    html += `<div class="perf-mini-empty">Not enough interval data for a fatigue trend yet.</div>`;
+  }
+  html += `<div class="perf-section-headline" style="margin-top:18px;">Heart rate &amp; aerobic.</div>`;
+  if (hr.has) {
+    html += `<div class="perf-trend-cards">
+      <div class="tt-card tt-ok"><div class="tt-label">Avg HR</div><div class="tt-value">${hr.avgHr}<span class="tt-u">bpm</span></div><div class="tt-note">last ${hr.n} sessions</div></div>
+      ${hr.avgDrift != null ? `<div class="tt-card tt-${hr.avgDrift > 6 ? "warn" : "ok"}"><div class="tt-label">HR drift</div><div class="tt-value">${hr.avgDrift >= 0 ? "+" : ""}${hr.avgDrift}<span class="tt-u">bpm</span></div><div class="tt-note">first→last quarter</div></div>` : ""}
+    </div>
+    <div class="perf-diagnosis">${fbEsc(hr.text)}</div>`;
+  } else {
+    html += `<div class="perf-mini-empty">${fbEsc(hr.text)}</div>`;
+  }
+  el.innerHTML = html;
 }
 
 function clubIsEmpty() {

@@ -38,6 +38,7 @@ To pull the next item: open a chat with me and say `do backlog #N`. I'll build i
 | 30 | ✅ done v1.7.0 | Export raw JSON                        | Single-session JSON with full metadata + force curves |
 | 31 | ✅ done v1.12.0 | Lineup readiness + rowing intelligence | Pure readiness engine (Ready / Needs attention / Blocked), upgraded stroke→bow seat map, equipment validation (sweep/scull + boat class), compact P/S notation, rowing-specific copy/export + athlete view. *Partial down-payment on L9 (crew compatibility) and L11 (rigging).* |
 | 32 | ✅ done v1.13.0 | Workout assignment to lineups          | Assign a practice workout to a lineup / team / squad / club / athlete (saved plan or free text, rate/split/HR targets, focus tags, coach-private + athlete-visible notes). New `workoutAssignments` subcollection + rules; athlete *Today's assignment* view; no personal history copied into club data. |
+| 33 | ✅ done v1.14.0 | Performance page Phase 2               | Real Overview (7/30-day rollups + best session + trend), Personal Records surfaced from Settings, benchmark-progress sparklines, fatigue + HR summaries, technique trends, real Insights. Pure analytics over saved history; no chart library. *Delivers the L13 Overview / Personal Records / Benchmark Progress / Fatigue / Technique sections.* |
 
 ## Long-term roadmap
 
@@ -57,7 +58,7 @@ Bigger items that don't fit in a single session — multi-session features, exte
 | L10 |        | Stroke matching                        | Compare current stroke against best session / target / another athlete. |
 | L11 |        | Rigging database                       | Per-shell config: pin span, oarlock height, foot height, drag factor target. |
 | L12 |        | Live coach broadcast                   | Coach pushes rate / target / message overlays to athletes mid-session. |
-| L13 |        | **Performance page** *(marquee)*       | Whole new top-level section that answers *"what does all this data actually mean?"* — see [Performance page spec](#l13-performance-page-spec-marquee) below. Several short-cycle items below feed into it. |
+| L13 | 🟡 Phase 2 v1.14.0 | **Performance page** *(marquee)*       | Top-level analysis section. **Phase 1** (tabs + spec) shipped v1.3; **Phase 2** (real Overview, Personal Records, Benchmark Progress, Fatigue + HR summaries, Technique trends, real Insights) shipped v1.14.0. Remaining: Goals CRUD, session Compare, force-curve overlays — see [Performance page spec](#l13-performance-page-spec-marquee). |
 
 ### L13 — Performance page (spec)
 

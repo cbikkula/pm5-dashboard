@@ -3490,11 +3490,11 @@
     <div class="lineup-meta" style="grid-template-columns: 1fr;">
       <label class="lm-field">
         <span class="lm-label">Club name</span>
-        <input type="text" id="newClubName" placeholder="Sammamish Rowing Association">
+        <input type="text" id="newClubName" placeholder="Your club or team name">
       </label>
       <label class="lm-field">
         <span class="lm-label">Subtitle (optional)</span>
-        <input type="text" id="newClubSubtitle" placeholder="Junior program">
+        <input type="text" id="newClubSubtitle" placeholder="Optional subtitle (program, season…)">
       </label>
     </div>
     <div class="modal-buttons">
@@ -3517,7 +3517,7 @@
     <label class="lm-field" style="margin-top: 10px;">
       <span class="lm-label">Paste shared club JSON</span>
       <textarea id="joinClubJson" rows="8" spellcheck="false"
-                placeholder='{"name":"Sammamish Rowing Association","teams":[...],"athletes":[...]}'></textarea>
+                placeholder='{"name":"My Club","teams":[...],"athletes":[...]}'></textarea>
     </label>
     <div class="modal-buttons">
       <button id="cancelJoinClubBtn">Back</button>
@@ -3706,7 +3706,7 @@
     <div class="lineup-meta" style="grid-template-columns: 1fr 1fr;">
       <label class="lm-field" style="grid-column: 1 / -1;">
         <span class="lm-label">Name</span>
-        <input type="text" id="athleteName" placeholder="Charan Bikkula">
+        <input type="text" id="athleteName" placeholder="Athlete's full name">
       </label>
       <label class="lm-field">
         <span class="lm-label">Default side</span>
@@ -4472,7 +4472,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.11.1";
+const APP_VERSION = "1.11.2";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 const SESSION_SCHEMA_VERSION = 2;
@@ -4679,7 +4679,7 @@ const state = {
   //
   // Schema:
   //   club.name        — string, the club's display name
-  //   club.subtitle    — string, optional (e.g. "Junior program")
+  //   club.subtitle    — string, optional (e.g. a program or season)
   //   club.teams[]     — { id, name, notes }
   //   club.squads[]    — { id, teamId, name, notes }
   //                      (a squad is one level deeper than a team — e.g.

@@ -43,7 +43,7 @@ Web Bluetooth requires **HTTPS** (or `localhost`), so a plain `file://` open won
 
 If you're looking for somewhere to start:
 
-- **Session replay** — given the persisted force-curve history per workout, build a scrubber UI.
+- **Session replay** — saved sessions persist **interval-level** results + bookmarks, so an interval scrubber is buildable today (see `getSessionReplayCapability()` and `docs/known-issues.md`). **Stroke-level and force-curve replay need new capture first** — per-stroke samples and force curves are *not* persisted to history yet.
 - **CSV export** — export workout history to a format other training-log tools understand.
 - **Firefox + Safari fallback** — they don't have Web Bluetooth, but they could show a useful "open this in Chrome" landing page instead of failing silently.
 - **Translations** — labels are all in `METRICS` and a few sprinkled `setToast()` calls. i18n would be straightforward.

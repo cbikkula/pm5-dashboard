@@ -7,8 +7,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 - Viewer role + read-only session sharing
-- Session replay
+- Session replay (interval + bookmark scrubber; stroke/force-curve replay needs new capture — see [known-issues](docs/known-issues.md))
 - AI technique analysis (peak-timing trends)
+
+## [v1.14.1] — June 2026 — Bundle Budget + Replay Readiness
+
+A small cleanup + scaffolding release before building Session Replay (the app is close to the 600 KB bundle guard).
+
+- **Dead-code cleanup** — removed the orphaned `.menu-card .card-soon` "Coming Soon" pill CSS (the Performance card stopped using it once the page shipped). Fixed `CONTRIBUTING.md`, which incorrectly claimed force-curve history is "persisted per workout" — it isn't.
+- **Session-replay readiness** — four pure, tested helpers (no UI yet): `getSessionReplayCapability()` (`none` / `summary-only` / `interval`), `buildIntervalReplayTimeline()`, `mapBookmarksToReplayTimeline()`, `summarizeReplayLimitations()`. They report honestly what saved data supports and never invent it — old/minimal/HR-less sessions don't crash.
+- **Replay data audit** (see [`docs/known-issues.md`](docs/known-issues.md)): interval + bookmark replay are buildable from saved data today; **stroke-level and force-curve replay are not** — per-stroke samples and force curves aren't persisted, so they need a new capture step first.
+- **Tests** — 17 new replay assertions (103 total, all green). Bundle 590 → 594 KB (under the 600 KB guard). No club / Firestore / security changes.
 
 ## [v1.14.0] — June 2026 — Performance Page Phase 2
 

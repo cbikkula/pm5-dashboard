@@ -21,7 +21,7 @@
 
 > Open in Chrome or Edge on a desktop or Android phone. Click **Connect**, pair the PM5 over Bluetooth, and row.
 
-**Current release: `v1.14.0`** ([changelog](CHANGELOG.md)) · single 590 KB `index.html`, no framework, no build step.
+**Current release: `v1.14.1`** ([changelog](CHANGELOG.md)) · single 594 KB `index.html`, no framework, no build step.
 
 ---
 
@@ -171,7 +171,7 @@ The part I'd want a reviewer to see first:
 |                                  |               |
 |----------------------------------|---------------|
 | Lines of code (web app)          | **~13,600** (single `index.html`) |
-| Shipped bundle                   | **590 KB**    |
+| Shipped bundle                   | **594 KB**    |
 | Live metrics                     | **48**        |
 | Of those, heart-rate metrics     | **20**        |
 | Focus presets                    | **6**         |
@@ -184,7 +184,7 @@ The part I'd want a reviewer to see first:
 | Render time (mid-tier hardware)  | < 10 ms       |
 | Offline-capable                  | yes (after first load) |
 | Crash-resistant                  | yes (auto-save recovery every 5 s) |
-| Released versions                | **20** (v1.0.0 → v1.14.0; [changelog](CHANGELOG.md)) · 7 git tags |
+| Released versions                | **21** (v1.0.0 → v1.14.1; [changelog](CHANGELOG.md)) · 7 git tags |
 | Total commits                    | **48** ([activity](https://github.com/cbikkula/pm5-dashboard/commits/main)) |
 | Server I run                     | **none** — serverless by design (Firebase Spark, **$0/mo**) |
 

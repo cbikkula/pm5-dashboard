@@ -277,20 +277,6 @@
     font-size: 12px;
     line-height: 1.4;
   }
-  /* "Coming Soon" pill, top-right corner. Used on the Performance
-     card until L13 ships. */
-  .menu-card .card-soon {
-    position: absolute;
-    top: 10px; right: 12px;
-    background: rgba(255, 143, 60, 0.18);
-    border: 1px solid var(--accent-2);
-    color: var(--accent-2);
-    border-radius: 999px;
-    padding: 2px 8px;
-    font-size: 9.5px;
-    font-weight: 700;
-    letter-spacing: 1px;
-  }
   .menu-card.primary {
     background: linear-gradient(135deg, var(--accent), var(--accent-3));
     border-color: transparent;
@@ -4874,7 +4860,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.14.0";
+const APP_VERSION = "1.14.1";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 const SESSION_SCHEMA_VERSION = 2;
@@ -12814,6 +12800,90 @@ function perfSessionMetrics(entry) {
     rate:  sessionAvgRate(entry),
     benchKey: (entry && entry.plan && entry.plan.benchKey) || null,
   };
+}
+
+// =====================================================================
+// Session Replay readiness (v1.14.1) — PURE capability detection over a
+// saved session. The replay UI is NOT built yet; these helpers report,
+// honestly, what the persisted data can support and never invent data.
+//
+// What history persists (see logCurrentWorkout): totals, plan, per-
+// INTERVAL results, optional bookmarks + pr. It does NOT persist per-
+// stroke samples or force-curve history — so stroke-level and force-
+// curve replay are impossible from saved data today.
+// =====================================================================
+// Highest replay fidelity the saved data supports:
+//   "none" · "summary-only" (totals only) · "interval" (per-interval).
+// "stroke"/"force-curve" are never returned: that data isn't saved yet.
+function getSessionReplayCapability(session) {
+  if (!session) return "none";
+  const rows = Array.isArray(session.results)
+    ? session.results.filter(r => r && (r.distanceM > 0 || r.elapsedS > 0)) : [];
+  if (rows.length >= 1) return "interval";
+  const T = session.totals || {};
+  if (T.distanceM > 0 || T.elapsedS > 0) return "summary-only";
+  return "none";
+}
+
+// Cumulative interval timeline for an interval scrubber — each point is
+// the boat's state at the END of that interval. Empty for old / summary-
+// only / plain sessions (they must not crash). Missing fields → null.
+function buildIntervalReplayTimeline(session) {
+  const rows = (session && Array.isArray(session.results) ? session.results : [])
+    .filter(r => r && (r.distanceM > 0 || r.elapsedS > 0));
+  let cumDist = 0, cumTime = 0;
+  return rows.map((r, i) => {
+    cumDist += r.distanceM || 0;
+    cumTime += r.elapsedS || 0;
+    return {
+      index: i,
+      cumulativeDistanceM: cumDist,
+      cumulativeTimeS: cumTime,
+      split:        (r.paceS != null && r.paceS > 0) ? r.paceS : null,
+      watts:        (r.watts != null && r.watts > 0) ? r.watts : null,
+      strokeRate:   (r.strokeRate != null && r.strokeRate > 0) ? r.strokeRate : null,
+      heartRate:    (r.heartRate != null && r.heartRate > 0) ? r.heartRate : null,   // missing HR → null
+      driveLengthM: (r.driveLengthM != null && r.driveLengthM > 0) ? r.driveLengthM : null,
+    };
+  });
+}
+
+// Place each saved bookmark on the replay timeline by distance, including
+// the interval it falls in (when interval data exists). Never invents a
+// bookmark; returns [] for a session with none.
+function mapBookmarksToReplayTimeline(session) {
+  const marks = (session && Array.isArray(session.bookmarks)) ? session.bookmarks : [];
+  const timeline = buildIntervalReplayTimeline(session);
+  return marks.map((b, i) => {
+    let intervalIndex = null;
+    if (timeline.length && b && b.distanceM != null) {
+      const hit = timeline.find(p => p.cumulativeDistanceM >= b.distanceM);
+      intervalIndex = hit ? hit.index : timeline.length - 1;
+    }
+    return {
+      index: i,
+      distanceM:   (b && b.distanceM   != null) ? b.distanceM   : null,
+      elapsedS:    (b && b.elapsedS    != null) ? b.elapsedS    : null,
+      strokeIndex: (b && b.strokeIndex != null) ? b.strokeIndex : null,
+      intervalIndex,
+    };
+  });
+}
+
+// Plain-English list of what replay CANNOT show for this session — so the
+// future UI can disclose limits rather than pretend. Always honest.
+function summarizeReplayLimitations(session) {
+  const cap = getSessionReplayCapability(session);
+  if (cap === "none") return ["This session has no logged data to replay."];
+  const out = [];
+  if (cap === "summary-only")
+    out.push("Summary only — no per-interval breakdown was saved, so only totals can be shown.");
+  out.push("No per-stroke samples are saved, so stroke-by-stroke replay isn't possible yet.");
+  out.push("No force-curve history is saved, so the drive force curve can't be replayed yet.");
+  const hasHr = (session.results || []).some(r => r && r.heartRate > 0) ||
+                (session.totals && session.totals.avgHr > 0);
+  if (!hasHr) out.push("No heart-rate data was recorded for this session.");
+  return out;
 }
 
 // 7-day / 30-day rollup + best-recent session + week-on-week trend.

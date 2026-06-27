@@ -107,6 +107,9 @@ function load() {
     "computePerformanceOverview", "computePrCards", "computeBenchmarkProgress",
     "computeFatigueTrend", "computeTechniqueTrend", "computeHrSummary",
     "perfSessionMetrics", "sessionAvgRate", "PR_KEYS",
+    // v1.14.1 — session replay readiness
+    "getSessionReplayCapability", "buildIntervalReplayTimeline",
+    "mapBookmarksToReplayTimeline", "summarizeReplayLimitations",
   ];
   const shim = "\n;globalThis.__APP = {" +
     exposed.map((n) => `${n}: (typeof ${n}!=="undefined"?${n}:undefined)`).join(",") +

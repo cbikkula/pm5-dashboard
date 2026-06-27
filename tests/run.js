@@ -385,6 +385,52 @@ if (app.computePerformanceOverview && app.computePrCards && app.computeBenchmark
 }
 
 // ---------------------------------------------------------------------
+// 12. Session replay readiness (v1.14.1) — honest capability detection.
+// ---------------------------------------------------------------------
+group("session replay readiness");
+if (app.getSessionReplayCapability && app.buildIntervalReplayTimeline) {
+  const cap = app.getSessionReplayCapability, tl = app.buildIntervalReplayTimeline,
+        bmap = app.mapBookmarksToReplayTimeline, lim = app.summarizeReplayLimitations;
+  const interval = { totals: { distanceM: 2000, elapsedS: 480 }, results: [
+    { distanceM: 500, elapsedS: 120, paceS: 120, watts: 250, strokeRate: 28, heartRate: 150, driveLengthM: 1.5 },
+    { distanceM: 500, elapsedS: 121, paceS: 121, watts: 248, strokeRate: 28, heartRate: 152, driveLengthM: 1.5 },
+  ] };
+  const summaryOnly = { totals: { distanceM: 5000, elapsedS: 1200 }, results: [] };
+  const noHrSess = { totals: { distanceM: 2000, elapsedS: 480 }, results: [{ distanceM: 500, elapsedS: 120, paceS: 120, watts: 250 }] };
+
+  // capability never exceeds what the saved data supports
+  ok("null session → none", cap(null) === "none");
+  ok("empty session → none", cap({ totals: {}, results: [] }) === "none");
+  ok("totals only → summary-only", cap(summaryOnly) === "summary-only");
+  ok("intervals → interval", cap(interval) === "interval");
+  ok("capability never claims stroke/force-curve", ["none", "summary-only", "interval"].includes(cap(interval)));
+
+  // interval timeline
+  const t = tl(interval);
+  ok("one timeline point per interval", t.length === 2);
+  ok("cumulative distance + time accumulate", t[1].cumulativeDistanceM === 1000 && t[1].cumulativeTimeS === 241);
+  ok("timeline carries HR when present", t[0].heartRate === 150);
+  ok("missing HR → null (no crash)", tl(noHrSess)[0].heartRate === null);
+  ok("summary-only → empty timeline", tl(summaryOnly).length === 0);
+
+  // old / minimal sessions stay compatible (no crashes)
+  ok("v1 minimal session → summary-only", cap({ schemaVersion: 1, totals: { distanceM: 2000, elapsedS: 480 } }) === "summary-only");
+  ok("blank session never crashes", cap({}) === "none" && tl({}).length === 0 && bmap({}).length === 0 && lim({}).length >= 1);
+
+  // bookmarks mapped, never invented
+  ok("no bookmarks → empty map", bmap(interval).length === 0);
+  const marked = Object.assign({}, interval, { bookmarks: [{ strokeIndex: 40, distanceM: 750, elapsedS: 180 }] });
+  const mb = bmap(marked);
+  ok("bookmark mapped to its interval", mb.length === 1 && mb[0].distanceM === 750 && mb[0].intervalIndex === 1);
+
+  // limitations stay honest about the universal gaps
+  const L = lim(interval);
+  ok("limitations note no per-stroke replay", L.some(s => /stroke/i.test(s)));
+  ok("limitations note no force-curve replay", L.some(s => /force/i.test(s)));
+  ok("no-HR session adds an HR limitation", lim(noHrSess).some(s => /heart.?rate/i.test(s)));
+}
+
+// ---------------------------------------------------------------------
 // 8. Bundle-size guard (#25) — keep the single file under budget.
 // ---------------------------------------------------------------------
 group("bundle size");

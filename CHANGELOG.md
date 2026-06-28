@@ -10,6 +10,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Session replay — stroke-by-stroke + force-curve scrubber (needs new per-stroke + force-curve capture first — see [known-issues](docs/known-issues.md))
 - AI technique analysis (peak-timing trends)
 
+## [v1.16.0] — June 2026 — Visual Theme Refresh
+
+A focused visual-polish pass — depth, motion, and theme consistency — kept under the 600 KB guard with no behavior or feature changes.
+
+- **Theme-safe buttons** — fixed a real cross-theme bug: button hover used hardcoded colors (`#222a40`, `#6cd2ff`), so on the Crimson / Forest / Ocean / Light themes the accent buttons still hovered blue. Hover/press now derive from the active theme's own tokens (`var(--border-bright)`, `filter: brightness()`), plus a subtle `:active` press for tactile feedback.
+- **Modal depth** — frosted `backdrop-filter` blur behind every modal + a soft elevation shadow, so dialogs read as floating above the page (Settings, Summary, Replay, Builder, Focus, club modals — all share `.modal`).
+- **Card & header polish** — menu cards lift with a shadow on hover; the header gets a subtle vertical gradient + crisper border for a more premium top bar.
+- **Themed scrollbars** — thin, theme-tinted scrollbars (Chrome/Edge) replace the default chrome.
+- All eight themes, the live monitor, Performance page, and the Session Replay MVP are unchanged functionally; verified by UI smoke + 375px overflow checks across home / performance / replay / summary / settings. Bundle 596 → **597 KB** (under the 600 KB guard). No club / Firestore / security changes.
+
 ## [v1.15.1] — June 2026 — Bundle Budget Reset
 
 A technical cleanup release — reclaim headroom under the 600 KB bundle guard before the next feature. **No behavior changes.**

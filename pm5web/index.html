@@ -56,16 +56,20 @@
     font-weight: 600;
     font-family: inherit;
     cursor: pointer;
+    transition: background-color .12s ease, border-color .12s ease, filter .12s ease, transform .05s ease;
   }
-  button:hover { background: #222a40; border-color: var(--accent); }
+  /* Theme-safe hover/press: brighten via the theme's own tokens (the old
+     hardcoded #222a40 / #6cd2ff turned every theme's buttons blue). */
+  button:hover { background: var(--border-bright); border-color: var(--accent); }
+  button:active:not(:disabled) { transform: translateY(1px); }
   button:disabled { color: var(--text-dim); cursor: not-allowed; }
   button.accent {
     background: var(--accent);
     color: var(--bg-base);
     border-color: var(--accent);
   }
-  button.accent:hover { background: #6cd2ff; }
-  button.accent:disabled { background: var(--border-bright); color: var(--text-dim); }
+  button.accent:hover { filter: brightness(1.08); }
+  button.accent:disabled { background: var(--border-bright); color: var(--text-dim); filter: none; }
   input[type="text"], input[type="number"], select {
     background: var(--bg-base);
     color: var(--text);
@@ -78,6 +82,13 @@
   }
   input:focus, select:focus { border-color: var(--accent); }
 
+  /* v1.16.0 — thin themed scrollbars for a more finished feel. */
+  html { scrollbar-width: thin; scrollbar-color: var(--border-bright) transparent; }
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+  ::-webkit-scrollbar-track { background: transparent; }
+
   /* ------- Layout ------- */
   #app {
     display: flex;
@@ -88,8 +99,8 @@
     min-height: 0;
   }
   header {
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
+    background: linear-gradient(180deg, var(--bg-panel-hi), var(--bg-panel));
+    border: 1px solid var(--border-bright);
     border-radius: 14px;
     padding: 10px 22px;
     display: flex;
@@ -97,6 +108,7 @@
     gap: 16px;
     height: 68px;
     flex: 0 0 auto;
+    box-shadow: 0 1px 0 rgba(255,255,255,.03) inset;
   }
   .conn-status { display: flex; align-items: center; gap: 12px; }
   .hdr-actions { display: flex; gap: 6px; }
@@ -262,9 +274,10 @@
   }
   .menu-card:hover {
     border-color: var(--accent);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px -14px rgba(0,0,0,.55);
   }
-  .menu-card:active { transform: translateY(0); }
+  .menu-card:active { transform: translateY(0); box-shadow: none; }
   .menu-card .card-icon { font-size: 30px; line-height: 1; }
   .menu-card .card-name {
     font-size: 18px;
@@ -1860,7 +1873,9 @@
   /* ------- Modals ------- */
   .modal-overlay {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,.6);
+    background: rgba(5,7,12,.62);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
     display: none;
     align-items: center;
     justify-content: center;
@@ -1877,6 +1892,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    box-shadow: 0 24px 64px -16px rgba(0,0,0,.7);
   }
   .modal h2 { font-size: 16px; font-weight: 700; letter-spacing: 3px; margin: 0; }
   .modal .h-sub { color: var(--text-muted); font-size: 12px; margin: 4px 0 12px; }
@@ -4716,7 +4732,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.15.1";
+const APP_VERSION = "1.16.0";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 const SESSION_SCHEMA_VERSION = 2;

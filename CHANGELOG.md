@@ -10,6 +10,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Session replay — stroke-by-stroke + force-curve scrubber (needs new per-stroke + force-curve capture first — see [known-issues](docs/known-issues.md))
 - AI technique analysis (peak-timing trends)
 
+## [v1.17.0] — June 2026 — Live Monitor 2.0
+
+A polish pass on the actual rowing screen — make it read like a serious performance display. CSS-only; **no PM5/Bluetooth parsing or metric math changed.**
+
+- **Stable telemetry numbers** — big live values (metric cards *and* fullscreen race mode) now use tabular figures, so digits don't jitter width as they change stroke-to-stroke.
+- **Clearer card hierarchy** — subtle depth on every metric card and a stronger lift on primary cards, consistent with the v1.16.0 theme polish; rounder corners.
+- **Theme-safe target zones** — in/near/out tints were hardcoded green/amber/red (wrong on Crimson/Forest/Ocean/Light); now a calm, theme-derived left accent (`var(--good)` / `var(--accent-2)` / `var(--warn)`) with no flashing. Same fix applied to the Heart focus preset's pill.
+- **Workout progress bar** — gradient panel + crisper border and a soft glow on the fill so the planned-workout bar reads as "live."
+- **Mobile fix** — the live monitor's fixed 3-column grid had no phone breakpoint and overflowed horizontally below ~520px; it now collapses to a single scrollable column at ≤600px so metric cards stack full-width with no overflow.
+- Verified in Demo Mode (force curve, cards, race mode) at desktop and 375px; replay, history, and Performance unregressed. Refreshed `live-monitor.png` (demo data). Bundle 597 → **598 KB** (under the 600 KB guard). No club / Firestore / security changes.
+
 ## [v1.16.0] — June 2026 — Visual Theme Refresh
 
 A focused visual-polish pass — depth, motion, and theme consistency — kept under the 600 KB guard with no behavior or feature changes.

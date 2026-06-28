@@ -168,18 +168,33 @@
     height: 100%;
     min-height: 0;
   }
+  /* v1.17.0 — phones: collapse the fixed 3-column monitor grid to a single
+     scrollable column so metric cards stack full-width with no horizontal
+     overflow (2fr/3fr/2fr + 160px card min-width overflowed below ~520px). */
+  @media (max-width: 600px) {
+    #monitorView.active {
+      grid-template-columns: 1fr;
+      grid-template-rows: none;
+      overflow-y: auto;
+    }
+    #monitorView.active .left-col,
+    #monitorView.active .center-col,
+    #monitorView.active .right-col { height: auto; }
+    #monitorView.active .hero { min-height: 0; }
+  }
 
   /* Workout progress bar (top of monitor view) */
   .workout-bar {
     grid-column: 1 / -1;
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
+    background: linear-gradient(180deg, var(--bg-panel-hi), var(--bg-panel));
+    border: 1px solid var(--border-bright);
     border-radius: 12px;
     padding: 12px 18px;
     display: flex;
     align-items: center;
     gap: 18px;
     min-height: 68px;
+    box-shadow: 0 2px 10px -4px rgba(0,0,0,.35);
   }
   .wb-info {
     display: flex;
@@ -207,16 +222,17 @@
     min-width: 0;
   }
   .wb-progress {
-    height: 14px;
-    background: var(--bg-card);
+    height: 15px;
+    background: var(--bg-base);
     border: 1px solid var(--border-bright);
-    border-radius: 7px;
+    border-radius: 8px;
     overflow: hidden;
   }
   .wb-progress-fill {
     height: 100%;
     width: 0%;
     background: linear-gradient(90deg, var(--accent), var(--accent-3));
+    box-shadow: 0 0 10px -1px var(--accent);
     transition: width .25s;
   }
   .wb-progress-labels {
@@ -484,8 +500,8 @@
                                             border-color: var(--accent-3); }
   .focus-card.theme-power     .mp-primary { background: var(--accent-2);
                                             border-color: var(--accent-2); }
-  .focus-card.theme-heart     .mp-primary { background: #ff6b6b;
-                                            border-color: #ff6b6b; }
+  .focus-card.theme-heart     .mp-primary { background: var(--warn);
+                                            border-color: var(--warn); }
   .focus-card.theme-race      .mp-primary { background: var(--accent-2);
                                             border-color: var(--accent-2); }
   .focus-card .fc-active-badge {
@@ -918,13 +934,14 @@
   .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 14px 18px;
     min-height: 96px;
     display: flex;
     flex-direction: column;
     flex: 1 1 auto;          /* grow + shrink with the column */
     min-width: 160px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.18);
   }
   .card .lab {
     color: var(--text-dim);
@@ -940,6 +957,10 @@
     margin-top: 4px;
     letter-spacing: -0.5px;
     line-height: 1.05;
+    /* Tabular figures keep big live numbers from jittering width as
+       digits change stroke-to-stroke — the key "stable telemetry" feel. */
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
   }
   .card .u {
     color: var(--text-muted);
@@ -957,6 +978,7 @@
     background: var(--bg-card);
     border-color: var(--border-bright);
     min-height: 150px;
+    box-shadow: 0 8px 26px -12px rgba(0,0,0,.5);
   }
   .card.tier-primary .lab { font-size: 14px; color: var(--text-muted); }
   .card.tier-primary .val { font-size: 84px; letter-spacing: -2px; }
@@ -2444,14 +2466,13 @@
 
   /* ============ Batch v1.5.0: live monitor tools ============ */
 
-  /* Target-zone tinting on metric cards (#9). A left border + faint
-     wash, kept off the value colour so it doesn't fight getColor. */
-  .card.tz-in   { border-left: 3px solid #56f9b3;
-                  box-shadow: inset 2px 0 0 rgba(86,249,179,0.15); }
-  .card.tz-near { border-left: 3px solid #ffcc55;
-                  box-shadow: inset 2px 0 0 rgba(255,204,85,0.15); }
-  .card.tz-out  { border-left: 3px solid #ff6b6b;
-                  box-shadow: inset 2px 0 0 rgba(255,107,107,0.15); }
+  /* Target-zone status on metric cards (#9) — a clear but calm left
+     accent in the zone colour, kept off the value so it doesn't fight
+     getColor. Theme-safe (was hardcoded green/amber/red); the card's own
+     box-shadow carries depth so this stays a flat, non-flashing cue. */
+  .card.tz-in   { border-left: 4px solid var(--good); }
+  .card.tz-near { border-left: 4px solid var(--accent-2); }
+  .card.tz-out  { border-left: 4px solid var(--warn); }
 
   /* Target-zone settings grid */
   .tz-toggle { display:flex; align-items:center; gap:8px;
@@ -2514,12 +2535,14 @@
   .race-primary .race-label { color:var(--text-dim); font-size:2vh;
     letter-spacing:3px; font-weight:700; }
   .race-primary .race-value { color:var(--accent); font-weight:800;
-    font-size:24vh; line-height:0.95; letter-spacing:-0.5vh; }
+    font-size:24vh; line-height:0.95; letter-spacing:-0.5vh;
+    font-variant-numeric:tabular-nums; font-feature-settings:"tnum"; }
   .race-secondary, .race-tertiary { display:flex; gap:6vw; flex-wrap:wrap;
     justify-content:center; }
   .race-cell { text-align:center; }
   .race-cell-label { color:var(--text-dim); font-size:1.6vh;
     letter-spacing:2px; font-weight:700; }
+  .race-cell-value { font-variant-numeric:tabular-nums; font-feature-settings:"tnum"; }
   .race-secondary .race-cell-value { color:var(--text); font-weight:700;
     font-size:8vh; line-height:1; }
   .race-tertiary .race-cell-value { color:var(--text-muted); font-weight:700;
@@ -4732,7 +4755,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.16.0";
+const APP_VERSION = "1.17.0";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 const SESSION_SCHEMA_VERSION = 2;

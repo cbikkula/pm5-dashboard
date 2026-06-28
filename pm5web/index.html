@@ -500,8 +500,7 @@
     font-size: 14px;
   }
   .active-plan-banner .active-plan-name { font-weight: 700; }
-  /* (v1.15.0 cleanup) removed orphaned .home-toolbar/.home-tabs/.home-tab/
-     .home-actions/.home-content/.home-pane — superseded layout, unused. */
+  /* (v1.15.0) removed orphaned .home-toolbar/.home-tabs/.home-tab/.home-actions/.home-content/.home-pane (unused). */
   .home-list {
     flex: 1;
     overflow-y: auto;
@@ -1855,84 +1854,8 @@
     transition: width .2s;
   }
 
-  /* ------- Workout panel ------- */
-  .panel {
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px 20px;
-    min-height: 140px;
-    max-height: 200px;
-    display: flex;
-    flex-direction: column;
-  }
-  .panel .row { display: flex; align-items: center; gap: 12px; }
-  .panel .desc-col { flex: 1; }
-  .panel .desc { font-size: 26px; font-weight: 700; line-height: 1.1; }
-  .panel .mode { color: var(--text-muted); font-size: 13px; letter-spacing: 1.5px; margin-top: 2px; }
-  .panel .panel-buttons { display: flex; flex-direction: column; gap: 4px; }
-  .panel .stats-row {
-    display: flex; align-items: center;
-    color: var(--text-muted); font-size: 14px;
-    margin-top: 2px;
-  }
-  .panel .current { color: var(--text); font-size: 22px; font-weight: 700; }
-
-  /* When a programmed plan is loaded, the panel becomes the dominant
-     element of the centre column and the interval table is the focus. */
-  .panel.has-plan {
-    min-height: 280px;
-    max-height: 540px;
-    flex: 1 1 auto;
-  }
-  .panel-table {
-    flex: 1;
-    overflow-y: auto;
-    margin-top: 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--bg-base);
-  }
-  .interval-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .interval-table th, .interval-table td {
-    padding: 10px 12px;
-    text-align: center;
-    border-bottom: 1px solid var(--border);
-    font-size: 15px;
-  }
-  .interval-table thead th {
-    position: sticky; top: 0;
-    background: var(--bg-panel-hi);
-    color: var(--text-dim);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-  }
-  .interval-table tr.future td   { color: var(--text-dim); }
-  .interval-table tr.done   td   { color: var(--text-muted); }
-  .interval-table tr.done   td:nth-child(3),
-  .interval-table tr.done   td:nth-child(4),
-  .interval-table tr.done   td:nth-child(5) { color: var(--accent-3); font-weight: 600; }
-  .interval-table tr.current {
-    background: rgba(76,194,255,0.10);
-    box-shadow: inset 4px 0 0 0 var(--accent);
-  }
-  .interval-table tr.current td {
-    color: var(--text);
-    font-weight: 700;
-    font-size: 17px;
-  }
-  .interval-table th:first-child,
-  .interval-table td:first-child {
-    width: 44px;
-    color: var(--text-dim);
-    font-weight: 700;
-  }
-  .interval-table tr:last-child td { border-bottom: 0; }
+  /* (v1.15.1) removed dead old-workout-panel CSS (.panel* / .panel-table / .interval-table):
+     replaced by #workoutBar; its only renderer (renderIntervalTable) went in v1.15.0. */
 
   /* ------- Modals ------- */
   .modal-overlay {
@@ -2461,9 +2384,8 @@
   }
 
   /* Performance preview modal — list of upcoming sections */
-  /* (v1.15.0 cleanup) removed .perf-preview/.perf-section/.perf-section-title
-     and the .perf-highlight rules — only the removed teaser modal used them.
-     .perf-section-body stays: the live Performance page still renders it. */
+  /* (v1.15.0) removed .perf-preview/.perf-section/.perf-section-title/.perf-highlight (teaser-only).
+     .perf-section-body stays — the live Performance page still renders it. */
   .perf-section-body {
     color: var(--text-muted);
     font-size: 12.5px;
@@ -2669,8 +2591,7 @@
   .summary-bookmarks .sb-i { color:var(--accent); font-weight:700;
     min-width:18px; }
 
-  /* Session Replay (v1.15.0) — interval scrubber + bookmarks. Lean: no
-     chart lib, reuses .modal/.h-sub/.modal-buttons. */
+  /* Session Replay (v1.15.0) — interval scrubber + bookmarks; reuses .modal/.h-sub/.modal-buttons. */
   #replayModal .modal { width:680px; }
   .rpl-body { overflow-y:auto; padding-right:4px; }
   .rpl-badges { display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 10px; }
@@ -3551,10 +3472,8 @@
 
 <!-- (Benchmarks modal removed — moved into Settings → BENCHMARKS section.) -->
 
-<!-- (v1.15.0 cleanup) Removed the dead "Performance — coming soon" teaser
-     modal (#performanceSoonModal). It was superseded when the real
-     Performance page shipped in v1.14.0; the home card now opens that view
-     directly, so the teaser was unreachable. -->
+<!-- (v1.15.0) removed the unreachable "Performance — coming soon" teaser modal
+     (#performanceSoonModal); superseded by the real Performance page (v1.14.0). -->
 
 <!-- Release notes — fires once when the app version bumps. -->
 <div class="modal-overlay" id="releaseNotesModal">
@@ -4797,7 +4716,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.15.0";
+const APP_VERSION = "1.15.1";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 const SESSION_SCHEMA_VERSION = 2;
@@ -6603,10 +6522,8 @@ function renderHero() {
     dlBarEff.style.display = "none";
   }
 }
-// (v1.15.0 cleanup) Removed dead renderIntervalTable() — it rendered into
-// #intervalTable in the old workout panel, which renderWorkoutPanel()
-// replaced with the top-of-monitor progress bar. It had no caller and the
-// #intervalTable element no longer exists.
+// (v1.15.0) removed dead renderIntervalTable() — old workout panel, replaced
+// by the #workoutBar progress bar; no caller, #intervalTable no longer exists.
 
 function describeRatio(r, spm) {
   // At high cadence the ratio is naturally compressed — a 32 spm row
@@ -13684,13 +13601,10 @@ function filteredHistory() {
   return rows;
 }
 
-// =====================================================================
-// Session Replay (v1.15.0) — interval-by-interval scrubber + bookmarks.
-// Renders only what logCurrentWorkout persisted (interval results +
-// bookmarks + totals), via the v1.14.1 pure helpers. There is NO stroke-
-// by-stroke or force-curve replay: those samples were never saved, and
-// the limitation panel says so rather than faking them.
-// =====================================================================
+// Session Replay (v1.15.0) — interval-by-interval scrubber + bookmarks, from
+// what logCurrentWorkout persisted (intervals + bookmarks + totals) via the
+// v1.14.1 helpers. No stroke/force-curve replay (never saved); the limitation
+// panel discloses that rather than faking it.
 let _replay = null;  // { tl, marks, pos }
 
 function openReplay(session) {

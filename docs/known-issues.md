@@ -59,6 +59,22 @@ The **interval + bookmark** replay UI shipped in **v1.15.0** (open ▶ from any 
 - **Force-curve replay:** ❌ **not built** — force curves are live-only (the overlay ghosts above are per-session memory; nothing is written to history).
 - **Future capture needed:** to unlock stroke / force-curve replay, the logger must start persisting per-stroke samples and a downsampled force-curve series per session — a new, opt-in, **size-bounded** capture step (per-stroke data is large, so it has to be capped to stay within the Drive `appdata` + localStorage budget).
 
+### Future replay capture (design — not implemented)
+
+The next replay step, when there's bundle + storage room to build it. Design constraints, not yet code:
+
+```text
+Future replay capture:
+- capture per-stroke samples only for future sessions
+- keep old sessions compatible
+- cap stored samples for long workouts
+- store compact fields only: time, distance, pace, watts, rate, HR, drive length, peak force, peak force timing
+- optionally store downsampled forceCurve64 only if size budget allows
+- never save raw BLE dumps
+- make capture opt-in or size-bounded
+- preserve Drive sync performance
+```
+
 ## Heart-rate flickers between values when the strap is weak
 
 If your HR strap signal is marginal (low battery, poor contact), the PM5 publishes alternating real / placeholder values. The dashboard's filter — `30 ≤ hr ≤ 240` — rejects the obvious garbage, but real-but-noisy strap readings will still flicker. **Workaround:** wet the strap contacts; replace the battery; sit still for 30 seconds at the start to let the signal lock.

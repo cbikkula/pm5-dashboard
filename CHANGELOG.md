@@ -10,6 +10,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Session replay — stroke-by-stroke + force-curve scrubber (needs new per-stroke + force-curve capture first — see [known-issues](docs/known-issues.md))
 - AI technique analysis (peak-timing trends)
 
+## [v1.15.1] — June 2026 — Bundle Budget Reset
+
+A technical cleanup release — reclaim headroom under the 600 KB bundle guard before the next feature. **No behavior changes.**
+
+- **Removed dead old-workout-panel CSS** — the `.panel*`, `.panel-table`, and `.interval-table` rules. That panel was replaced by the top-of-monitor `#workoutBar` progress bar, and its only renderer (`renderIntervalTable()`) was already removed in v1.15.0; the bare `.panel` class was applied nowhere (the unrelated `.conn-health-panel` / `.force-panel` are untouched).
+- **Tightened verbose comments** — the v1.15.0 cleanup notes and the Session Replay banner, with no loss of meaning.
+- **Bundle 598.8 → 596.1 KB** — margin under the 600 KB guard widened from ~1.2 KB to ~3.9 KB. Tests unchanged at **115 passing**. No club / Firestore / security changes; no UI, replay, or feature changes.
+- **Future replay capture plan** documented in [`docs/known-issues.md`](docs/known-issues.md) (design only — per-stroke + optional downsampled force-curve capture, size-bounded, future-sessions-only, old-session compatible). Not implemented.
+
 ## [v1.15.0] — June 2026 — Session Replay MVP
 
 The first real Session Replay — replay a saved session **interval by interval**, honestly scoped to the data that's actually persisted (built on the v1.14.1 readiness helpers).

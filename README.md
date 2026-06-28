@@ -21,7 +21,7 @@
 
 > Open in Chrome or Edge on a desktop or Android phone. Click **Connect**, pair the PM5 over Bluetooth, and row.
 
-**Current release: `v1.14.1`** ([changelog](CHANGELOG.md)) · single 594 KB `index.html`, no framework, no build step.
+**Current release: `v1.15.0`** ([changelog](CHANGELOG.md)) · single 599 KB `index.html`, no framework, no build step.
 
 ---
 
@@ -45,6 +45,7 @@ The part I'd want a reviewer to see first:
 | **Multi-coach club system** *(v1.11)* | A full role-based club: **owner / admin / coach / athlete**, invite links + expiring join codes, pending-request approval, a members panel (change role, suspend, remove, link a member to a roster athlete), an append-only **audit log**, and athlete self-service availability. Enforced end-to-end by Firestore Security Rules — see [Engineering highlights](#engineering-highlights) and [`docs/security.md`](docs/security.md). |
 | **Cloud sync (Firebase)** *(v1.10)* | Sign in from the Clubs view and your club, roster, shells, oars, and lineups sync to **Cloud Firestore** with real-time `onSnapshot` updates across every device. Separate from, and complementary to, the Google Drive sync of your personal workout history. |
 | **Performance page** *(v1.3)* | A real top-level analysis area (not a teaser): tabs for **Overview / Insights / Technique / Fitness / Goals / Compare** that answer *"am I getting faster / fitter / more consistent?"* with trends, fatigue, technique drift, and rule-based per-workout insights. |
+| **Session replay** *(v1.15)* | Replay a saved session **interval by interval** — slider + prev/next step through each interval (split / watts / rate / HR), active-interval highlight, and **🔖 bookmarks** that jump to the interval they fall in. Honest by design: capability badges + a limitations panel spell out that this is interval + bookmark replay, *not* stroke-by-stroke or force-curve replay (those samples aren't persisted yet). |
 | **PR tracking + live PR pace** *(v1.4)* | Auto-detects personal records from benchmark Test sessions (500 m / 1k / 2k / 5k / 6k / 10k / 30 min) with full provenance and a 🏆 badge on history rows. During a test, a live **PR Δ** (*"ahead by 2.8 s"*) and projected finish update every stroke. |
 | **48 live metrics** | Stroke rate, pace, watts, distance, peak force, avg force, work/stroke, drive length, drive ratio, slip (catch/release), peak force timing, meters/stroke, drag factor, calories, splits, and 20 HR-specific metrics (current zone, % max, % HRR, time-in-zone, drift, decoupling, recovery deltas, TRIMP load). |
 | **Tier-based layouts + 6 focus presets** | Cards size themselves by importance tier (primary / secondary / passive). Six curated presets — Balanced, Technical, Power, Heart Rate, Endurance, Race — rewrite the entire screen in one tap. Race mode pins **split** as a 168 px primary; Heart Rate mode swaps the force curve out for HR-zone-driven metrics. Each preset enforces **locked metrics** that can't be removed without breaking the mode. |
@@ -116,6 +117,13 @@ The part I'd want a reviewer to see first:
 ![Personal records + benchmark-progress sparklines](docs/screenshots/performance-pr-trends.png)
 ![Fatigue & heart-rate summary in plain English](docs/screenshots/performance-fatigue-technique.png)
 
+### Session Replay *(v1.15.0)*
+
+> Replay any saved session **interval by interval** — a slider + prev/next step through each interval with its split, watts, rate, and HR, the active interval highlighted, and your dropped **🔖 bookmarks** mapped to the interval they fall in (click one to jump). Capability badges and an honest limitations panel make the scope explicit: this is **interval + bookmark replay**, *not* stroke-by-stroke — per-stroke samples and force curves aren't saved to history yet, and the UI says so rather than faking them. *(Shown with Demo Mode data.)*
+
+![Session Replay — interval timeline, capability badges, bookmarks, and an honest limitations panel](docs/screenshots/session-replay-overview.png)
+![Bookmark jump — clicking a bookmark moves the scrubber to its interval](docs/screenshots/session-replay-bookmarks.png)
+
 ---
 
 ### Club system *(v1.11 — shipped)*
@@ -184,7 +192,7 @@ The part I'd want a reviewer to see first:
 | Render time (mid-tier hardware)  | < 10 ms       |
 | Offline-capable                  | yes (after first load) |
 | Crash-resistant                  | yes (auto-save recovery every 5 s) |
-| Released versions                | **21** (v1.0.0 → v1.14.1; [changelog](CHANGELOG.md)) · 7 git tags |
+| Released versions                | **22** (v1.0.0 → v1.15.0; [changelog](CHANGELOG.md)) · 7 git tags |
 | Total commits                    | **48** ([activity](https://github.com/cbikkula/pm5-dashboard/commits/main)) |
 | Server I run                     | **none** — serverless by design (Firebase Spark, **$0/mo**) |
 
@@ -310,7 +318,7 @@ Most of the original roadmap has shipped — PR tracking, target zones, fatigue 
 - Real-time presence — see who's online during a session
 
 **Analysis & data:**
-- Session replay — stroke-by-stroke scrubber
+- Session replay — **stroke-by-stroke + force-curve** scrubber (interval + bookmark replay shipped in v1.15.0; per-stroke and force-curve capture still needed)
 - AI technique analysis — peak-timing + fatigue patterns across many sessions
 - Garmin / Apple Health HR integration
 

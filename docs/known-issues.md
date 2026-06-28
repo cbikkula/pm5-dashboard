@@ -48,15 +48,15 @@ The PM5 sends drag factor on its own cadence (~once every few seconds) rather th
 
 The best-stroke and average-stroke ghost buffers are **per-session** only — they exist in memory and reset whenever the session does (or when you tap **Reset best**). They aren't persisted to localStorage or Drive. This is intentional — those overlays should reflect *today's* rowing, not yesterday's.
 
-## Session Replay readiness (audit — replay UI not built yet)
+## Session Replay: interval + bookmark shipped (v1.15.0); stroke + force-curve still need capture
 
-Honest inventory of what a *saved* session persists today, so a future replay scrubber is scoped to what the data can actually prove. Source of truth: `logCurrentWorkout()` and the pure helpers `getSessionReplayCapability()` / `buildIntervalReplayTimeline()` / `mapBookmarksToReplayTimeline()` / `summarizeReplayLimitations()` (v1.14.1).
+The **interval + bookmark** replay UI shipped in **v1.15.0** (open ▶ from any history row or the Summary modal). It's scoped to exactly what a *saved* session persists, built on `logCurrentWorkout()` and the pure helpers `getSessionReplayCapability()` / `buildIntervalReplayTimeline()` / `mapBookmarksToReplayTimeline()` / `summarizeReplayLimitations()`. The replay modal itself surfaces these limits in a capability-badge row + a "what this replay can't show" panel, so the UI never over-promises.
 
-- **Old sessions support:** yes — `schemaVersion 1` and otherwise-minimal sessions never crash; they resolve to `summary-only` or `none`.
-- **Interval replay support:** **yes** — per-interval `results` (distance, time, split, watts, rate, HR, drive length) are saved, so an interval-by-interval scrubber is buildable today.
-- **Bookmark support:** **yes** — stroke bookmarks (`strokeIndex`, `distanceM`, `elapsedS`) are saved and map onto the interval timeline.
-- **Stroke-level replay support:** **no** — only interval-level rows are persisted; there are no per-stroke samples in history.
-- **Force-curve replay support:** **no** — force curves are live-only (the overlay ghosts above are per-session memory; nothing is written to history).
+- **Old sessions:** ✅ handled — `schemaVersion 1` and otherwise-minimal sessions never crash; they resolve to `summary-only` or `none` and the modal degrades to a summary/limitation view.
+- **Interval replay:** ✅ **shipped** — per-interval `results` (distance, time, split, watts, rate, HR, drive length) drive the slider + interval list.
+- **Bookmark replay:** ✅ **shipped** — stroke bookmarks (`strokeIndex`, `distanceM`, `elapsedS`) are listed and map onto the interval timeline; clicking one jumps to the nearest interval.
+- **Stroke-level replay:** ❌ **not built** — only interval-level rows are persisted; there are no per-stroke samples in history.
+- **Force-curve replay:** ❌ **not built** — force curves are live-only (the overlay ghosts above are per-session memory; nothing is written to history).
 - **Future capture needed:** to unlock stroke / force-curve replay, the logger must start persisting per-stroke samples and a downsampled force-curve series per session — a new, opt-in, **size-bounded** capture step (per-stroke data is large, so it has to be capped to stay within the Drive `appdata` + localStorage budget).
 
 ## Heart-rate flickers between values when the strap is weak

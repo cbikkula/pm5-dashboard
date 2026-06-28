@@ -431,6 +431,56 @@ if (app.getSessionReplayCapability && app.buildIntervalReplayTimeline) {
 }
 
 // ---------------------------------------------------------------------
+// 13. Session Replay MVP (v1.15.0) — the behaviours the replay UI relies
+// on, asserted against the same pure helpers the UI consumes. Honest:
+// interval/bookmark replay only, never stroke- or force-curve.
+// ---------------------------------------------------------------------
+group("session replay MVP");
+if (app.getSessionReplayCapability && app.buildIntervalReplayTimeline) {
+  const cap = app.getSessionReplayCapability, tl = app.buildIntervalReplayTimeline,
+        bmap = app.mapBookmarksToReplayTimeline, lim = app.summarizeReplayLimitations,
+        rate = app.sessionAvgRate;
+  // 3x500m with a bookmark whose distance (1100 m) lands mid-interval.
+  const session = {
+    title: "2k Test", date: "2026-06-20T08:00:00Z", plan: { title: "2k Test", benchKey: "2k" },
+    pr: { keys: ["2k"] },
+    bookmarks: [{ strokeIndex: 60, distanceM: 1100, elapsedS: 268 }],
+    totals: { distanceM: 1500, elapsedS: 360, avgPaceS: 120, avgWatts: 245, avgHr: 158, strokes: 174 },
+    results: [
+      { distanceM: 500, elapsedS: 118, paceS: 118, watts: 250, strokeRate: 30, heartRate: 150 },
+      { distanceM: 500, elapsedS: 121, paceS: 121, watts: 244, strokeRate: 29, heartRate: 158 },
+      { distanceM: 500, elapsedS: 121, paceS: 121, watts: 241, strokeRate: 28, heartRate: 165 },
+    ],
+  };
+  const summaryOnly = { title: "Long row", totals: { distanceM: 8000, elapsedS: 1900 }, results: [] };
+  const noWattsRate = { totals: { distanceM: 1000, elapsedS: 240 },
+    results: [{ distanceM: 500, elapsedS: 120, paceS: 120 }, { distanceM: 500, elapsedS: 120, paceS: 120 }] };
+
+  // entry behaviours the UI branches on
+  ok("interval session → interval replay", cap(session) === "interval" && tl(session).length === 3);
+  ok("summary-only session → summary-only (no timeline)", cap(summaryOnly) === "summary-only" && tl(summaryOnly).length === 0);
+  ok("no usable data → none", cap({ totals: {}, results: [] }) === "none");
+
+  // bookmark jump maps to the NEAREST interval (1100 m falls in interval 3)
+  const mb = bmap(session);
+  ok("bookmark maps to nearest interval", mb.length === 1 && mb[0].intervalIndex === 2);
+
+  // resilient to missing fields (no crash, nulls not fake zeros)
+  ok("missing HR → null in timeline", tl(noWattsRate)[0].heartRate === null);
+  ok("missing watts/rate → null, no crash", tl(noWattsRate)[0].watts === null && tl(noWattsRate)[0].strokeRate === null);
+  ok("avg rate from intervals (sessionAvgRate)", Math.round(rate(session)) === 29);
+  ok("malformed/no session never crashes the UI helpers",
+     cap(null) === "none" && tl(null).length === 0 && bmap(undefined).length === 0 && lim({}).length >= 1);
+
+  // honesty guarantees the limitation panel makes
+  ok("capability never claims stroke/force-curve", !["stroke", "force"].some(w => cap(session).includes(w)));
+  const L = lim(session);
+  ok("limitation panel discloses no stroke replay", L.some(s => /stroke/i.test(s)));
+  ok("limitation panel discloses no force-curve replay", L.some(s => /force/i.test(s)));
+  ok("summary-only limitation explains interval breakdown missing", lim(summaryOnly).some(s => /summary/i.test(s)));
+}
+
+// ---------------------------------------------------------------------
 // 8. Bundle-size guard (#25) — keep the single file under budget.
 // ---------------------------------------------------------------------
 group("bundle size");

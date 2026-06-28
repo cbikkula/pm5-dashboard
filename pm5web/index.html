@@ -500,50 +500,8 @@
     font-size: 14px;
   }
   .active-plan-banner .active-plan-name { font-weight: 700; }
-  .home-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .home-tabs {
-    display: inline-flex;
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 4px;
-    gap: 4px;
-  }
-  .home-tab {
-    background: transparent;
-    border: 0;
-    padding: 10px 22px;
-    border-radius: 8px;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-weight: 600;
-    font-family: inherit;
-    font-size: 14px;
-  }
-  .home-tab:hover { color: var(--text); }
-  .home-tab.active {
-    background: var(--accent);
-    color: var(--bg-base);
-  }
-  .home-actions {
-    margin-left: auto;
-    display: flex;
-    gap: 8px;
-  }
-  .home-content {
-    flex: 1;
-    min-height: 0;
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    overflow: hidden;
-  }
-  .home-pane { display: none; height: 100%; flex-direction: column; }
-  .home-pane.active { display: flex; }
+  /* (v1.15.0 cleanup) removed orphaned .home-toolbar/.home-tabs/.home-tab/
+     .home-actions/.home-content/.home-pane — superseded layout, unused. */
   .home-list {
     flex: 1;
     overflow-y: auto;
@@ -2162,7 +2120,7 @@
   }
   .history-row {
     display: grid;
-    grid-template-columns: 1fr 110px 110px 110px 80px 32px;
+    grid-template-columns: 1fr 110px 110px 110px 80px auto 32px;
     gap: 12px;
     align-items: center;
     padding: 12px 16px;
@@ -2503,42 +2461,14 @@
   }
 
   /* Performance preview modal — list of upcoming sections */
-  .perf-preview {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 8px;
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-    padding-right: 4px;
-  }
-  .perf-section {
-    background: var(--bg-base);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 14px;
-  }
-  .perf-section-title {
-    color: var(--text-dim);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    margin-bottom: 4px;
-  }
+  /* (v1.15.0 cleanup) removed .perf-preview/.perf-section/.perf-section-title
+     and the .perf-highlight rules — only the removed teaser modal used them.
+     .perf-section-body stays: the live Performance page still renders it. */
   .perf-section-body {
     color: var(--text-muted);
     font-size: 12.5px;
     line-height: 1.55;
   }
-  .perf-section.perf-highlight {
-    border-color: var(--accent-3);
-    background: linear-gradient(135deg,
-                  rgba(86, 249, 179, 0.08),
-                  rgba(76, 194, 255, 0.04));
-  }
-  .perf-section.perf-highlight .perf-section-title { color: var(--accent-3); }
-  .perf-section.perf-highlight .perf-section-body { color: var(--text); }
 
   .recovered-tag {
     display: inline-block;
@@ -2738,6 +2668,44 @@
     color:var(--text-muted); font-size:12.5px; padding:2px 0; }
   .summary-bookmarks .sb-i { color:var(--accent); font-weight:700;
     min-width:18px; }
+
+  /* Session Replay (v1.15.0) — interval scrubber + bookmarks. Lean: no
+     chart lib, reuses .modal/.h-sub/.modal-buttons. */
+  #replayModal .modal { width:680px; }
+  .rpl-body { overflow-y:auto; padding-right:4px; }
+  .rpl-badges { display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 10px; }
+  .rpl-badge { font-size:10.5px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+    padding:3px 9px; border-radius:999px; border:1px solid var(--border-bright); color:var(--text-muted); }
+  .rpl-badge.on { color:var(--accent); border-color:var(--accent); }
+  .rpl-totals { color:var(--text-muted); font-size:13px; margin-bottom:10px; }
+  .rpl-scrub { background:var(--bg-base); border:1px solid var(--border); border-radius:10px;
+    padding:12px 14px; margin-bottom:10px; }
+  .rpl-pos { display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:6px; }
+  .rpl-pos span:first-child { color:var(--accent); font-weight:700; }
+  .rpl-pos span:last-child { color:var(--text-muted); font-size:12.5px; text-align:right; }
+  .rpl-scrub input[type=range] { width:100%; margin:4px 0 8px; accent-color:var(--accent); }
+  .rpl-nav { display:flex; gap:8px; }
+  .rpl-nav button { flex:1; }
+  .rpl-list { margin-top:10px; max-height:200px; overflow-y:auto; }
+  .rpl-row { display:grid; grid-template-columns:38px 1fr 1fr 1fr 1fr; gap:6px; align-items:center;
+    padding:6px 8px; border-radius:8px; font-size:12.5px; color:var(--text-muted); cursor:pointer; }
+  .rpl-row:hover { background:rgba(76,194,255,0.06); }
+  .rpl-row.on { background:rgba(76,194,255,0.14); color:var(--text); }
+  .rpl-row .i { color:var(--text-dim); font-weight:700; text-align:center; }
+  .rpl-row.on .i { color:var(--accent); }
+  .rpl-bm, .rpl-limits { border-radius:10px; padding:10px 14px; margin-bottom:10px; font-size:12.5px; }
+  .rpl-bm { background:var(--bg-base); border:1px solid var(--border); }
+  .rpl-limits { background:rgba(245,185,66,0.06); border:1px solid rgba(245,185,66,0.3);
+    color:var(--text-muted); line-height:1.6; }
+  .rpl-bm .t, .rpl-limits .t { color:var(--text-dim); font-size:10.5px; letter-spacing:1.2px; font-weight:700;
+    text-transform:uppercase; display:block; margin-bottom:5px; }
+  .rpl-bm .b { display:flex; gap:10px; padding:3px 0; color:var(--text-muted); cursor:pointer; }
+  .rpl-bm .b:hover { color:var(--text); }
+  .rpl-bm .b .n { color:#f5b942; font-weight:700; min-width:16px; }
+  .history-row .rpl-x { background:transparent; border:1px solid var(--border-bright); color:var(--accent);
+    border-radius:8px; font-size:12px; padding:3px 9px; }
+  .history-row .rpl-x:hover { border-color:var(--accent); background:rgba(76,194,255,0.1); }
+  @media (max-width:520px) { .rpl-row { grid-template-columns:30px 1fr 1fr; } .rpl-row .w, .rpl-row .h { display:none; } }
 
   /* Session notes editor inside the Summary modal */
   .session-notes {
@@ -3583,70 +3551,10 @@
 
 <!-- (Benchmarks modal removed — moved into Settings → BENCHMARKS section.) -->
 
-<!-- Performance page — coming soon preview. Tapping the card on the
-     home menu opens this until L13 ships. -->
-<div class="modal-overlay" id="performanceSoonModal">
-  <div class="modal" style="width: 640px; max-height: 88vh;">
-    <div class="row" style="justify-content: space-between; align-items: baseline;">
-      <h2>📈 PERFORMANCE</h2>
-      <span class="h-sub" style="margin:0;">Coming soon</span>
-    </div>
-    <div class="h-sub">
-      A whole new section answering one question: <b>what does all this data actually mean?</b>
-      Not another grid of tiny charts — a curated view where every section answers
-      <i>"am I getting faster · fitter · more consistent · where did I fade · how does this
-      compare to last month · what should I work on next?"</i>
-    </div>
-
-    <div class="perf-preview">
-      <div class="perf-section">
-        <div class="perf-section-title">🏆 PERSONAL RECORDS</div>
-        <div class="perf-section-body">Front-and-centre, not buried in Settings. <i>500m 1:27 · 2k 7:01 · 6k 22:58 · 30 min 8,221 m.</i></div>
-      </div>
-      <div class="perf-section">
-        <div class="perf-section-title">📊 TRAINING OVERVIEW</div>
-        <div class="perf-section-body">Last 30 days: total metres, workouts, hours, average split, average HR, training load.</div>
-      </div>
-      <div class="perf-section">
-        <div class="perf-section-title">📉 PERFORMANCE TRENDS</div>
-        <div class="perf-section-body">Sparkline per metric showing direction over time — split, watts, HR, drive length, peak force.</div>
-      </div>
-      <div class="perf-section">
-        <div class="perf-section-title">⏱ BENCHMARK PROGRESS</div>
-        <div class="perf-section-body">Per-distance timeline: <i>7:18 → 7:12 → 7:08 → 7:04</i>.</div>
-      </div>
-      <div class="perf-section">
-        <div class="perf-section-title">🛠 TECHNIQUE TRENDS</div>
-        <div class="perf-section-body">Average drive length over time, peak-force timing over time. Reveals shifts only visible across sessions.</div>
-      </div>
-      <div class="perf-section">
-        <div class="perf-section-title">📉 FATIGUE TRENDS</div>
-        <div class="perf-section-body">Monthly fade % comparison — <i>"Last month 3.2%, this month 1.7%"</i>.</div>
-      </div>
-      <div class="perf-section">
-        <div class="perf-section-title">❤ HR DISTRIBUTION + TRAINING LOAD</div>
-        <div class="perf-section-body">Weekly zone breakdown + Banister-style load rollup.</div>
-      </div>
-      <div class="perf-section perf-highlight">
-        <div class="perf-section-title">✦ INSIGHTS</div>
-        <div class="perf-section-body">
-          <b>The section users will actually read.</b> 4–8 rule-based observations after every workout:
-          <i>"Longest drive length in 3 weeks · Lowest HR for this pace · Stroke consistency improved 6% · Drive shortened after minute 24 · Peak force shifted later in the final quarter."</i>
-        </div>
-      </div>
-    </div>
-
-    <div class="h-sub" style="margin-top: 12px;">
-      Roadmap details + status live in
-      <a href="https://github.com/cbikkula/pm5-dashboard/blob/main/docs/feature-backlog.md"
-         target="_blank" style="color: var(--accent);">docs/feature-backlog.md (item L13)</a>.
-    </div>
-
-    <div class="modal-buttons">
-      <button class="accent" id="closePerformanceSoonBtn">Close</button>
-    </div>
-  </div>
-</div>
+<!-- (v1.15.0 cleanup) Removed the dead "Performance — coming soon" teaser
+     modal (#performanceSoonModal). It was superseded when the real
+     Performance page shipped in v1.14.0; the home card now opens that view
+     directly, so the teaser was unreachable. -->
 
 <!-- Release notes — fires once when the app version bumps. -->
 <div class="modal-overlay" id="releaseNotesModal">
@@ -4287,7 +4195,36 @@
     <div class="modal-buttons">
       <button id="summaryExportCsvBtn" class="left">Export CSV</button>
       <button id="summaryExportJsonBtn" class="left">Export JSON</button>
+      <button id="summaryReplayBtn">▶ Replay</button>
       <button class="accent" id="closeSummaryBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Session Replay (v1.15.0) — interval-by-interval timeline + bookmarks.
+     Honest by design: interval replay only. No stroke-by-stroke or force-
+     curve replay (those samples were never persisted). -->
+<div class="modal-overlay" id="replayModal">
+  <div class="modal">
+    <h2 id="replayTitle">Session Replay</h2>
+    <div class="h-sub" id="replaySub"></div>
+    <div class="rpl-body">
+      <div class="rpl-badges" id="replayBadges"></div>
+      <div class="rpl-totals" id="replayTotals"></div>
+      <div class="rpl-scrub" id="replayScrub" style="display:none;">
+        <div class="rpl-pos"><span id="replayPos">Interval 1 of 1</span><span id="replayMeta"></span></div>
+        <input type="range" id="replaySlider" min="0" max="0" value="0" aria-label="Interval position">
+        <div class="rpl-nav">
+          <button id="replayPrev">‹ Prev</button>
+          <button id="replayNext">Next ›</button>
+        </div>
+        <div class="rpl-list" id="replayList"></div>
+      </div>
+      <div class="rpl-bm" id="replayBm" style="display:none;"></div>
+      <div class="rpl-limits" id="replayLimits" style="display:none;"></div>
+    </div>
+    <div class="modal-buttons">
+      <button class="accent" id="closeReplayBtn">Close</button>
     </div>
   </div>
 </div>
@@ -4860,7 +4797,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.14.1";
+const APP_VERSION = "1.15.0";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 const SESSION_SCHEMA_VERSION = 2;
@@ -6666,80 +6603,10 @@ function renderHero() {
     dlBarEff.style.display = "none";
   }
 }
-function renderIntervalTable() {
-  const plan = state.localPlan;
-  const tableEl = document.getElementById("intervalTable");
-  if (!plan || !plan.intervals || !plan.intervals.length) {
-    tableEl.innerHTML = "";
-    return;
-  }
-  const intervals = plan.intervals;
-  const results = state.planResults;
-  const currentIdx = state.planCurrentIdx;
-
-  // Only show the Rest column if at least one interval (planned or
-  // completed) actually has a rest period — otherwise it's a column
-  // full of dashes that wastes width.
-  const showRest =
-    intervals.some(iv => iv.restS && iv.restS > 0) ||
-    results.some(r => r.restS && r.restS > 0);
-
-  let html = "<thead><tr>"
-    + "<th>#</th>"
-    + "<th>Target</th>"
-    + "<th>Time</th>"
-    + "<th>/500m</th>"
-    + "<th>SPM</th>"
-    + (showRest ? "<th>Rest</th>" : "")
-    + "</tr></thead><tbody>";
-
-  for (let i = 0; i < intervals.length; i++) {
-    const iv = intervals[i];
-    const target = iv.kind === "distance"
-      ? `${Math.round(iv.value).toLocaleString()} m`
-      : fmtTime(iv.value);
-    const restTarget = iv.restS ? fmtTime(iv.restS) : "—";
-
-    let cls = "future";
-    let timeCell = "—", paceCell = "—", spmCell = "—", restCell = restTarget;
-
-    if (i < results.length) {
-      // Completed: show the captured stats from the plan tracker.
-      const r = results[i];
-      cls = "done";
-      timeCell = fmtTime(r.elapsedS);
-      paceCell = fmtPace(r.paceS);
-      spmCell  = r.strokeRate ? String(r.strokeRate) : "—";
-      restCell = r.restS ? fmtTime(r.restS) : restTarget;
-    } else if (i === currentIdx) {
-      // In-progress: live values for the current leg.
-      cls = "current";
-      const elapsedLeg = (state.elapsedTimeS || 0) - (state.planStartTimeS || 0);
-      const distLeg    = (state.distanceM    || 0) - (state.planStartDistM    || 0);
-      timeCell = fmtTime(elapsedLeg);
-      // For an in-progress leg, the pace seen by the rower right now
-      // is the most useful number — current pace, not the leg average.
-      paceCell = fmtPace(state.paceS);
-      spmCell  = state.strokeRate ? String(state.strokeRate) : "—";
-      // For a distance leg, also show m-of-m progress in the Time cell
-      if (iv.kind === "distance") {
-        timeCell = `${Math.round(distLeg)} / ${Math.round(iv.value)} m`;
-      }
-      restCell = restTarget;
-    }
-
-    html += `<tr class="${cls}">`
-      + `<td>${i + 1}</td>`
-      + `<td>${target}</td>`
-      + `<td>${timeCell}</td>`
-      + `<td>${paceCell}</td>`
-      + `<td>${spmCell}</td>`
-      + (showRest ? `<td>${restCell}</td>` : "")
-      + `</tr>`;
-  }
-  html += "</tbody>";
-  tableEl.innerHTML = html;
-}
+// (v1.15.0 cleanup) Removed dead renderIntervalTable() — it rendered into
+// #intervalTable in the old workout panel, which renderWorkoutPanel()
+// replaced with the top-of-monitor progress bar. It had no caller and the
+// #intervalTable element no longer exists.
 
 function describeRatio(r, spm) {
   // At high cadence the ratio is naturally compressed — a 32 spm row
@@ -13816,6 +13683,155 @@ function filteredHistory() {
   else                      rows.sort((a, b) => new Date(b.date) - new Date(a.date));
   return rows;
 }
+
+// =====================================================================
+// Session Replay (v1.15.0) — interval-by-interval scrubber + bookmarks.
+// Renders only what logCurrentWorkout persisted (interval results +
+// bookmarks + totals), via the v1.14.1 pure helpers. There is NO stroke-
+// by-stroke or force-curve replay: those samples were never saved, and
+// the limitation panel says so rather than faking them.
+// =====================================================================
+let _replay = null;  // { tl, marks, pos }
+
+function openReplay(session) {
+  const cap = getSessionReplayCapability(session);
+  const tl = buildIntervalReplayTimeline(session);
+  const marks = mapBookmarksToReplayTimeline(session);
+  _replay = { tl, marks, pos: 0 };
+
+  const plan = session && session.plan, T = (session && session.totals) || {};
+  document.getElementById("replayTitle").textContent =
+    (session && session.title) || (plan && plan.title) || "Session Replay";
+  const dt = (session && session.date)
+    ? new Date(session.date).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "";
+  const label = (plan && plan.benchKey) || (session && session.description) || (plan && plan.description) || "";
+  document.getElementById("replaySub").textContent = [dt, label].filter(Boolean).join(" · ");
+
+  // One compact totals line ("—" omitted; reuses summary's numbers, no cards).
+  const rate = sessionAvgRate(session);
+  const tot = [
+    T.distanceM > 0 ? Math.round(T.distanceM).toLocaleString() + " m" : null,
+    T.elapsedS  > 0 ? fmtTime(T.elapsedS) : null,
+    T.avgPaceS  > 0 ? fmtPace(T.avgPaceS) + " /500" : null,
+    T.avgWatts  > 0 ? Math.round(T.avgWatts) + " W" : null,
+    (rate != null && rate > 0) ? Math.round(rate) + " spm" : null,
+    T.avgHr     > 0 ? Math.round(T.avgHr) + " bpm" : null,
+  ].filter(Boolean).join("  ·  ");
+  document.getElementById("replayTotals").textContent = tot || "No totals saved for this session.";
+
+  // Honest capability badges — claim only what the data supports.
+  const badges = [];
+  if (cap === "interval") badges.push(["Interval replay", true]);
+  else if (cap === "summary-only") badges.push(["Summary only", true]);
+  else badges.push(["No replay data", false]);
+  if (cap !== "none") {
+    if (marks.length) badges.push(["Bookmarks available", false]);
+    badges.push(["Force curve not saved", false]);
+  }
+  if (session && session.pr && session.pr.keys && session.pr.keys.length)
+    badges.push(["🏆 PR " + session.pr.keys.join(", "), true]);
+  document.getElementById("replayBadges").innerHTML =
+    badges.map(([t, on]) => `<span class="rpl-badge${on ? " on" : ""}">${t}</span>`).join("");
+
+  // Interval scrubber — only when interval data exists.
+  const scrub = document.getElementById("replayScrub");
+  if (cap === "interval" && tl.length) {
+    scrub.style.display = "";
+    const sl = document.getElementById("replaySlider");
+    sl.min = 0; sl.max = tl.length - 1; sl.value = 0;
+    renderReplayList();
+    renderReplayPos();
+  } else {
+    scrub.style.display = "none";
+  }
+
+  // Bookmarks — each jumps to the interval it falls in (nearest).
+  const bm = document.getElementById("replayBm");
+  if (marks.length) {
+    bm.style.display = "";
+    bm.innerHTML = `<span class="t">🔖 Bookmarks (${marks.length})</span>` +
+      marks.map((m, i) => {
+        const near = m.intervalIndex != null ? `→ interval ${m.intervalIndex + 1}` : "";
+        const d = m.distanceM != null ? Math.round(m.distanceM).toLocaleString() + " m" : "—";
+        const tm = m.elapsedS != null ? fmtTime(m.elapsedS) : "—";
+        return `<div class="b" data-iv="${m.intervalIndex != null ? m.intervalIndex : ""}">` +
+          `<span class="n">${i + 1}</span><span>${d} · ${tm} ${near}</span></div>`;
+      }).join("");
+    bm.querySelectorAll(".b").forEach(r => r.addEventListener("click", () => {
+      const iv = r.getAttribute("data-iv");
+      if (iv !== "" && _replay && _replay.tl.length) {
+        _replay.pos = Math.max(0, Math.min(_replay.tl.length - 1, parseInt(iv, 10)));
+        renderReplayPos();
+      }
+    }));
+  } else {
+    bm.style.display = "none";
+  }
+
+  // Honest limitation panel — what replay can't show for this session.
+  const lim = summarizeReplayLimitations(session);
+  const le = document.getElementById("replayLimits");
+  if (lim.length) {
+    le.style.display = "";
+    le.innerHTML = `<span class="t">${cap === "none" ? "No replay data" : "What this replay can't show"}</span>` +
+      lim.map(l => `<div>• ${l}</div>`).join("");
+  } else {
+    le.style.display = "none";
+  }
+
+  document.getElementById("replayModal").classList.add("open");
+}
+
+function renderReplayList() {
+  if (!_replay) return;
+  const bmIvs = new Set(_replay.marks.map(m => m.intervalIndex).filter(v => v != null));
+  const list = document.getElementById("replayList");
+  list.innerHTML = _replay.tl.map(p => {
+    const sp = p.split != null ? fmtPace(p.split) : "—";
+    const w = p.watts != null ? Math.round(p.watts) + "W" : "—";
+    const r = p.strokeRate != null ? p.strokeRate + "spm" : "—";
+    const h = p.heartRate != null ? p.heartRate + "bpm" : "—";
+    const flag = bmIvs.has(p.index) ? " 🔖" : "";
+    return `<div class="rpl-row" data-i="${p.index}"><span class="i">${p.index + 1}${flag}</span>` +
+      `<span>${sp}</span><span class="w">${w}</span><span>${r}</span><span class="h">${h}</span></div>`;
+  }).join("");
+  list.querySelectorAll(".rpl-row").forEach(r => r.addEventListener("click", () => {
+    _replay.pos = parseInt(r.getAttribute("data-i"), 10) || 0;
+    renderReplayPos();
+  }));
+}
+
+function renderReplayPos() {
+  if (!_replay || !_replay.tl.length) return;
+  const tl = _replay.tl;
+  const i = Math.max(0, Math.min(tl.length - 1, _replay.pos));
+  _replay.pos = i;
+  const p = tl[i];
+  document.getElementById("replayPos").textContent = `Interval ${i + 1} of ${tl.length}`;
+  const bits = [`${Math.round(p.cumulativeDistanceM).toLocaleString()} m`, fmtTime(p.cumulativeTimeS)];
+  if (p.split != null) bits.push(fmtPace(p.split) + " /500");
+  if (p.watts != null) bits.push(Math.round(p.watts) + " W");
+  if (p.strokeRate != null) bits.push(p.strokeRate + " spm");
+  if (p.heartRate != null) bits.push(p.heartRate + " bpm");
+  document.getElementById("replayMeta").textContent = bits.join(" · ");
+  document.getElementById("replaySlider").value = i;
+  document.querySelectorAll("#replayList .rpl-row").forEach(r =>
+    r.classList.toggle("on", parseInt(r.getAttribute("data-i"), 10) === i));
+  const a = document.querySelector("#replayList .rpl-row.on");
+  if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest" });
+}
+
+function replayStep(d) {
+  if (!_replay || !_replay.tl.length) return;
+  _replay.pos = Math.max(0, Math.min(_replay.tl.length - 1, _replay.pos + d));
+  renderReplayPos();
+}
+
+function closeReplay() {
+  document.getElementById("replayModal").classList.remove("open");
+  _replay = null;
+}
+
 function renderHistoryList() {
   const list = document.getElementById("historyList");
   const countEl = document.getElementById("histCount");
@@ -13859,10 +13875,16 @@ function renderHistoryList() {
       <div><div class="stat-label">Meters</div><div class="stat-value">${dist}</div></div>
       <div><div class="stat-label">Avg /500</div><div class="stat-value">${pace}</div></div>
       <div><div class="stat-label">Watts</div><div class="stat-value">${watts}</div></div>
+      <button class="rpl-x" title="Replay this session">▶</button>
       <button class="delete-x" title="Delete">✕</button>
     `;
+    row.querySelector(".rpl-x").addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      closeHistory();
+      openReplay(e);
+    });
     row.addEventListener("click", (ev) => {
-      if (ev.target.closest(".delete-x")) return;
+      if (ev.target.closest(".delete-x") || ev.target.closest(".rpl-x")) return;
       // Show this entry in the existing summary modal.
       // Temporarily swap in this entry's plan + results, open summary,
       // then restore live state on close.
@@ -14509,6 +14531,27 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("logBtn").addEventListener("click", () => logCurrentWorkout());
   document.getElementById("historyBtn").addEventListener("click", openHistory);
   document.getElementById("closeHistoryBtn").addEventListener("click", closeHistory);
+  // Session Replay (v1.15.0) — static controls, wired once.
+  document.getElementById("closeReplayBtn").addEventListener("click", closeReplay);
+  document.getElementById("replayPrev").addEventListener("click", () => replayStep(-1));
+  document.getElementById("replayNext").addEventListener("click", () => replayStep(1));
+  document.getElementById("replaySlider").addEventListener("input", (ev) => {
+    if (_replay) { _replay.pos = parseInt(ev.target.value, 10) || 0; renderReplayPos(); }
+  });
+  document.getElementById("summaryReplayBtn").addEventListener("click", () => {
+    // Replay the saved entry when viewing one from history; otherwise the
+    // live in-progress session (built from current plan + results).
+    const saved = state.summaryHistoryEntryId
+      ? state.history.find(h => h.id === state.summaryHistoryEntryId) : null;
+    const session = saved || {
+      title: (state.localPlan && state.localPlan.title) || "Current session",
+      date: new Date().toISOString(), plan: state.localPlan, results: state.planResults || [],
+      bookmarks: (state.bookmarks && state.bookmarks.length) ? state.bookmarks : undefined,
+      totals: { distanceM: state.distanceM || 0, elapsedS: state.elapsedTimeS || 0,
+                avgWatts: state.watts || null, avgPaceS: workoutAvgPace() },
+    };
+    openReplay(session);
+  });
   document.getElementById("historyExportBtn").addEventListener("click", exportHistoryJson);
   document.getElementById("historyExportCsvBtn").addEventListener("click", exportHistoryCsv);
   document.getElementById("historyImportBtn").addEventListener("click", promptImportSessions);
@@ -14560,17 +14603,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Focus modal — preset picker, "Done" closes.
   document.getElementById("closeFocusBtn").addEventListener("click", closeFocus);
-  // Performance view tab clicks. The teaser modal (performanceSoonModal)
-  // is now dead code — the card opens the real view via showView().
+  // Performance view tab clicks. The home card opens the real Performance
+  // view via showView() (the old coming-soon teaser was removed in v1.15.0).
   document.querySelectorAll("#performanceView .perf-tab").forEach(t => {
     t.addEventListener("click", () => setPerformanceTab(t.dataset.perfTab));
-  });
-  // closePerformanceSoonBtn still exists in the dead teaser modal HTML
-  // but isn't reachable from the UI — leaving the listener stub here
-  // just so a stray reload doesn't error.
-  const oldTeaserBtn = document.getElementById("closePerformanceSoonBtn");
-  if (oldTeaserBtn) oldTeaserBtn.addEventListener("click", () => {
-    document.getElementById("performanceSoonModal").classList.remove("open");
   });
 
   // -----------------------------------------------------------------
@@ -14804,7 +14840,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     "focusModal","lineupModal","athleteModal",
                     "shellModal","teamModal","oarSetModal","squadModal",
                     "clubChooserModal","clubCreateModal","clubJoinModal",
-                    "releaseNotesModal","performanceSoonModal"]) {
+                    "releaseNotesModal","replayModal"]) {
     const overlay = document.getElementById(id);
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) overlay.classList.remove("open");

@@ -7,8 +7,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 - Viewer role + read-only session sharing
-- Session replay (interval + bookmark scrubber; stroke/force-curve replay needs new capture — see [known-issues](docs/known-issues.md))
+- Session replay — stroke-by-stroke + force-curve scrubber (needs new per-stroke + force-curve capture first — see [known-issues](docs/known-issues.md))
 - AI technique analysis (peak-timing trends)
+
+## [v1.15.0] — June 2026 — Session Replay MVP
+
+The first real Session Replay — replay a saved session **interval by interval**, honestly scoped to the data that's actually persisted (built on the v1.14.1 readiness helpers).
+
+- **Replay modal** — open from any history row (▶) or the Summary modal. Capability badges (`Interval replay` / `Summary only` / `Bookmarks available` / `Force curve not saved`), a compact totals line, and a 🏆 PR badge when relevant.
+- **Interval scrubber** — a range slider + prev/next step through each interval, *"Interval N of M"* with the interval's cumulative distance/time and split / watts / rate / HR, the active interval highlighted in a clickable list.
+- **Bookmarks** — dropped 🔖 bookmarks are listed with distance/time and mapped to the interval they fall in; clicking one jumps the scrubber to that (nearest) interval.
+- **Honest limitation panel** — interval + bookmark replay only. Stroke-by-stroke and force-curve replay are **not** available because per-stroke samples and force curves were never written to history; the panel says so rather than faking them. Summary-only, bookmark-less, HR-less and old sessions degrade gracefully and never crash.
+- **Lean by budget** — no chart library, framework, or dependency. To fit under the 600 KB guard, removed genuinely dead code: the unreachable "Performance — coming soon" teaser modal (superseded when the real Performance page shipped in v1.14.0), the orphaned `.home-*` layout CSS, and the dead `renderIntervalTable()` (the old workout panel it drove was replaced by the progress bar). Bundle 594 → **599 KB** (under the 600 KB guard).
+- **Tests** — 12 new replay-MVP assertions (115 total, all green). No club / Firestore / security changes.
 
 ## [v1.14.1] — June 2026 — Bundle Budget + Replay Readiness
 

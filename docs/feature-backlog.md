@@ -26,7 +26,7 @@ To pull the next item: open a chat with me and say `do backlog #N`. I'll build i
 | 18 |        | Smarter workout builder                | Repeat-group blocks (3× [8 min / 2 min rest]) |
 | 19 |        | First-time setup wizard                | Athlete/coach mode, max HR, resting HR, units, default layout |
 | 20 | ✅ done v1.5.0 | Fullscreen race mode                   | Distraction-free: split + rate + dist remaining + PR delta |
-| 21 | 🟡 readiness v1.14.1 | Session replay                | Scrubber UI. **Readiness audited v1.14.1** (`getSessionReplayCapability()` + helpers + [known-issues](known-issues.md#session-replay-readiness-audit--replay-ui-not-built-yet)): interval + bookmark replay are buildable from saved data now; **stroke-level / force-curve replay need new per-stroke + force-curve capture first** (not persisted today). |
+| 21 | 🟢 MVP v1.15.0 | Session replay                | **Interval + bookmark scrubber shipped v1.15.0** — replay any saved session interval-by-interval (slider + prev/next, active highlight, totals, capability badges, bookmark click-to-jump) with an honest limitations panel. Built on the v1.14.1 helpers. **Still ahead:** stroke-level + force-curve replay need a new per-stroke + force-curve capture step first (not persisted today — see [known-issues](known-issues.md)). |
 | 22 |        | Telemetry view                         | Multi-chart post-workout analysis page. *Feeds L13 — Performance Trends section.* |
 | 23 |        | Compare sessions                       | Side-by-side: pick two from history. *Feeds L13 — Compare Sessions button.* |
 | 24 | ✅ done v1.9.0 | Synthetic PM5 test harness             | `tests/bleParser.test.js` + fake packet fixtures |

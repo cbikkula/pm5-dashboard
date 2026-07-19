@@ -110,6 +110,15 @@ function load() {
     // v1.14.1 — session replay readiness
     "getSessionReplayCapability", "buildIntervalReplayTimeline",
     "mapBookmarksToReplayTimeline", "summarizeReplayLimitations",
+    // v1.18 — stroke capture + technique analytics
+    "STROKE_LOG_CAP", "strokeCaptureAppend", "strokePeakTiming",
+    "enforceHistoryBudget", "computeTechniqueDrift",
+    "buildStrokeReplayTimeline", "mapBookmarksToStrokeTimeline",
+    "computeEfficiencyScore", "computeEfficiencyTrend",
+    "buildSessionComparison", "benchmarkPaceOf", "suggestTargetsForPlan",
+    "buildTrainingReport",
+    // v1.18 security pass
+    "fbEsc", "sanitizeStrokeLog", "sanitizeSessionCurves",
   ];
   const shim = "\n;globalThis.__APP = {" +
     exposed.map((n) => `${n}: (typeof ${n}!=="undefined"?${n}:undefined)`).join(",") +

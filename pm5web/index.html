@@ -2421,6 +2421,32 @@
     font-size: 11.5px;
   }
 
+  /* Compare tab (v1.18.0) — session pickers, curve overlay, diff table */
+  .pc-pickers { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .pc-pickers select { flex: 1; min-width: 180px; background: var(--bg-panel);
+    color: var(--text); border: 1px solid var(--border-bright); border-radius: 8px;
+    padding: 8px 10px; font-size: 13px; }
+  .pc-vs { color: var(--text-dim); font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+  .pc-fc { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 16px 10px; margin-bottom: 10px; }
+  .pc-fc-title { font-size: 11px; font-weight: 700; letter-spacing: 1.2px; color: var(--text-muted);
+    margin-bottom: 8px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .pc-fc-title span { font-weight: 600; letter-spacing: .2px; text-transform: none; }
+  .pc-fc canvas { display: block; width: 100%; height: 160px; }
+  .pc-note { color: var(--text-dim); font-size: 12px; margin-bottom: 10px; }
+  .pc-table { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 6px 16px; }
+  .pc-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 8px;
+    padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+    font-variant-numeric: tabular-nums; }
+  .pc-row:last-child { border-bottom: none; }
+  .pc-row.pc-head { color: var(--text-dim); font-size: 10.5px; font-weight: 700; letter-spacing: 1px; }
+  .pc-row .pc-lab { color: var(--text-muted); }
+  .pc-row .pc-a { color: #4cc2ff; }
+  .pc-row .pc-b { color: #ff8f3c; }
+  .pc-row .pc-a.win, .pc-row .pc-b.win { font-weight: 700; }
+  .pc-row .pc-d { color: var(--text-muted); }
+
   /* Performance preview modal — list of upcoming sections */
   /* (v1.15.0) removed .perf-preview/.perf-section/.perf-section-title/.perf-highlight (teaser-only).
      .perf-section-body stays — the live Performance page still renders it. */
@@ -2603,6 +2629,28 @@
     border-radius:10px; padding:10px 14px; color:var(--text-muted);
     font-size:13px; line-height:1.6; }
   .sa-fatigue b { color:var(--text); }
+  /* v1.18.0 — efficiency-score breakdown */
+  .sa-eff { background:var(--bg-base); border:1px solid var(--border);
+    border-radius:10px; padding:10px 14px; }
+  .sa-eff-row { display:flex; align-items:center; gap:10px; margin-top:6px; }
+  .sa-eff-row:first-child { margin-top:0; }
+  .sa-eff-lab { flex:0 0 168px; font-size:12.5px; color:var(--text-muted); }
+  .sa-eff-lab i { font-style:normal; color:var(--text-dim); font-size:10.5px; }
+  .sa-eff-track { flex:1; height:6px; background:var(--bg-panel-hi);
+    border-radius:999px; overflow:hidden; }
+  .sa-eff-bar { display:block; height:100%; border-radius:999px; }
+  .sa-eff-ok   { background:#56f9b3; }
+  .sa-eff-warn { background:#ffcc55; }
+  .sa-eff-bad  { background:#ff6b6b; }
+  .sa-eff-n { flex:0 0 26px; text-align:right; font-size:12.5px; color:var(--text);
+    font-variant-numeric:tabular-nums; }
+  .sa-eff-detail { margin:2px 0 4px 178px; font-size:11.5px; color:var(--text-dim); }
+  .sa-eff-how { margin-top:8px; padding-top:8px; border-top:1px solid var(--border);
+    font-size:11.5px; color:var(--text-dim); line-height:1.5; }
+  @media (max-width: 600px) {
+    .sa-eff-lab { flex-basis:120px; }
+    .sa-eff-detail { margin-left:0; }
+  }
   .sa-quality { display:flex; flex-direction:column; gap:4px; }
   .sa-qissue { color:#ffcc55; font-size:12.5px; background:rgba(255,204,85,0.08);
     border:1px solid rgba(255,204,85,0.3); border-radius:8px; padding:6px 12px; }
@@ -2638,6 +2686,13 @@
     padding:3px 9px; border-radius:999px; border:1px solid var(--border-bright); color:var(--text-muted); }
   .rpl-badge.on { color:var(--accent); border-color:var(--accent); }
   .rpl-totals { color:var(--text-muted); font-size:13px; margin-bottom:10px; }
+  /* v1.18.0 — session force-curve inspection inside replay */
+  .rpl-fc { background:var(--bg-base); border:1px solid var(--border); border-radius:10px;
+    padding:10px 14px 8px; margin-bottom:10px; }
+  .rpl-fc-title { font-size:10.5px; font-weight:700; letter-spacing:.6px; color:var(--text-muted);
+    margin-bottom:6px; display:flex; justify-content:space-between; gap:8px; }
+  .rpl-fc-title span { font-weight:600; letter-spacing:.2px; text-transform:none; }
+  .rpl-fc canvas { display:block; width:100%; height:130px; }
   .rpl-scrub { background:var(--bg-base); border:1px solid var(--border); border-radius:10px;
     padding:12px 14px; margin-bottom:10px; }
   .rpl-pos { display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:6px; }
@@ -3089,6 +3144,9 @@
           <div class="perf-pr-grid" id="perfPrGrid"></div>
           <h3 class="perf-sub">Benchmark progress</h3>
           <div id="perfBenchProgress"></div>
+          <div style="margin-top:16px;">
+            <button id="perfReportBtn" title="Download a markdown training report">📄 Export training report</button>
+          </div>
         </div>
       </div>
 
@@ -3144,18 +3202,19 @@
       <!-- COMPARE TAB ------------------------------------------------ -->
       <div class="perf-pane" data-perf-pane="compare">
         <div class="perf-section-headline">Two sessions, side by side.</div>
-        <div class="perf-spec-grid">
-          <div class="ps-card">
-            <div class="ps-title">Difference table</div>
-            <div class="ps-body">Avg split, watts, rate, HR, drive length, HR drift — all delta-labelled. <i>"+1.3 sec faster · +8 W · drift improved 2.3%."</i></div>
+        <div id="perfCompareEmpty" style="display:none;"></div>
+        <div id="perfCompareReal" style="display:none;">
+          <div class="pc-pickers">
+            <select id="pcSelA" aria-label="Session A"></select>
+            <span class="pc-vs">vs</span>
+            <select id="pcSelB" aria-label="Session B"></select>
           </div>
-          <div class="ps-card">
-            <div class="ps-title">Graph overlays</div>
-            <div class="ps-body">Split, watts, HR, drive length, peak-force timing — all overlaid with both sessions. Normalised by percentage complete so workouts of slightly different length still compare.</div>
+          <div class="pc-fc" id="pcFcBox" style="display:none;">
+            <div class="pc-fc-title">FORCE CURVE OVERLAY <span id="pcFcLegend"></span></div>
+            <canvas id="pcFcCanvas"></canvas>
           </div>
-        </div>
-        <div class="perf-coming-soon">
-          <b>Phase 7 (backlog pull #23 — Compare sessions):</b> overlay rendering + diff logic.
+          <div class="pc-note" id="pcFcNote" style="display:none;"></div>
+          <div class="pc-table" id="pcTable"></div>
         </div>
       </div>
 
@@ -3367,8 +3426,10 @@
       <div></div>
     </div>
     <div class="interval-rows" id="intervalRows"></div>
-    <div style="margin-top:6px;">
+    <div style="margin-top:6px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
       <button id="addIntervalBtn">+ New interval</button>
+      <button id="suggestTargetsBtn" title="Fill interval target paces from your PRs">✨ Suggest targets</button>
+      <span id="suggestTargetsNote" style="font-size:11.5px; color:var(--text-dim);"></span>
     </div>
     <div class="modal-buttons">
       <button class="left" id="clearPlanBtn">Clear plan</button>
@@ -4159,9 +4220,11 @@
   </div>
 </div>
 
-<!-- Session Replay (v1.15.0) — interval-by-interval timeline + bookmarks.
-     Honest by design: interval replay only. No stroke-by-stroke or force-
-     curve replay (those samples were never persisted). -->
+<!-- Session Replay (v1.15.0, stroke fidelity v1.18.0) — synchronized
+     timeline over per-stroke samples when the session captured them,
+     interval scrubbing otherwise, plus session Force Curve inspection.
+     Honest by design: capability badges + the limits panel say exactly
+     what the saved data can and can't show. -->
 <div class="modal-overlay" id="replayModal">
   <div class="modal">
     <h2 id="replayTitle">Session Replay</h2>
@@ -4169,9 +4232,13 @@
     <div class="rpl-body">
       <div class="rpl-badges" id="replayBadges"></div>
       <div class="rpl-totals" id="replayTotals"></div>
+      <div class="rpl-fc" id="replayFc" style="display:none;">
+        <div class="rpl-fc-title">FORCE CURVE <span id="replayFcLegend"></span></div>
+        <canvas id="replayFcCanvas"></canvas>
+      </div>
       <div class="rpl-scrub" id="replayScrub" style="display:none;">
         <div class="rpl-pos"><span id="replayPos">Interval 1 of 1</span><span id="replayMeta"></span></div>
-        <input type="range" id="replaySlider" min="0" max="0" value="0" aria-label="Interval position">
+        <input type="range" id="replaySlider" min="0" max="0" value="0" aria-label="Replay position">
         <div class="rpl-nav">
           <button id="replayPrev">‹ Prev</button>
           <button id="replayNext">Next ›</button>
@@ -4755,12 +4822,28 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.17.0";
+const APP_VERSION = "1.18.0";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
-const SESSION_SCHEMA_VERSION = 2;
+// v3 (1.18.0) adds optional entry.strokes (compact per-stroke samples)
+// and entry.fc (session best/avg force curves) — additive, so v1/v2
+// entries need no migration and are still read as-is.
+const SESSION_SCHEMA_VERSION = 3;
 
 const RELEASE_NOTES = {
+  "1.18.0": {
+    date: "July 2026",
+    headline: "Stroke capture, Replay 2.0 & session compare",
+    items: [
+      "Sessions now save a compact per-stroke log + your best/average Force Curves (size-bounded, old sessions untouched)",
+      "Session Replay scrubs stroke by stroke with every metric at that moment, plus Force Curve inspection",
+      "Performance → Compare: overlay two sessions' Force Curves with a delta table",
+      "Live Tech Drift card (Technical preset) warns when your form fades mid-piece",
+      "Technical-efficiency score (0-100) with a full how-it's-scored breakdown in the Summary",
+      "✨ Suggest targets fills workout paces from your PRs · 📄 exportable training report",
+      "Fixed: PM5 auto-reconnects after it naps · PR detail on tap · history title escaping",
+    ],
+  },
   "1.11.0": {
     date: "June 2026",
     headline: "Multi-coach clubs",
@@ -4931,6 +5014,11 @@ const state = {
   // mark of peak force seen this session, ratcheted up but not down,
   // rounded to a stable 50 lbf step so the gridlines don't jitter.
   fcYMax: 100,
+  // v1.18.0 stroke capture — size-bounded per-stroke sample log
+  // ({log, stride, seen}) and the cached live technique-drift analysis
+  // recomputed every 5th stroke from it.
+  strokeCapture: null,
+  techDrift: null,
   // secondary
   strokeRate: null, paceS: null, avgPaceS: null,
   watts: null, heartRate: null,
@@ -5716,6 +5804,22 @@ const METRICS = {
                    return ((a2 - a1) / a1 * 100).toFixed(1) + "%";
                  },
                  visible: () => state.hr.samples.length >= 20 },
+  // v1.18.0 — live technique drift vs the early-session baseline.
+  // Computed every 5th stroke from the capture log (never per-render);
+  // needs ~40 strokes before it has a baseline worth trusting.
+  techDrift:   { label: "Tech Drift", unit: "",
+                 get: () => {
+                   const d = state.techDrift;
+                   if (!d || !d.has) return "—";
+                   if (!d.drifting) return "Stable";
+                   const w = d.items.filter(i => i.tone === "warn");
+                   return w.length > 1 ? `${w.length} flags` : (w[0] && w[0].label) || "Drifting";
+                 },
+                 getColor: () => {
+                   const d = state.techDrift;
+                   if (!d || !d.has) return "";
+                   return d.drifting ? "var(--warn)" : "var(--good)";
+                 } },
 };
 
 const DEFAULT_LAYOUT_AREAS = {
@@ -5914,6 +6018,7 @@ function applyGS(d) {
       // only"), but you can argue for resetting it too; we don't,
       // since most users alternate sessions of similar peak force.
       resetForceCurveOverlays();
+      resetStrokeCapture();
     }
   }
   if (d.elapsed_time_s != null) state.elapsedTimeS = d.elapsed_time_s;
@@ -6116,6 +6221,11 @@ function commitCompletedStroke(curve) {
     }
   }
   state.avgStrokeCount = n;
+
+  // v1.18.0 — record the compact per-stroke sample. Passing the raw
+  // curve matters: state.forceCurve still holds the previous stroke
+  // at this point in both live commit paths.
+  captureStroke(curve);
 }
 
 // Wipe the overlay buffers — fired at the start of a new session
@@ -6128,6 +6238,221 @@ function resetForceCurveOverlays() {
   state.avgStrokeCurve  = null;
   state.avgStrokeCount  = 0;
   state.fcYMax          = 40;
+}
+
+// =====================================================================
+// Stroke capture (v1.18.0)
+// =====================================================================
+// Implements the size-bounded capture designed in docs/known-issues.md:
+// compact scalar samples per stroke plus the session best/average
+// curves — never raw BLE dumps, never unbounded growth. Every consumer
+// treats entry.strokes / entry.fc as optional so pre-v1.18 sessions
+// keep working untouched.
+
+// Hard per-session sample ceiling. When the log fills, it is decimated
+// (every 2nd sample kept) and the capture stride doubles, so a marathon
+// still fits in the same budget at proportionally lower resolution.
+const STROKE_LOG_CAP = 600;
+
+// Serialized-history budget: beyond this, the bulky per-stroke arrays
+// are stripped from the OLDEST sessions (summaries, intervals, and fc
+// curves are tiny and always kept).
+const HISTORY_BUDGET_BYTES = 4 * 1024 * 1024;
+
+// Bounded append. capState = { log: sample[], stride: int, seen: int }.
+// Pure in/out apart from mutating capState — exposed for tests.
+function strokeCaptureAppend(capState, sample, cap) {
+  cap = cap || STROKE_LOG_CAP;
+  capState.seen++;
+  if ((capState.seen - 1) % capState.stride !== 0) return capState;
+  if (capState.log.length >= cap) {
+    capState.log = capState.log.filter((_, i) => i % 2 === 0);
+    capState.stride *= 2;
+  }
+  capState.log.push(sample);
+  return capState;
+}
+
+// Peak-force timing from an explicit curve (state.forceCurve is already
+// rotated by the time the capture hook runs, so the live helper's
+// state read would see the previous stroke).
+function strokePeakTiming(curve) {
+  if (!curve || curve.length < 4) return null;
+  let peakIdx = 0;
+  for (let i = 1; i < curve.length; i++) if (curve[i] > curve[peakIdx]) peakIdx = i;
+  return peakIdx / (curve.length - 1);
+}
+
+// Strip serialized bulk: drop `strokes` from the oldest entries until
+// the history JSON fits the budget. history is newest-first, so oldest
+// entries are at the end. Returns how many sessions were stripped.
+function enforceHistoryBudget(history, maxBytes) {
+  maxBytes = maxBytes || HISTORY_BUDGET_BYTES;
+  if (!Array.isArray(history) || !history.length) return 0;
+  let json = JSON.stringify(history);
+  let stripped = 0;
+  for (let i = history.length - 1; i >= 0 && json.length > maxBytes; i--) {
+    if (history[i] && history[i].strokes) {
+      delete history[i].strokes;
+      stripped++;
+      json = JSON.stringify(history);
+    }
+  }
+  return stripped;
+}
+
+// Sanitize a stroke log arriving from OUTSIDE the app (file import,
+// Drive merge): whitelisted numeric fields only, plausible ranges,
+// capped length, nothing else copied. Returns null when nothing valid
+// remains, so callers can omit the field entirely.
+function sanitizeStrokeLog(strokes, cap) {
+  if (!Array.isArray(strokes)) return null;
+  cap = cap || 2000;
+  const num = (v, lo, hi) => (typeof v === "number" && isFinite(v) && v >= lo && v <= hi) ? v : null;
+  const out = [];
+  for (const s of strokes.slice(0, cap)) {
+    if (!s || typeof s !== "object") continue;
+    const row = {
+      t: num(s.t, 0, 864000), d: num(s.d, 0, 1e6), p: num(s.p, 0, 3600),
+      w: num(s.w, 0, 5000), r: num(s.r, 0, 300), hr: num(s.hr, 0, 300),
+      dl: num(s.dl, 0, 10), dt: num(s.dt, 0, 60), rt: num(s.rt, 0, 600),
+      pf: num(s.pf, 0, 2000), pt: num(s.pt, 0, 1),
+    };
+    if (row.t == null && row.d == null) continue;
+    out.push(row);
+  }
+  return out.length >= 2 ? out : null;
+}
+
+// Same idea for imported session curves: arrays of finite numbers only,
+// capped and clamped to plausible force values.
+function sanitizeSessionCurves(fc) {
+  if (!fc || typeof fc !== "object") return null;
+  const arr = a => Array.isArray(a)
+    ? a.slice(0, 128).map(v => (typeof v === "number" && isFinite(v)) ? Math.max(0, Math.min(2000, v)) : 0)
+    : null;
+  const out = {};
+  const best = arr(fc.best), avg = arr(fc.avg);
+  if (best && best.length >= 2) out.best = best;
+  if (avg && avg.length >= 2) out.avg = avg;
+  if (typeof fc.peak === "number" && isFinite(fc.peak)) out.peak = Math.max(0, Math.min(2000, fc.peak));
+  if (typeof fc.n === "number" && isFinite(fc.n)) out.n = Math.max(0, Math.min(100000, Math.round(fc.n)));
+  return (out.best || out.avg) ? out : null;
+}
+
+// Session force-curve snapshot for persistence: the best/avg ghost
+// buffers rounded to 0.1 lbf. null when no strokes were committed.
+function sessionCurveSnapshot() {
+  const r1 = a => Array.from(a, v => Math.round(v * 10) / 10);
+  const out = {};
+  if (state.bestStrokeCurve) {
+    out.best = r1(state.bestStrokeCurve);
+    out.peak = Math.round(state.bestStrokePeak * 10) / 10;
+  }
+  if (state.avgStrokeCurve) {
+    out.avg = r1(state.avgStrokeCurve);
+    out.n = state.avgStrokeCount;
+  }
+  return (out.best || out.avg) ? out : null;
+}
+
+function resetStrokeCapture() {
+  state.strokeCapture = { log: [], stride: 1, seen: 0 };
+  state.techDrift = null;
+}
+
+// Capture hook — called from commitCompletedStroke, which all three
+// stroke-completion paths funnel through (both live BLE triggers and
+// Demo Mode). Sample keys are deliberately terse: these arrays are
+// persisted per session and every byte multiplies across history.
+//   t elapsed s · d distance m · p pace s/500 · w watts · r spm ·
+//   hr bpm · dl drive length m · dt drive s · rt recovery s ·
+//   pf peak force lbf · pt peak timing 0-1
+function captureStroke(curve) {
+  if (!state.strokeCapture) resetStrokeCapture();
+  const r1 = v => (v || v === 0) ? Math.round(v * 10) / 10 : null;
+  const r2 = v => (v || v === 0) ? Math.round(v * 100) / 100 : null;
+  const hrOk = state.heartRate >= 30 && state.heartRate <= 240;
+  const sample = {
+    t: r1(state.elapsedTimeS), d: Math.round(state.distanceM || 0),
+    p: r1(state.paceS), w: state.paceS ? Math.round(currentWattsFromPace() || 0) || null : null,
+    r: state.strokeRate || null, hr: hrOk ? state.heartRate : null,
+    dl: r2(state.driveLengthM), dt: r2(state.driveTimeS), rt: r2(state.recoveryTimeS),
+    pf: r1(state.peakForceLbs), pt: r2(strokePeakTiming(curve)),
+  };
+  strokeCaptureAppend(state.strokeCapture, sample, STROKE_LOG_CAP);
+  // Refresh the live drift analysis every 5th stroke — cheap (log is
+  // capped) and far below per-render frequency.
+  if (state.strokeCapture.seen % 5 === 0) {
+    state.techDrift = computeTechniqueDrift(state.strokeCapture.log);
+  }
+}
+
+// =====================================================================
+// Live technique-drift detection (v1.18.0)
+// =====================================================================
+// Compares the last 15 strokes against an early-session baseline
+// (strokes 11-25 — the first 10 are warm-up noise). Pure: takes the
+// capture log, returns display-ready items. null-tolerant on every
+// field so demo mode and HR-less rows never crash it.
+function computeTechniqueDrift(samples) {
+  if (!Array.isArray(samples) || samples.length < 40) return { has: false };
+  const base = samples.slice(10, 25);
+  const recent = samples.slice(-15);
+  const mean = (rows, f) => {
+    const vs = rows.map(f).filter(v => v != null && isFinite(v));
+    return vs.length >= 5 ? vs.reduce((a, b) => a + b, 0) / vs.length : null;
+  };
+  const cv = (rows, f) => {
+    const vs = rows.map(f).filter(v => v != null && isFinite(v));
+    if (vs.length < 5) return null;
+    const m = vs.reduce((a, b) => a + b, 0) / vs.length;
+    if (!m) return null;
+    const sd = Math.sqrt(vs.reduce((a, b) => a + (b - m) * (b - m), 0) / vs.length);
+    return (sd / m) * 100;
+  };
+  const ratioOf = s => (s.dt && s.rt) ? s.rt / s.dt : null;
+  const items = [];
+  const push = (key, label, b, c, fmt, warn, text) => {
+    if (b == null || c == null) return;
+    items.push({ key, label, base: b, cur: c, tone: warn ? "warn" : "ok",
+      text: text, baseText: fmt(b), curText: fmt(c) });
+  };
+
+  const dlB = mean(base, s => s.dl), dlC = mean(recent, s => s.dl);
+  if (dlB != null && dlC != null) {
+    const pct = ((dlC - dlB) / dlB) * 100;
+    push("driveLen", "Drive length", dlB, dlC, v => v.toFixed(2) + " m",
+      pct < -3, pct < -3 ? `Drive shortened ${Math.abs(pct).toFixed(1)}% vs early strokes` : "Drive length holding");
+  }
+  const rtB = mean(base, ratioOf), rtC = mean(recent, ratioOf);
+  if (rtB != null && rtC != null) {
+    const pct = ((rtC - rtB) / rtB) * 100;
+    push("ratio", "Ratio", rtB, rtC, v => v.toFixed(1) + " : 1",
+      Math.abs(pct) > 12, Math.abs(pct) > 12
+        ? `Ratio ${pct > 0 ? "lengthened" : "collapsed"} ${Math.abs(pct).toFixed(0)}%`
+        : "Rhythm steady");
+  }
+  const ptB = mean(base, s => s.pt), ptC = mean(recent, s => s.pt);
+  if (ptB != null && ptC != null) {
+    const shift = ptC - ptB;
+    push("peakTiming", "Peak timing", ptB, ptC, v => Math.round(v * 100) + "%",
+      Math.abs(shift) > 0.06, Math.abs(shift) > 0.06
+        ? `Peak force moved ${shift > 0 ? "later" : "earlier"} in the drive`
+        : "Peak timing steady");
+  }
+  const rvB = cv(base, s => s.r), rvC = cv(recent, s => s.r);
+  if (rvB != null && rvC != null) {
+    push("rateCv", "Rate steadiness", rvB, rvC, v => v.toFixed(1) + "% cv",
+      rvC - rvB > 1.5, rvC - rvB > 1.5 ? "Stroke rate getting ragged" : "Rate steady");
+  }
+
+  if (!items.length) return { has: false };
+  const warns = items.filter(i => i.tone === "warn");
+  return {
+    has: true, drifting: warns.length > 0, items,
+    headline: warns.length ? warns[0].text : "Technique stable",
+  };
 }
 
 function applyForceCurvePacket(d) {
@@ -6287,6 +6612,7 @@ function advancePlanTracker() {
 async function connectBle() {
   try {
     state.connecting = true;
+    _manualDisconnect = false;
     setStatus("connecting", "Picking device…");
     setToast("Pull the handle once to wake the PM5, then pick it from the picker.", "ok");
 
@@ -6305,63 +6631,11 @@ async function connectBle() {
       optionalServices: [SERVICE_ROWING, SERVICE_DEVICE_INFO],
     });
     state.bleDevice = device;
-    device.addEventListener("gattserverdisconnected", () => {
-      state.connected = false;
-      state.bleServer = null;
-      // Mark the workout-end for the HR-recovery tracker, then save.
-      markWorkoutEndForHr();
-      maybeAutoLog("disconnected");
-      setStatus("disconnected", "PM5 disconnected");
-      render();
-    });
+    device.addEventListener("gattserverdisconnected", handleBleDrop);
 
     setStatus("connecting", `Connecting to ${device.name || "PM5"}…`);
     setToast(`Connecting to ${device.name || "PM5"}…`, "ok");
-    const server = await device.gatt.connect();
-    state.bleServer = server;
-    const service = await server.getPrimaryService(SERVICE_ROWING);
-
-    // Best-effort sample-rate set (250 ms). Some firmwares refuse this
-    // write — that's fine, we fall through to the device's default rate.
-    try {
-      const rateCh = await service.getCharacteristic(CHAR_RATE_CONTROL);
-      await rateCh.writeValue(new Uint8Array([2]));
-    } catch (e) {
-      console.warn("Rate control write failed (non-fatal):", e);
-    }
-
-    const subs = [
-      [CHAR_GENERAL_STATUS,   onGS],
-      [CHAR_GENERAL_STATUS_1, onGS1],
-      [CHAR_GENERAL_STATUS_2, onGS2],
-      [CHAR_STROKE_DATA,      onStroke],
-      [CHAR_FORCE_CURVE,      onForce],
-    ];
-    let okCount = 0;
-    const failures = [];
-    for (const [uuid, handler] of subs) {
-      try {
-        const ch = await service.getCharacteristic(uuid);
-        ch.addEventListener("characteristicvaluechanged", (e) => {
-          // The Web-Bluetooth value is a DataView. Build a Uint8Array
-          // honouring the DataView's byteOffset and byteLength so the
-          // parsers see exactly the notification bytes.
-          const dv = e.target.value;
-          const data = new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength);
-          handler(data);
-          render();
-        });
-        await ch.startNotifications();
-        okCount++;
-      } catch (e) {
-        failures.push(`${uuid.slice(4, 8)}: ${e.message || e}`);
-        console.warn("subscribe failed", uuid, e);
-      }
-    }
-    if (okCount === 0) {
-      throw new Error("No PM5 data characteristics could be subscribed.\n"
-        + failures.join("\n"));
-    }
+    const failures = await subscribePm5(device);
 
     state.connected = true;
     state.connecting = false;
@@ -6388,7 +6662,99 @@ async function connectBle() {
   render();
 }
 
+// GATT setup shared by first connect and silent reconnect: connect the
+// server, grab the rowing service, best-effort rate write, subscribe the
+// five data characteristics. Returns the per-characteristic failure list;
+// throws if nothing could be subscribed.
+async function subscribePm5(device) {
+  const server = await device.gatt.connect();
+  state.bleServer = server;
+  const service = await server.getPrimaryService(SERVICE_ROWING);
+
+  // Best-effort sample-rate set (250 ms). Some firmwares refuse this
+  // write — that's fine, we fall through to the device's default rate.
+  try {
+    const rateCh = await service.getCharacteristic(CHAR_RATE_CONTROL);
+    await rateCh.writeValue(new Uint8Array([2]));
+  } catch (e) {
+    console.warn("Rate control write failed (non-fatal):", e);
+  }
+
+  const subs = [
+    [CHAR_GENERAL_STATUS,   onGS],
+    [CHAR_GENERAL_STATUS_1, onGS1],
+    [CHAR_GENERAL_STATUS_2, onGS2],
+    [CHAR_STROKE_DATA,      onStroke],
+    [CHAR_FORCE_CURVE,      onForce],
+  ];
+  let okCount = 0;
+  const failures = [];
+  for (const [uuid, handler] of subs) {
+    try {
+      const ch = await service.getCharacteristic(uuid);
+      ch.addEventListener("characteristicvaluechanged", (e) => {
+        // The Web-Bluetooth value is a DataView. Build a Uint8Array
+        // honouring the DataView's byteOffset and byteLength so the
+        // parsers see exactly the notification bytes.
+        const dv = e.target.value;
+        const data = new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength);
+        handler(data);
+        render();
+      });
+      await ch.startNotifications();
+      okCount++;
+    } catch (e) {
+      failures.push(`${uuid.slice(4, 8)}: ${e.message || e}`);
+      console.warn("subscribe failed", uuid, e);
+    }
+  }
+  if (okCount === 0) {
+    throw new Error("No PM5 data characteristics could be subscribed.\n"
+      + failures.join("\n"));
+  }
+  return failures;
+}
+
+// Unexpected GATT drop (PM5 sleeping is the usual cause). Retry silently
+// — state.bleDevice survives the drop, so device.gatt.connect() works
+// without a new chooser. Only give up (and auto-log) after the retries.
+let _manualDisconnect = false;
+let _reconnecting = false;
+const RECONNECT_DELAYS_MS = [1000, 3000, 6000];
+async function handleBleDrop() {
+  state.connected = false;
+  state.bleServer = null;
+  if (_manualDisconnect) { _manualDisconnect = false; return; }
+  if (_reconnecting) return;
+  _reconnecting = true;
+  const device = state.bleDevice;
+  for (const delay of RECONNECT_DELAYS_MS) {
+    setStatus("connecting", "PM5 dropped — reconnecting…");
+    render();
+    await new Promise(res => setTimeout(res, delay));
+    if (_manualDisconnect || !state.bleDevice) break;   // user moved on
+    try {
+      await subscribePm5(device);
+      state.connected = true;
+      _reconnecting = false;
+      setStatus("connected-ble", `Connected to ${device.name || "PM5"}`);
+      setToast("PM5 reconnected.", "ok");
+      render();
+      return;
+    } catch (e) {
+      console.warn("reconnect attempt failed:", e);
+    }
+  }
+  _reconnecting = false;
+  // Retries exhausted — treat it as a real end-of-session disconnect.
+  markWorkoutEndForHr();
+  maybeAutoLog("disconnected");
+  setStatus("disconnected", "PM5 disconnected");
+  render();
+}
+
 async function disconnectBle() {
+  _manualDisconnect = true;
   try {
     if (state.bleDevice && state.bleDevice.gatt.connected) {
       state.bleDevice.gatt.disconnect();
@@ -7184,6 +7550,30 @@ function readIntervalRow(row) {
   return { kind: type, value, targetPaceS, targetWatts, targetSpm, restS };
 }
 
+// ✨ Suggest targets (v1.18.0) — fill each interval's intensity field
+// with a PR-derived pace via suggestTargetsForPlan. Overwrites what's
+// there (the note says so); the user can still edit before saving.
+function applySuggestedTargets() {
+  const rows = Array.from(document.querySelectorAll("#intervalRows .interval-row"));
+  const pairs = rows.map(r => ({ row: r, iv: readIntervalRow(r) })).filter(p => p.iv);
+  const note = document.getElementById("suggestTargetsNote");
+  const sug = suggestTargetsForPlan({ intervals: pairs.map(p => p.iv) }, state.userPrefs);
+  if (!sug.has) {
+    if (note) note.textContent = sug.reason === "no-prs"
+      ? "No PRs yet — row a benchmark Test (Settings → Tests) to unlock suggestions."
+      : "Add an interval with a distance or time first.";
+    return;
+  }
+  sug.targets.forEach((t, i) => {
+    const row = pairs[i] && pairs[i].row;
+    if (!row) return;
+    const m = Math.floor(t.targetPaceS / 60), s = (t.targetPaceS - m * 60).toFixed(1);
+    row.children[3].value = `${m}:${s.padStart(4, "0")}`;
+  });
+  if (note) note.textContent =
+    `Paces from your ${sug.refKey} PR (${fmtPace(sug.refPaceS)} /500) — edit freely before saving.`;
+}
+
 function savePlanFromForm() {
   const rows = document.querySelectorAll("#intervalRows .interval-row");
   const intervals = [];
@@ -7271,6 +7661,14 @@ function loadHistory() {
 }
 
 function saveHistory() {
+  // v1.18.0 — before serializing, shed per-stroke bulk from the oldest
+  // sessions if the history has outgrown the storage budget. Quota
+  // failures below were silently swallowed before; this keeps the data
+  // that matters (summaries, intervals, curves) from ever being at risk.
+  try {
+    const n = enforceHistoryBudget(state.history);
+    if (n) console.warn(`History budget: stripped stroke samples from ${n} oldest session(s).`);
+  } catch (e) {}
   try { localStorage.setItem(historyKey(), JSON.stringify(state.history)); }
   catch (e) {}
   // If signed in, also push to Drive (best-effort, non-blocking).
@@ -7472,8 +7870,9 @@ function logCurrentWorkout({ silent = false } = {}) {
   }
   const entry = {
     // Schema version (#12) — every saved session is stamped so future
-    // app updates can migrate old records safely. v2 is the current
-    // shape (totals + per-interval results + optional pr/bookmarks).
+    // app updates can migrate old records safely. v3 is the current
+    // shape (totals + per-interval results + optional pr/bookmarks/
+    // strokes/fc).
     schemaVersion: SESSION_SCHEMA_VERSION,
     appVersion: APP_VERSION,
     id: uid(),
@@ -7489,6 +7888,15 @@ function logCurrentWorkout({ silent = false } = {}) {
   if (state.bookmarks && state.bookmarks.length) {
     entry.bookmarks = JSON.parse(JSON.stringify(state.bookmarks));
   }
+  // v1.18.0 stroke capture — attach the compact per-stroke samples and
+  // the session best/avg force curves when the session produced any.
+  // Both fields are optional in the schema; old sessions and thin
+  // recovered entries simply don't have them.
+  if (state.strokeCapture && state.strokeCapture.log.length >= 2) {
+    entry.strokes = JSON.parse(JSON.stringify(state.strokeCapture.log));
+  }
+  const fcSnap = sessionCurveSnapshot();
+  if (fcSnap) entry.fc = fcSnap;
   // PR detection — runs BEFORE the unshift so the evaluator only sees
   // the prior history when comparing. Only credits when the plan has
   // a benchKey (i.e. came from a real benchmark test). If a PR was
@@ -10568,6 +10976,7 @@ function startJustRow() {
   resetAutoLogTracker();
   resetHrTracking();
   resetForceCurveOverlays();
+  resetStrokeCapture();
   state.bookmarks = [];
   resetConnHealth();
   persistPlan();
@@ -10786,6 +11195,7 @@ function enterDemoMode() {
   resetAutoLogTracker();
   resetHrTracking();
   resetForceCurveOverlays();
+  resetStrokeCapture();
   state.bookmarks = [];
   resetConnHealth();
   // Fake the "connected" state so the monitor header reads right.
@@ -10814,6 +11224,7 @@ function exitDemoMode() {
   state.previousForceCurve = [];
   state.liveForceCurve = [];
   resetForceCurveOverlays();
+  resetStrokeCapture();
   showView("home");
   render();
 }
@@ -10855,7 +11266,6 @@ function demoTick() {
   // Force-curve packet (simulated multi-sample completion).
   const peak = d.peakForceBase + (Math.random() - 0.5) * 12;
   const curve = demoForceCurve(peak, 28 + Math.floor(Math.random() * 8));
-  commitCompletedStroke(curve);
   state.previousForceCurve = state.forceCurve;
   state.forceCurve = curve.slice();
   state.liveForceCurve = curve.slice();
@@ -10881,6 +11291,9 @@ function demoTick() {
   if (state.heartRate >= 30 && state.heartRate <= 240) {
     updateHrTracking(state.heartRate);
   }
+  // Commit AFTER the state writes so the v1.18 stroke-capture sample
+  // records this tick's values, not last tick's.
+  commitCompletedStroke(curve);
   // Force a render — normally this fires from BLE events; here we
   // drive it from the tick directly.
   render();
@@ -10963,7 +11376,6 @@ function openSummary() {
   const p = state.localPlan;
   document.getElementById("summaryTitle").textContent =
     (p && p.title) ? p.title : "Workout summary";
-  document.getElementById("summarySubtitle").textContent = (p && p.description) ? p.description : "";
 
   // Session-notes editor — only meaningful when viewing a saved entry.
   // state.summaryHistoryEntryId is set by renderHistoryList when the
@@ -10972,6 +11384,15 @@ function openSummary() {
   const entry = state.summaryHistoryEntryId
     ? state.history.find(h => h.id === state.summaryHistoryEntryId)
     : null;
+
+  // Subtitle: plan description, with the PR line prepended for saved
+  // entries so touch users get the detail the badge tooltip can't show.
+  const subParts = [];
+  if (entry && entry.pr && entry.pr.keys && entry.pr.keys.length) {
+    subParts.push("🏆 " + formatPrSetMessage(entry.pr));
+  }
+  if (p && p.description) subParts.push(p.description);
+  document.getElementById("summarySubtitle").textContent = subParts.join(" — ");
   if (entry) {
     notesPanel.style.display = "";
     document.getElementById("sessionRating").value     = entry.rating || "";
@@ -11617,9 +12038,9 @@ function renderWorkoutsList() {
       : "";
     card.innerHTML = `
       <div class="plan-row-info">
-        <div class="ttl">${p.title || summary}</div>
-        <div class="date">${summary} · ${totalLine}${dateStr ? "  ·  " + dateStr : ""}</div>
-        ${p.description ? `<div class="desc">${p.description}</div>` : ""}
+        <div class="ttl">${fbEsc(p.title || summary)}</div>
+        <div class="date">${fbEsc(summary)} · ${fbEsc(totalLine)}${dateStr ? "  ·  " + fbEsc(dateStr) : ""}</div>
+        ${p.description ? `<div class="desc">${fbEsc(p.description)}</div>` : ""}
       </div>
       <div class="plan-row-actions">
         <button class="accent" data-act="use">Use →</button>
@@ -11804,6 +12225,7 @@ function startBenchmarkTest(benchKey) {
   resetAutoLogTracker();
   resetHrTracking();
   resetForceCurveOverlays();
+  resetStrokeCapture();
   state.bookmarks = [];
   resetConnHealth();
   persistPlan();
@@ -12453,18 +12875,19 @@ function renderSummaryAnalysis(entry) {
   const el = document.getElementById("summaryAnalysis");
   if (!el) return;
   const a = analyzeSession(entry, state.history);
+  const eff = computeEfficiencyScore(entry);
   const hasFatigue = !!a.fatigue;
   const hasInsights = a.insights && a.insights.length;
   const hasQualityIssue = a.quality && a.quality.issues && a.quality.issues.length;
-  if (!hasFatigue && !hasInsights && !hasQualityIssue) {
+  if (!hasFatigue && !hasInsights && !hasQualityIssue && !eff.has) {
     // Nothing useful to show (e.g. a plain short session).
     el.style.display = "none";
     return;
   }
   el.style.display = "";
   let html = "";
-  // Fatigue + quality summary row.
-  if (hasFatigue || a.quality) {
+  // Fatigue + quality + efficiency summary row.
+  if (hasFatigue || a.quality || eff.has) {
     html += `<div class="sa-row">`;
     if (hasFatigue) {
       const idx = a.fatigue.index;
@@ -12480,7 +12903,37 @@ function renderSummaryAnalysis(entry) {
         <div class="sa-stat-n">${q}<span>%</span></div>
         <div class="sa-stat-l">DATA QUALITY</div></div>`;
     }
+    if (eff.has) {
+      const tone = eff.score >= 75 ? "ok" : eff.score >= 50 ? "warn" : "bad";
+      html += `<div class="sa-stat sa-${tone}">
+        <div class="sa-stat-n">${eff.score}<span>/100</span></div>
+        <div class="sa-stat-l">EFFICIENCY</div></div>`;
+    }
     html += `</div>`;
+  }
+  // Efficiency breakdown (v1.18.0) — every component shown with its
+  // weight and score, plus the one-line formula, so the number is
+  // never a black box.
+  if (eff.has) {
+    html += `<div class="sa-eff">`;
+    for (const c of eff.components) {
+      const tone = c.score >= 75 ? "ok" : c.score >= 50 ? "warn" : "bad";
+      html += `<div class="sa-eff-row">
+        <span class="sa-eff-lab">${fbEsc(c.label)} <i>${Math.round(c.weight * 100)}%</i></span>
+        <span class="sa-eff-track"><span class="sa-eff-bar sa-eff-${tone}" style="width:${Math.round(c.score)}%"></span></span>
+        <span class="sa-eff-n">${Math.round(c.score)}</span></div>
+      <div class="sa-eff-detail">${fbEsc(c.detail)}</div>`;
+    }
+    html += `<div class="sa-eff-how">How it's scored: ${fbEsc(eff.explanation)}</div></div>`;
+  }
+  // Technique drift over the piece (v1.18.0) — recomputed from the
+  // saved stroke log with the same analyzer the live card uses.
+  if (entry && Array.isArray(entry.strokes)) {
+    const dr = computeTechniqueDrift(entry.strokes);
+    if (dr.has && dr.drifting) {
+      html += `<div class="sa-fatigue"><b>Technique drift:</b> ` +
+        dr.items.filter(i => i.tone === "warn").map(i => fbEsc(i.text)).join(" · ") + `</div>`;
+    }
   }
   // Fatigue headline.
   if (hasFatigue && a.fatigue.mainIssue) {
@@ -12592,6 +13045,9 @@ function setPerformanceTab(tabId) {
   document.querySelectorAll("#performanceView .perf-pane").forEach(p => {
     p.classList.toggle("active", p.dataset.perfPane === tabId);
   });
+  // Compare renders lazily on activation — its canvas has no layout
+  // while the pane is hidden, so drawing early would size to zero.
+  if (tabId === "compare") renderPerfCompare();
 }
 // =====================================================================
 // Performance analytics (v1.14.0) — pure, DOM-free rollups over saved
@@ -12626,26 +13082,65 @@ function perfSessionMetrics(entry) {
 }
 
 // =====================================================================
-// Session Replay readiness (v1.14.1) — PURE capability detection over a
-// saved session. The replay UI is NOT built yet; these helpers report,
-// honestly, what the persisted data can support and never invent data.
+// Session Replay readiness (v1.14.1, extended v1.18.0) — PURE capability
+// detection over a saved session. These helpers report, honestly, what
+// the persisted data can support and never invent data.
 //
 // What history persists (see logCurrentWorkout): totals, plan, per-
-// INTERVAL results, optional bookmarks + pr. It does NOT persist per-
-// stroke samples or force-curve history — so stroke-level and force-
-// curve replay are impossible from saved data today.
+// INTERVAL results, optional bookmarks + pr, and — since v1.18.0 —
+// optional per-stroke samples (entry.strokes) + session force curves
+// (entry.fc). Pre-v1.18 sessions cap out at interval fidelity.
 // =====================================================================
 // Highest replay fidelity the saved data supports:
-//   "none" · "summary-only" (totals only) · "interval" (per-interval).
-// "stroke"/"force-curve" are never returned: that data isn't saved yet.
+//   "none" · "summary-only" (totals only) · "interval" (per-interval) ·
+//   "stroke" (v1.18+ capture — per-stroke scrubbing).
 function getSessionReplayCapability(session) {
   if (!session) return "none";
+  if (Array.isArray(session.strokes) && session.strokes.length >= 2) return "stroke";
   const rows = Array.isArray(session.results)
     ? session.results.filter(r => r && (r.distanceM > 0 || r.elapsedS > 0)) : [];
   if (rows.length >= 1) return "interval";
   const T = session.totals || {};
   if (T.distanceM > 0 || T.elapsedS > 0) return "summary-only";
   return "none";
+}
+
+// Stroke-level timeline (v1.18.0) — one point per captured sample,
+// expanded from the compact persisted keys to the same field names the
+// interval timeline uses. [] when the session has no stroke capture.
+function buildStrokeReplayTimeline(session) {
+  const rows = (session && Array.isArray(session.strokes)) ? session.strokes : [];
+  const num = v => (v != null && isFinite(v) && v > 0) ? v : null;
+  return rows.map((s, i) => ({
+    index: i,
+    elapsedS:  (s.t != null && s.t >= 0) ? s.t : null,
+    distanceM: (s.d != null && s.d >= 0) ? s.d : null,
+    split: num(s.p), watts: num(s.w), strokeRate: num(s.r),
+    heartRate: num(s.hr), driveLengthM: num(s.dl),
+    peakForceLbs: num(s.pf),
+    peakTiming: (s.pt != null && s.pt >= 0 && s.pt <= 1) ? s.pt : null,
+    ratio: (num(s.dt) && num(s.rt)) ? s.rt / s.dt : null,
+  }));
+}
+
+// Place bookmarks on the stroke timeline by distance — nearest sample.
+// [] when the session has no bookmarks or no stroke capture.
+function mapBookmarksToStrokeTimeline(session) {
+  const marks = (session && Array.isArray(session.bookmarks)) ? session.bookmarks : [];
+  const tl = buildStrokeReplayTimeline(session);
+  if (!tl.length) return [];
+  return marks.map((b, i) => {
+    let best = null, bestErr = Infinity;
+    if (b && b.distanceM != null) {
+      for (const p of tl) {
+        if (p.distanceM == null) continue;
+        const err = Math.abs(p.distanceM - b.distanceM);
+        if (err < bestErr) { bestErr = err; best = p.index; }
+      }
+    }
+    return { index: i, distanceM: (b && b.distanceM != null) ? b.distanceM : null,
+      elapsedS: (b && b.elapsedS != null) ? b.elapsedS : null, strokePos: best };
+  });
 }
 
 // Cumulative interval timeline for an interval scrubber — each point is
@@ -12701,10 +13196,22 @@ function summarizeReplayLimitations(session) {
   const out = [];
   if (cap === "summary-only")
     out.push("Summary only — no per-interval breakdown was saved, so only totals can be shown.");
-  out.push("No per-stroke samples are saved, so stroke-by-stroke replay isn't possible yet.");
-  out.push("No force-curve history is saved, so the drive force curve can't be replayed yet.");
+  if (cap === "stroke") {
+    // v1.18 capture: long sessions are decimated to stay in budget, and
+    // curves are session-level (best + average), not one per stroke.
+    out.push("Long sessions store a thinned stroke sample, so very fine stroke-to-stroke detail may be smoothed.");
+    if (session.fc) {
+      out.push("Force curves are saved per session (best + average) — individual stroke curves aren't stored.");
+    } else {
+      out.push("No force-curve history is saved for this session.");
+    }
+  } else {
+    out.push("No per-stroke samples are saved, so stroke-by-stroke replay isn't possible for this session.");
+    out.push("No force-curve history is saved, so the drive force curve can't be replayed.");
+  }
   const hasHr = (session.results || []).some(r => r && r.heartRate > 0) ||
-                (session.totals && session.totals.avgHr > 0);
+                (session.totals && session.totals.avgHr > 0) ||
+                (Array.isArray(session.strokes) && session.strokes.some(s => s && s.hr > 0));
   if (!hasHr) out.push("No heart-rate data was recorded for this session.");
   return out;
 }
@@ -12902,6 +13409,267 @@ function sparklineSvg(values, opts) {
     `<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.2" fill="currentColor"/></svg>`;
 }
 
+// =====================================================================
+// Technical-efficiency score (v1.18.0) — pure, explained, 0-100.
+// =====================================================================
+// Four PM5-derivable components, each 0-100, weighted:
+//   curve  35% — smoothness of the session-AVERAGE force curve (one
+//                clean accelerating push scores high; double peaks and
+//                bumps score low). Averaging denoises single strokes.
+//   peak   25% — where peak force lands in the drive; the front third
+//                (30-45%) is the efficient band.
+//   ratio  20% — recovery:drive rhythm inside the 1.8-2.8:1 band, with
+//                a penalty for stroke-to-stroke ratio scatter.
+//   length 20% — drive-length consistency (CV of per-stroke length).
+// Needs v1.18 capture (entry.strokes and/or entry.fc); older sessions
+// return {has:false} rather than a made-up number.
+function computeEfficiencyScore(entry) {
+  if (!entry) return { has: false };
+  const strokes = Array.isArray(entry.strokes) ? entry.strokes : [];
+  const fc = entry.fc || null;
+  const clamp = v => Math.max(0, Math.min(100, v));
+  const meanOf = vs => vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : null;
+  const cvOf = vs => {
+    const m = meanOf(vs);
+    if (m == null || !m) return null;
+    const sd = Math.sqrt(vs.reduce((a, b) => a + (b - m) * (b - m), 0) / vs.length);
+    return (sd / m) * 100;
+  };
+  const components = [];
+
+  // curve smoothness — mean |second difference| of the peak-normalised
+  // average curve. The session average smooths sensor noise, so what's
+  // left really is shape.
+  const curveSrc = fc && (fc.avg || fc.best);
+  if (curveSrc && curveSrc.length >= 8) {
+    const peak = Math.max(...curveSrc);
+    if (peak > 0) {
+      const n = curveSrc.map(v => v / peak);
+      let jerk = 0;
+      for (let i = 1; i < n.length - 1; i++) jerk += Math.abs(n[i + 1] - 2 * n[i] + n[i - 1]);
+      jerk /= (n.length - 2);
+      const score = clamp(100 - Math.max(0, jerk - 0.004) * 3000);
+      components.push({ key: "curve", label: "Curve smoothness", weight: 0.35, score,
+        detail: score >= 75 ? "One clean accelerating push — no double peak."
+              : score >= 45 ? "Some bumpiness in the drive — think one continuous push."
+              : "The force curve has dips or double peaks — leg-back-arm sequence is breaking up." });
+    }
+  }
+
+  // peak position — front third of the drive is the efficient band.
+  let pt = null;
+  const pts = strokes.map(s => s && s.pt).filter(v => v != null && v >= 0 && v <= 1);
+  if (pts.length >= 5) pt = meanOf(pts);
+  else if (curveSrc && curveSrc.length >= 8) {
+    let pi = 0;
+    for (let i = 1; i < curveSrc.length; i++) if (curveSrc[i] > curveSrc[pi]) pi = i;
+    pt = pi / (curveSrc.length - 1);
+  }
+  if (pt != null) {
+    const dist = pt < 0.30 ? 0.30 - pt : pt > 0.45 ? pt - 0.45 : 0;
+    const score = clamp(100 - dist * 400);
+    components.push({ key: "peak", label: "Peak-force timing", weight: 0.25, score,
+      detail: `Peak lands at ${Math.round(pt * 100)}% of the drive` +
+        (dist === 0 ? " — right in the efficient front-third band."
+         : pt > 0.45 ? " — late; drive the legs harder off the catch."
+         : " — very early; keep pressure building through the drive.") });
+  }
+
+  // ratio band + steadiness.
+  const ratios = strokes.map(s => (s && s.dt && s.rt) ? s.rt / s.dt : null)
+    .filter(v => v != null && isFinite(v) && v > 0);
+  if (ratios.length >= 5) {
+    const m = meanOf(ratios);
+    const dist = m < 1.8 ? 1.8 - m : m > 2.8 ? m - 2.8 : 0;
+    const scatter = cvOf(ratios);
+    const score = clamp(100 - dist * 60 - Math.max(0, (scatter || 0) - 6) * 2.5);
+    components.push({ key: "ratio", label: "Rhythm (ratio)", weight: 0.20, score,
+      detail: `Average ${m.toFixed(1)} : 1` +
+        (dist === 0 ? ", steady in the 1.8-2.8 band." : m < 1.8 ? " — rushing the slide." : " — recovery drifting long.") });
+  }
+
+  // drive-length consistency.
+  const dls = strokes.map(s => s && s.dl).filter(v => v != null && v > 0);
+  if (dls.length >= 5) {
+    const cv = cvOf(dls);
+    if (cv != null) {
+      const score = clamp(100 - Math.max(0, cv - 2) * 12);
+      components.push({ key: "length", label: "Length consistency", weight: 0.20, score,
+        detail: cv <= 3 ? `Drive length varies just ${cv.toFixed(1)}% stroke to stroke.`
+          : `Drive length varies ${cv.toFixed(1)}% stroke to stroke — hold full compression when tired.` });
+    }
+  }
+
+  if (!components.length) return { has: false };
+  const wSum = components.reduce((a, c) => a + c.weight, 0);
+  const score = Math.round(components.reduce((a, c) => a + c.score * c.weight, 0) / wSum);
+  return {
+    has: true, score, components,
+    explanation: "Weighted blend of " +
+      components.map(c => `${c.label.toLowerCase()} (${Math.round(c.weight / wSum * 100)}%)`).join(", ") +
+      ", each 0-100 from this session's captured strokes and curves.",
+  };
+}
+
+// Cross-session efficiency trend for the Technique tab. Sessions
+// without v1.18 capture are skipped, never faked.
+function computeEfficiencyTrend(history, max) {
+  const scored = [];
+  for (const h of (history || []).slice(0, max || 10)) {
+    const r = computeEfficiencyScore(h);
+    if (r.has) scored.push({ id: h.id, title: h.title, date: h.date, score: r.score });
+  }
+  if (!scored.length) return { has: false };
+  const series = scored.slice().reverse().map(s => s.score);   // oldest → newest
+  return {
+    has: true, n: scored.length, latest: scored[0].score,
+    avg: Math.round(scored.reduce((a, s) => a + s.score, 0) / scored.length),
+    series,
+  };
+}
+
+// =====================================================================
+// Workout-to-workout comparison (v1.18.0) — pure diff over two saved
+// sessions: delta-labelled metric rows + overlayable force-curve sets.
+// =====================================================================
+function buildSessionComparison(a, b) {
+  if (!a || !b) return { has: false };
+  const A = perfSessionMetrics(a), B = perfSessionMetrics(b);
+  const rows = [];
+  // better: which side wins ("a"/"b"/null) — null for neutral facts.
+  const push = (label, va, vb, fmt, deltaFmt, lowerBetter) => {
+    if (va == null || vb == null) return;
+    const d = vb - va;
+    let better = null;
+    if (lowerBetter != null && Math.abs(d) > 1e-9) {
+      better = (lowerBetter ? d < 0 : d > 0) ? "b" : "a";
+    }
+    rows.push({ label, aText: fmt(va), bText: fmt(vb),
+      deltaText: (d >= 0 ? "+" : "−") + deltaFmt(Math.abs(d)), better });
+  };
+  const avgFromResults = (e, k) => {
+    const vs = ((e && e.results) || []).map(r => r && r[k]).filter(v => v != null && v > 0);
+    return vs.length ? vs.reduce((x, y) => x + y, 0) / vs.length : null;
+  };
+  push("Distance", A.distanceM || null, B.distanceM || null, v => Math.round(v).toLocaleString() + " m", v => Math.round(v).toLocaleString() + " m", null);
+  push("Time", A.elapsedS || null, B.elapsedS || null, fmtTime, fmtTime, null);
+  push("Avg split", A.split, B.split, fmtPace, v => v.toFixed(1) + " s", true);
+  push("Avg watts", A.watts, B.watts, v => Math.round(v) + " W", v => Math.round(v) + " W", false);
+  push("Stroke rate", A.rate, B.rate, v => Math.round(v) + " spm", v => v.toFixed(1) + " spm", null);
+  push("Avg HR", A.hr, B.hr, v => Math.round(v) + " bpm", v => Math.round(v) + " bpm", null);
+  push("Drive length", avgFromResults(a, "driveLengthM"), avgFromResults(b, "driveLengthM"),
+    v => v.toFixed(2) + " m", v => v.toFixed(2) + " m", false);
+  push("Peak force", avgFromResults(a, "peakForceLbs"), avgFromResults(b, "peakForceLbs"),
+    v => Math.round(v) + " lbf", v => Math.round(v) + " lbf", false);
+  const effA = computeEfficiencyScore(a), effB = computeEfficiencyScore(b);
+  if (effA.has && effB.has) {
+    push("Efficiency score", effA.score, effB.score, v => Math.round(v) + " / 100", v => Math.round(v), false);
+  }
+  // Overlayable curves — session AVERAGE preferred (typical stroke),
+  // best as fallback. Which one was used is reported so the UI can say.
+  const curveOf = e => (e && e.fc && (e.fc.avg || e.fc.best)) || null;
+  const curveKind = e => (e && e.fc ? (e.fc.avg ? "avg" : e.fc.best ? "best" : null) : null);
+  return {
+    has: true, rows,
+    curves: {
+      a: curveOf(a), aKind: curveKind(a),
+      b: curveOf(b), bKind: curveKind(b),
+    },
+  };
+}
+
+// =====================================================================
+// Smarter workout creation (v1.18.0) — PR-informed target paces. Pure.
+// =====================================================================
+// Split for a saved benchmark: distance benchmarks store seconds,
+// time benchmarks store metres (see BENCHMARKS/applyPrUpdates).
+function benchmarkPaceOf(key, prefs) {
+  const v = prefs && prefs.benchmarks && prefs.benchmarks[key];
+  if (!v || v <= 0) return null;
+  const dist = BENCH_TARGET_DIST[key];
+  const time = BENCH_TARGET_TIME[key];
+  if (dist) return v * 500 / dist;
+  if (time) return time * 500 / v;
+  return null;
+}
+
+// Suggest a target pace per interval from the user's PRs. The best
+// available PR is normalised to a 2k-equivalent split with Paul's Law
+// (~5 s per 500 per doubling of distance), then each interval gets a
+// training band relative to that: sprints under it, steady state well
+// over it. Returns {has:false, reason} when there's nothing to go on.
+const SUGGEST_REF_ORDER = ["2k", "5k", "6k", "1k", "500m", "10k", "30min", "60min"];
+function suggestTargetsForPlan(plan, prefs) {
+  const ivs = (plan && Array.isArray(plan.intervals)) ? plan.intervals.filter(Boolean) : [];
+  if (!ivs.length) return { has: false, reason: "no-intervals" };
+  let refKey = null, refPace = null;
+  for (const k of SUGGEST_REF_ORDER) {
+    const p = benchmarkPaceOf(k, prefs);
+    if (p) { refKey = k; refPace = p; break; }
+  }
+  if (!refPace) return { has: false, reason: "no-prs" };
+  const refDist = BENCH_TARGET_DIST[refKey] ||
+    (prefs.benchmarks[refKey] > 0 ? prefs.benchmarks[refKey] : 2000);   // time-bench: stored metres
+  const pace2k = refPace - 5 * (Math.log(refDist / 2000) / Math.LN2);
+  const targets = ivs.map((iv, i) => {
+    // Interval size in metres (time intervals estimated at 2k pace).
+    const approxDist = iv.kind === "distance" ? iv.value : (iv.value / pace2k) * 500;
+    let band, label;
+    if (approxDist <= 300)       { band = -3; label = "sprint"; }
+    else if (approxDist <= 700)  { band = -1; label = "race pace"; }
+    else if (approxDist <= 1600) { band =  5; label = "threshold"; }
+    else if (approxDist <= 4000) { band = 10; label = "sweet spot"; }
+    else                         { band = 16; label = "steady state"; }
+    return { index: i, targetPaceS: Math.round((pace2k + band) * 10) / 10, label };
+  });
+  return { has: true, refKey, refPaceS: refPace, pace2kS: pace2k, targets };
+}
+
+// =====================================================================
+// Training report (v1.18.0) — pure markdown builder over saved history.
+// =====================================================================
+function buildTrainingReport(history, prefs, nowMs) {
+  history = history || [];
+  const L = [];
+  L.push("# PM5 Dashboard — Training report");
+  L.push("");
+  L.push(`Generated ${new Date(nowMs).toISOString().slice(0, 10)} · ${history.length} logged session${history.length === 1 ? "" : "s"}`);
+  const ov = computePerformanceOverview(history, nowMs);
+  if (ov.has) {
+    const block = (name, r) => {
+      L.push("");
+      L.push(`## ${name}`);
+      L.push(`- Volume: ${Math.round(r.meters).toLocaleString()} m across ${r.workouts} workout${r.workouts === 1 ? "" : "s"} (${fmtTime(r.timeS)})`);
+      if (r.avgSplit) L.push(`- Avg split: ${fmtPace(r.avgSplit)} /500`);
+      if (r.avgWatts) L.push(`- Avg watts: ${Math.round(r.avgWatts)} W`);
+      if (r.avgHr) L.push(`- Avg HR: ${Math.round(r.avgHr)} bpm`);
+    };
+    block("Last 7 days", ov.d7);
+    block("Last 30 days", ov.d30);
+    if (ov.trend && ov.trend.text) { L.push(""); L.push(`Trend: ${ov.trend.text}`); }
+  }
+  const prCards = computePrCards(prefs || {}).filter(c => c.has);
+  if (prCards.length) {
+    L.push("");
+    L.push("## Personal records");
+    for (const c of prCards) {
+      L.push(`- ${c.label}: ${c.resultText}${c.paceText ? ` (${c.paceText} /500)` : ""}${c.date ? ` — ${c.date}` : ""}`);
+    }
+  }
+  const tech = computeTechniqueTrend(history);
+  if (tech.has && tech.text) { L.push(""); L.push("## Technique"); L.push(tech.text); }
+  const eff = computeEfficiencyTrend(history);
+  if (eff.has) L.push(`Technical efficiency: latest ${eff.latest}/100, average ${eff.avg}/100 over ${eff.n} captured session${eff.n === 1 ? "" : "s"}.`);
+  const fat = computeFatigueTrend(history);
+  if (fat.has && fat.text) { L.push(""); L.push("## Fatigue & pacing"); L.push(fat.text); }
+  const hr = computeHrSummary(history);
+  if (hr.has && hr.text) { L.push(""); L.push("## Heart rate"); L.push(hr.text); }
+  L.push("");
+  L.push("---");
+  L.push("Exported from PM5 Dashboard.");
+  return L.join("\n");
+}
+
 function renderPerformanceView() {
   if (!state.performance) state.performance = { activeTab: "overview" };
   setPerformanceTab(state.performance.activeTab);
@@ -13030,18 +13798,33 @@ function renderPerfTechnique() {
   const el = document.getElementById("perfTechniqueReal");
   if (!el) return;
   const t = computeTechniqueTrend(state.history);
-  if (!t.has) {
+  const eff = computeEfficiencyTrend(state.history);
+  if (!t.has && !eff.has) {
     el.innerHTML = perfEmptyBlock("🛠", "Not enough technique data", "Log workouts with per-interval data (drive length, peak force) — <b>Demo Mode</b> generates it — and trends appear here.");
     return;
   }
-  el.innerHTML = `<div class="perf-section-headline">Rowing mechanics across your last ${t.n} pieces.</div>` +
-    `<div class="perf-trend-cards">` + t.items.map(i => `
-      <div class="tt-card tt-${i.tone}">
-        <div class="tt-label">${fbEsc(i.label)}</div>
-        <div class="tt-value">${fbEsc(i.value)}</div>
-        <div class="tt-note">${fbEsc(i.note)}</div>
-      </div>`).join("") + `</div>` +
-    `<div class="perf-diagnosis">${fbEsc(t.text)}</div>`;
+  let html = "";
+  if (t.has) {
+    html += `<div class="perf-section-headline">Rowing mechanics across your last ${t.n} pieces.</div>` +
+      `<div class="perf-trend-cards">` + t.items.map(i => `
+        <div class="tt-card tt-${i.tone}">
+          <div class="tt-label">${fbEsc(i.label)}</div>
+          <div class="tt-value">${fbEsc(i.value)}</div>
+          <div class="tt-note">${fbEsc(i.note)}</div>
+        </div>`).join("") + `</div>` +
+      `<div class="perf-diagnosis">${fbEsc(t.text)}</div>`;
+  }
+  // Efficiency-score trend (v1.18.0) — sessions with stroke capture.
+  if (eff.has) {
+    const tone = eff.latest >= 75 ? "ok" : eff.latest >= 50 ? "warn" : "bad";
+    html += `<div class="perf-section-headline" style="margin-top:18px;">Technical efficiency.</div>
+      <div class="perf-trend-cards">
+        <div class="tt-card tt-${tone}"><div class="tt-label">Latest score</div><div class="tt-value">${eff.latest}<span class="tt-u">/100</span></div><div class="tt-note">${sparklineSvg(eff.series)}</div></div>
+        <div class="tt-card tt-ok"><div class="tt-label">Average</div><div class="tt-value">${eff.avg}</div><div class="tt-note">last ${eff.n} captured session${eff.n === 1 ? "" : "s"}</div></div>
+      </div>
+      <div class="perf-diagnosis">Scored from captured strokes and curves: curve smoothness, peak-force timing, rhythm, and length consistency — open any session's Summary for the full breakdown.</div>`;
+  }
+  el.innerHTML = html;
 }
 
 function renderPerfFitness() {
@@ -13076,6 +13859,86 @@ function renderPerfFitness() {
     html += `<div class="perf-mini-empty">${fbEsc(hr.text)}</div>`;
   }
   el.innerHTML = html;
+}
+
+// ---- Compare tab (v1.18.0) ------------------------------------------
+// Two-session diff: force-curve overlay (A blue solid, B orange solid)
+// + delta-labelled metric table from buildSessionComparison. Selection
+// lives in state.performance so it survives tab switches.
+function renderPerfCompare() {
+  const empty = document.getElementById("perfCompareEmpty");
+  const real  = document.getElementById("perfCompareReal");
+  if (!empty || !real) return;
+  const hist = state.history || [];
+  if (hist.length < 2) {
+    empty.style.display = "";
+    real.style.display = "none";
+    empty.innerHTML = perfEmptyBlock("⇄", "Nothing to compare yet",
+      "Log at least two sessions and they'll appear here, force curves and all.");
+    return;
+  }
+  empty.style.display = "none";
+  real.style.display = "";
+
+  const perf = state.performance;
+  if (perf.compareA == null || !hist.some(h => h.id === perf.compareA)) perf.compareA = hist[0].id;
+  if (perf.compareB == null || !hist.some(h => h.id === perf.compareB) || perf.compareB === perf.compareA) {
+    const alt = hist.find(h => h.id !== perf.compareA);
+    perf.compareB = alt ? alt.id : hist[0].id;
+  }
+
+  const optionsHtml = hist.map(h => {
+    const d = new Date(h.date);
+    const dateStr = isNaN(d) ? "" : d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    const dist = h.totals && h.totals.distanceM ? ` · ${Math.round(h.totals.distanceM).toLocaleString()} m` : "";
+    return `<option value="${fbEsc(h.id)}">${fbEsc(`${dateStr} — ${h.title}${dist}`)}</option>`;
+  }).join("");
+  const selA = document.getElementById("pcSelA");
+  const selB = document.getElementById("pcSelB");
+  selA.innerHTML = optionsHtml; selA.value = perf.compareA;
+  selB.innerHTML = optionsHtml; selB.value = perf.compareB;
+  selA.onchange = () => { perf.compareA = selA.value; renderPerfCompare(); };
+  selB.onchange = () => { perf.compareB = selB.value; renderPerfCompare(); };
+
+  const a = hist.find(h => h.id === perf.compareA);
+  const b = hist.find(h => h.id === perf.compareB);
+  const cmp = buildSessionComparison(a, b);
+  if (!cmp.has) return;
+
+  // Force-curve overlay — only when at least one side saved curves.
+  const fcBox = document.getElementById("pcFcBox");
+  const note = document.getElementById("pcFcNote");
+  const kindWord = k => k === "avg" ? "average stroke" : "best stroke";
+  if (cmp.curves.a || cmp.curves.b) {
+    fcBox.style.display = "";
+    const sets = [];
+    if (cmp.curves.a) sets.push({ samples: cmp.curves.a, color: "rgba(76,194,255,0.9)", width: 2.5 });
+    if (cmp.curves.b) sets.push({ samples: cmp.curves.b, color: "rgba(255,143,60,0.9)", width: 2.5 });
+    const leg = [];
+    if (cmp.curves.a) leg.push(`A ${kindWord(cmp.curves.aKind)}`);
+    if (cmp.curves.b) leg.push(`B ${kindWord(cmp.curves.bKind)}`);
+    document.getElementById("pcFcLegend").textContent = leg.join(" · ");
+    setTimeout(() => drawCurveSet(document.getElementById("pcFcCanvas"), sets), 0);
+    if (!cmp.curves.a || !cmp.curves.b) {
+      note.style.display = "";
+      note.textContent = "Only one of these sessions has saved force curves — curves are captured from v1.18.0 onward.";
+    } else {
+      note.style.display = "none";
+    }
+  } else {
+    fcBox.style.display = "none";
+    note.style.display = "";
+    note.textContent = "Neither session has saved force curves (captured from v1.18.0 onward) — comparing on the numbers.";
+  }
+
+  document.getElementById("pcTable").innerHTML =
+    `<div class="pc-row pc-head"><span></span><span class="pc-a">A</span><span class="pc-b">B</span><span>Δ (B − A)</span></div>` +
+    cmp.rows.map(r =>
+      `<div class="pc-row"><span class="pc-lab">${fbEsc(r.label)}</span>` +
+      `<span class="pc-a${r.better === "a" ? " win" : ""}">${fbEsc(r.aText)}</span>` +
+      `<span class="pc-b${r.better === "b" ? " win" : ""}">${fbEsc(r.bText)}</span>` +
+      `<span class="pc-d">${fbEsc(r.deltaText)}</span></div>`
+    ).join("");
 }
 
 function clubIsEmpty() {
@@ -13263,8 +14126,8 @@ const FOCUS_PRESETS = [
     themeClass: "preset-technical",
     accent: "var(--accent-3)",
     primary:   ["driveLen", "slip"],
-    secondary: ["ratio", "peakForceTiming", "effectiveLen"],
-    passive:   ["workStroke", "metersPerStroke", "strokeRate", "peakForce"],
+    secondary: ["ratio", "peakForceTiming", "techDrift"],
+    passive:   ["effectiveLen", "workStroke", "metersPerStroke", "strokeRate", "peakForce"],
     locked:    ["driveLen", "slip", "peakForceTiming"],
   },
   {
@@ -13458,13 +14321,26 @@ function renderAccountChip() {
   if (!chip) return;
   const u = state.user;
   const initial = (u.name || "?").trim().charAt(0).toUpperCase() || "?";
-  if (u.signedIn && u.picture) {
-    chip.innerHTML = `<img src="${u.picture}" referrerpolicy="no-referrer" alt=""><span>${u.name.split(" ")[0]}</span>`;
-  } else if (u.signedIn) {
-    chip.innerHTML = `<span class="avatar">${initial}</span><span>${u.name.split(" ")[0]}</span>`;
+  // Built with DOM APIs, not innerHTML — the display name and picture
+  // URL come from the Google profile (and Drive-synced state), so they
+  // are data, never markup. Picture must be a real https URL.
+  chip.textContent = "";
+  const pictureOk = u.picture && /^https:\/\//i.test(u.picture);
+  if (u.signedIn && pictureOk) {
+    const img = document.createElement("img");
+    img.src = u.picture;
+    img.referrerPolicy = "no-referrer";
+    img.alt = "";
+    chip.appendChild(img);
   } else {
-    chip.innerHTML = `<span class="avatar">${initial}</span><span>Sign in</span>`;
+    const av = document.createElement("span");
+    av.className = "avatar";
+    av.textContent = initial;
+    chip.appendChild(av);
   }
+  const label = document.createElement("span");
+  label.textContent = u.signedIn ? (u.name || "").split(" ")[0] : "Sign in";
+  chip.appendChild(label);
 }
 
 function toggleAccountMenu(force) {
@@ -13646,11 +14522,70 @@ function filteredHistory() {
 // panel discloses that rather than faking it.
 let _replay = null;  // { tl, marks, pos }
 
+// Shared static force-curve painter (replay + performance compare).
+// sets = [{samples: number[], color, dashed?, width?, fill?}] — scaled
+// together so overlaid curves are directly comparable.
+function drawCurveSet(canvas, sets, _retry) {
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth, cssH = canvas.clientHeight || 130;
+  if (!cssW) {
+    // The host modal/pane hasn't finished layout yet — retry shortly.
+    // setTimeout, not rAF: rAF is suspended entirely in hidden tabs,
+    // which would leave the canvas blank forever.
+    if ((_retry || 0) < 5) setTimeout(() => drawCurveSet(canvas, sets, (_retry || 0) + 1), 60);
+    return;
+  }
+  canvas.width = Math.round(cssW * dpr); canvas.height = Math.round(cssH * dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssW, cssH);
+  const valid = (sets || []).filter(s => s && s.samples && s.samples.length >= 2);
+  if (!valid.length) return;
+  let yMax = 40;
+  for (const s of valid) for (const v of s.samples) if (v > yMax) yMax = v;
+  yMax *= 1.06;
+  const padL = 4, padR = 4, padT = 6, padB = 4;
+  const W = cssW - padL - padR, H = cssH - padT - padB;
+  ctx.strokeStyle = "rgba(155,167,189,0.15)";
+  ctx.lineWidth = 1;
+  for (let g = 50; g < yMax; g += 50) {
+    const y = padT + H - (g / yMax) * H;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + W, y); ctx.stroke();
+  }
+  for (const s of valid) {
+    const n = s.samples.length;
+    ctx.beginPath();
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = s.width || 2;
+    ctx.setLineDash(s.dashed ? [6, 5] : []);
+    for (let i = 0; i < n; i++) {
+      const x = padL + (i / (n - 1)) * W;
+      const y = padT + H - (Math.max(0, s.samples[i]) / yMax) * H;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    if (s.fill) {
+      ctx.setLineDash([]);
+      ctx.lineTo(padL + W, padT + H);
+      ctx.lineTo(padL, padT + H);
+      ctx.closePath();
+      ctx.fillStyle = s.fill;
+      ctx.fill();
+    }
+  }
+  ctx.setLineDash([]);
+}
+
 function openReplay(session) {
   const cap = getSessionReplayCapability(session);
-  const tl = buildIntervalReplayTimeline(session);
-  const marks = mapBookmarksToReplayTimeline(session);
-  _replay = { tl, marks, pos: 0 };
+  const strokeMode = cap === "stroke";
+  const ivTl = buildIntervalReplayTimeline(session);
+  const tl = strokeMode ? buildStrokeReplayTimeline(session) : ivTl;
+  const marks = strokeMode
+    ? mapBookmarksToStrokeTimeline(session)
+    : mapBookmarksToReplayTimeline(session);
+  _replay = { mode: strokeMode ? "stroke" : "interval", tl, ivTl, marks, pos: 0 };
 
   const plan = session && session.plan, T = (session && session.totals) || {};
   document.getElementById("replayTitle").textContent =
@@ -13674,21 +14609,44 @@ function openReplay(session) {
 
   // Honest capability badges — claim only what the data supports.
   const badges = [];
-  if (cap === "interval") badges.push(["Interval replay", true]);
+  if (cap === "stroke") badges.push(["Stroke replay", true]);
+  else if (cap === "interval") badges.push(["Interval replay", true]);
   else if (cap === "summary-only") badges.push(["Summary only", true]);
   else badges.push(["No replay data", false]);
   if (cap !== "none") {
     if (marks.length) badges.push(["Bookmarks available", false]);
-    badges.push(["Force curve not saved", false]);
+    if (session && session.fc) badges.push(["Session force curves", true]);
+    else badges.push(["Force curve not saved", false]);
   }
   if (session && session.pr && session.pr.keys && session.pr.keys.length)
     badges.push(["🏆 PR " + session.pr.keys.join(", "), true]);
   document.getElementById("replayBadges").innerHTML =
     badges.map(([t, on]) => `<span class="rpl-badge${on ? " on" : ""}">${t}</span>`).join("");
 
-  // Interval scrubber — only when interval data exists.
+  // Force Curve inspection (v1.18.0) — the session's saved best/avg
+  // curves, drawn with the same colors as the live monitor's ghosts.
+  const fcBox = document.getElementById("replayFc");
+  const fc = session && session.fc;
+  if (fc && (fc.best || fc.avg)) {
+    fcBox.style.display = "";
+    const sets = [];
+    if (fc.avg)  sets.push({ samples: fc.avg,  color: "rgba(255,143,60,0.8)", dashed: true, width: 2 });
+    if (fc.best) sets.push({ samples: fc.best, color: "rgba(86,249,179,0.9)", width: 2.5 });
+    const leg = [];
+    if (fc.best) leg.push(`— best${fc.peak ? " " + Math.round(fc.peak) + " lbf" : ""}`);
+    if (fc.avg)  leg.push(`- - avg${fc.n ? " of " + fc.n + " strokes" : ""}`);
+    document.getElementById("replayFcLegend").textContent = leg.join("   ");
+    // The canvas has no layout until the modal is visible — draw just
+    // after .open lands (setTimeout, not rAF — see drawCurveSet).
+    setTimeout(() =>
+      drawCurveSet(document.getElementById("replayFcCanvas"), sets), 0);
+  } else {
+    fcBox.style.display = "none";
+  }
+
+  // Scrubber — stroke-level when captured, else interval-level.
   const scrub = document.getElementById("replayScrub");
-  if (cap === "interval" && tl.length) {
+  if (tl.length && (strokeMode || cap === "interval")) {
     scrub.style.display = "";
     const sl = document.getElementById("replaySlider");
     sl.min = 0; sl.max = tl.length - 1; sl.value = 0;
@@ -13698,16 +14656,19 @@ function openReplay(session) {
     scrub.style.display = "none";
   }
 
-  // Bookmarks — each jumps to the interval it falls in (nearest).
+  // Bookmarks — jump to the nearest stroke (stroke mode) or the
+  // interval the bookmark falls in.
   const bm = document.getElementById("replayBm");
   if (marks.length) {
     bm.style.display = "";
     bm.innerHTML = `<span class="t">🔖 Bookmarks (${marks.length})</span>` +
       marks.map((m, i) => {
-        const near = m.intervalIndex != null ? `→ interval ${m.intervalIndex + 1}` : "";
+        const target = strokeMode ? m.strokePos : m.intervalIndex;
+        const near = target != null
+          ? (strokeMode ? `→ stroke ${target + 1}` : `→ interval ${target + 1}`) : "";
         const d = m.distanceM != null ? Math.round(m.distanceM).toLocaleString() + " m" : "—";
         const tm = m.elapsedS != null ? fmtTime(m.elapsedS) : "—";
-        return `<div class="b" data-iv="${m.intervalIndex != null ? m.intervalIndex : ""}">` +
+        return `<div class="b" data-iv="${target != null ? target : ""}">` +
           `<span class="n">${i + 1}</span><span>${d} · ${tm} ${near}</span></div>`;
       }).join("");
     bm.querySelectorAll(".b").forEach(r => r.addEventListener("click", () => {
@@ -13735,11 +14696,19 @@ function openReplay(session) {
   document.getElementById("replayModal").classList.add("open");
 }
 
+// The list always shows INTERVALS (orientation) — in stroke mode a
+// click jumps the scrubber to the nearest captured stroke instead of
+// selecting the row directly.
 function renderReplayList() {
   if (!_replay) return;
-  const bmIvs = new Set(_replay.marks.map(m => m.intervalIndex).filter(v => v != null));
+  const stroke = _replay.mode === "stroke";
+  const rows = stroke ? _replay.ivTl : _replay.tl;
   const list = document.getElementById("replayList");
-  list.innerHTML = _replay.tl.map(p => {
+  if (!rows.length) { list.innerHTML = ""; return; }
+  const bmIvs = stroke
+    ? new Set()
+    : new Set(_replay.marks.map(m => m.intervalIndex).filter(v => v != null));
+  list.innerHTML = rows.map(p => {
     const sp = p.split != null ? fmtPace(p.split) : "—";
     const w = p.watts != null ? Math.round(p.watts) + "W" : "—";
     const r = p.strokeRate != null ? p.strokeRate + "spm" : "—";
@@ -13749,27 +14718,64 @@ function renderReplayList() {
       `<span>${sp}</span><span class="w">${w}</span><span>${r}</span><span class="h">${h}</span></div>`;
   }).join("");
   list.querySelectorAll(".rpl-row").forEach(r => r.addEventListener("click", () => {
-    _replay.pos = parseInt(r.getAttribute("data-i"), 10) || 0;
+    const iv = parseInt(r.getAttribute("data-i"), 10) || 0;
+    if (stroke) {
+      // Jump to the first captured stroke at/after this interval's start.
+      const startDist = iv > 0 ? _replay.ivTl[iv - 1].cumulativeDistanceM : 0;
+      let target = 0;
+      for (const p of _replay.tl) {
+        if (p.distanceM != null && p.distanceM >= startDist) { target = p.index; break; }
+      }
+      _replay.pos = target;
+    } else {
+      _replay.pos = iv;
+    }
     renderReplayPos();
   }));
 }
 
 function renderReplayPos() {
   if (!_replay || !_replay.tl.length) return;
+  const stroke = _replay.mode === "stroke";
   const tl = _replay.tl;
   const i = Math.max(0, Math.min(tl.length - 1, _replay.pos));
   _replay.pos = i;
   const p = tl[i];
-  document.getElementById("replayPos").textContent = `Interval ${i + 1} of ${tl.length}`;
-  const bits = [`${Math.round(p.cumulativeDistanceM).toLocaleString()} m`, fmtTime(p.cumulativeTimeS)];
-  if (p.split != null) bits.push(fmtPace(p.split) + " /500");
-  if (p.watts != null) bits.push(Math.round(p.watts) + " W");
-  if (p.strokeRate != null) bits.push(p.strokeRate + " spm");
-  if (p.heartRate != null) bits.push(p.heartRate + " bpm");
+  document.getElementById("replayPos").textContent =
+    `${stroke ? "Stroke" : "Interval"} ${i + 1} of ${tl.length}`;
+  const bits = [];
+  if (stroke) {
+    if (p.distanceM != null) bits.push(`${Math.round(p.distanceM).toLocaleString()} m`);
+    if (p.elapsedS != null) bits.push(fmtTime(p.elapsedS));
+    if (p.split != null) bits.push(fmtPace(p.split) + " /500");
+    if (p.watts != null) bits.push(Math.round(p.watts) + " W");
+    if (p.strokeRate != null) bits.push(p.strokeRate + " spm");
+    if (p.heartRate != null) bits.push(p.heartRate + " bpm");
+    if (p.driveLengthM != null) bits.push(p.driveLengthM.toFixed(2) + " m drive");
+    if (p.peakForceLbs != null) bits.push(Math.round(p.peakForceLbs) + " lbf");
+    if (p.peakTiming != null) bits.push("peak @ " + Math.round(p.peakTiming * 100) + "%");
+    if (p.ratio != null) bits.push(p.ratio.toFixed(1) + " : 1");
+  } else {
+    bits.push(`${Math.round(p.cumulativeDistanceM).toLocaleString()} m`, fmtTime(p.cumulativeTimeS));
+    if (p.split != null) bits.push(fmtPace(p.split) + " /500");
+    if (p.watts != null) bits.push(Math.round(p.watts) + " W");
+    if (p.strokeRate != null) bits.push(p.strokeRate + " spm");
+    if (p.heartRate != null) bits.push(p.heartRate + " bpm");
+  }
   document.getElementById("replayMeta").textContent = bits.join(" · ");
   document.getElementById("replaySlider").value = i;
+  // Row highlight: in stroke mode, light the interval the scrub
+  // position falls in; otherwise the selected interval itself.
+  let hi = i;
+  if (stroke) {
+    hi = -1;
+    if (p.distanceM != null && _replay.ivTl.length) {
+      const hit = _replay.ivTl.find(q => q.cumulativeDistanceM >= p.distanceM);
+      hi = hit ? hit.index : _replay.ivTl.length - 1;
+    }
+  }
   document.querySelectorAll("#replayList .rpl-row").forEach(r =>
-    r.classList.toggle("on", parseInt(r.getAttribute("data-i"), 10) === i));
+    r.classList.toggle("on", parseInt(r.getAttribute("data-i"), 10) === hi));
   const a = document.querySelector("#replayList .rpl-row.on");
   if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest" });
 }
@@ -13817,11 +14823,11 @@ function renderHistoryList() {
     // PR badge — mint-green pill listing the benchmark keys this
     // session set. Tooltip is the full "key: time (delta)" line.
     const prTag = (e.pr && e.pr.keys && e.pr.keys.length)
-      ? `<span class="pr-tag" title="${formatPrSetMessage(e.pr).replace(/"/g, "&quot;")}">🏆 PR</span>`
+      ? `<span class="pr-tag" title="${fbEsc(formatPrSetMessage(e.pr)).replace(/"/g, "&quot;")}">🏆 PR</span>`
       : "";
     row.innerHTML = `
       <div>
-        <div class="ttl">${e.title} ${prTag}${recoveredTag}</div>
+        <div class="ttl">${fbEsc(e.title)} ${prTag}${recoveredTag}</div>
         <div class="date">${dateStr}</div>
       </div>
       <div><div class="stat-label">Time</div><div class="stat-value">${time}</div></div>
@@ -13835,6 +14841,13 @@ function renderHistoryList() {
       ev.stopPropagation();
       closeHistory();
       openReplay(e);
+    });
+    // PR detail on tap — the title-attr tooltip doesn't exist on touch,
+    // so the badge itself surfaces the full PR line as a toast.
+    const prEl = row.querySelector(".pr-tag");
+    if (prEl) prEl.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      setToast(formatPrSetMessage(e.pr), "ok");
     });
     row.addEventListener("click", (ev) => {
       if (ev.target.closest(".delete-x") || ev.target.closest(".rpl-x")) return;
@@ -14178,7 +15191,7 @@ function exportSessionJson(entry) {
     kind: "pm5-session-export", schemaVersion: SESSION_SCHEMA_VERSION,
     appVersion: APP_VERSION, exportedAt: new Date().toISOString(), session: e,
   }, null, 2)], { type: "application/json" });
-  const safe = (e.title || "session").replace(/[^a-z0-9_-]/gi, "_");
+  const safe = (e.title || "session").replace(/[^a-z0-9_-]/gi, "_").slice(0, 60);
   triggerDownload(blob, `pm5-${safe}-${new Date().toISOString().slice(0,10)}.json`);
 }
 
@@ -14196,14 +15209,18 @@ function importSessionsFromText(raw) {
   else if (parsed.history && Array.isArray(parsed.history)) incoming = parsed.history;
   else if (parsed.id && parsed.totals) incoming = [parsed];
   else { setToast("Unrecognised file — expected a PM5 history or session export.", "err"); return 0; }
-  // Normalise: ensure id + date + schemaVersion exist.
+  // Hard cap on import size — a malformed or hostile file must not hang
+  // the merge or blow the storage budget in one paste.
+  incoming = incoming.slice(0, 2000);
+  // Normalise: ensure id + date + schemaVersion exist. Text fields are
+  // coerced to bounded strings (they're data — renderers escape them).
   const norm = incoming.filter(e => e && typeof e === "object").map(e => ({
     schemaVersion: e.schemaVersion || 1,
-    appVersion: e.appVersion || "imported",
-    id: e.id || uid(),
-    date: e.date || new Date().toISOString(),
-    title: e.title || "Imported session",
-    description: e.description || "",
+    appVersion: String(e.appVersion || "imported").slice(0, 40),
+    id: String(e.id || uid()).slice(0, 80),
+    date: String(e.date || new Date().toISOString()).slice(0, 40),
+    title: String(e.title || "Imported session").slice(0, 300),
+    description: String(e.description || "").slice(0, 2000),
     plan: e.plan || null,
     results: e.results || [],
     totals: e.totals || {},
@@ -14213,6 +15230,10 @@ function importSessionsFromText(raw) {
     ...(e.rating ? { rating: e.rating } : {}),
     ...(e.tags ? { tags: e.tags } : {}),
     ...(e.recovered ? { recovered: e.recovered } : {}),
+    // v1.18 fields are sanitized, never copied raw — imported files are
+    // untrusted input (whitelisted numeric fields, capped lengths).
+    ...((() => { const s = sanitizeStrokeLog(e.strokes); return s ? { strokes: s } : {}; })()),
+    ...((() => { const f = sanitizeSessionCurves(e.fc); return f ? { fc: f } : {}; })()),
     imported: true,
   }));
   const before = state.history.length;
@@ -14343,7 +15364,7 @@ function exportSessionCsv(entry) {
     ]));
   }
   const blob = new Blob([rows.join("")], { type: "text/csv" });
-  const safe = title.replace(/[^a-z0-9_-]/gi, "_");
+  const safe = title.replace(/[^a-z0-9_-]/gi, "_").slice(0, 60);
   triggerDownload(blob, `pm5-${safe}-${new Date().toISOString().slice(0,10)}.csv`);
 }
 
@@ -14444,6 +15465,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("programBtn").addEventListener("click", openBuilder);
   document.getElementById("summaryBtn").addEventListener("click", openSummary);
   document.getElementById("addIntervalBtn").addEventListener("click", () => addIntervalRow());
+  document.getElementById("suggestTargetsBtn").addEventListener("click", applySuggestedTargets);
   document.getElementById("savePlanBtn").addEventListener("click", savePlanFromForm);
   document.getElementById("clearPlanBtn").addEventListener("click", clearPlanFromForm);
   document.getElementById("cancelBuilderBtn").addEventListener("click", closeBuilder);
@@ -14502,6 +15524,10 @@ document.addEventListener("DOMContentLoaded", () => {
       bookmarks: (state.bookmarks && state.bookmarks.length) ? state.bookmarks : undefined,
       totals: { distanceM: state.distanceM || 0, elapsedS: state.elapsedTimeS || 0,
                 avgWatts: state.watts || null, avgPaceS: workoutAvgPace() },
+      // v1.18 — live sessions replay at stroke fidelity too.
+      strokes: (state.strokeCapture && state.strokeCapture.log.length >= 2)
+        ? state.strokeCapture.log : undefined,
+      fc: sessionCurveSnapshot() || undefined,
     };
     openReplay(session);
   });
@@ -14560,6 +15586,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // view via showView() (the old coming-soon teaser was removed in v1.15.0).
   document.querySelectorAll("#performanceView .perf-tab").forEach(t => {
     t.addEventListener("click", () => setPerformanceTab(t.dataset.perfTab));
+  });
+  // Training report export (v1.18.0).
+  const reportBtn = document.getElementById("perfReportBtn");
+  if (reportBtn) reportBtn.addEventListener("click", () => {
+    const md = buildTrainingReport(state.history, state.userPrefs, Date.now());
+    triggerDownload(new Blob([md], { type: "text/markdown" }),
+      `pm5-training-report-${new Date().toISOString().slice(0, 10)}.md`);
   });
 
   // -----------------------------------------------------------------

@@ -481,13 +481,250 @@ if (app.getSessionReplayCapability && app.buildIntervalReplayTimeline) {
 }
 
 // ---------------------------------------------------------------------
+// 14. Stroke capture (v1.18.0) — bounded append, peak timing, budget.
+// ---------------------------------------------------------------------
+group("stroke capture");
+if (app.strokeCaptureAppend && app.strokePeakTiming && app.enforceHistoryBudget) {
+  const cs = { log: [], stride: 1, seen: 0 };
+  for (let i = 0; i < 700; i++) app.strokeCaptureAppend(cs, { i }, 100);
+  ok("log stays under the cap for long sessions", cs.log.length <= 100);
+  ok("decimation keeps meaningful coverage", cs.log.length >= 50);
+  ok("stride doubles once the cap is hit", cs.stride >= 2);
+  ok("first stroke survives decimation", cs.log[0] && cs.log[0].i === 0);
+  ok("recent strokes are still being recorded", cs.log[cs.log.length - 1].i > 690 - cs.stride);
+  ok("every stroke was seen", cs.seen === 700);
+
+  eqApprox("peak timing: centered peak = 0.5", app.strokePeakTiming([0, 50, 100, 50, 0]), 0.5, 0.01);
+  eqApprox("peak timing: front-loaded peak", app.strokePeakTiming([0, 100, 80, 60, 40, 20, 10, 5]), 1 / 7, 0.01);
+  ok("peak timing: short curve → null", app.strokePeakTiming([1, 2]) === null);
+  ok("peak timing: null curve → null", app.strokePeakTiming(null) === null);
+
+  const bulky = () => Array.from({ length: 500 }, (_, i) => ({ t: i, d: i * 10, p: 105 }));
+  const hist = [
+    { id: "new", strokes: bulky(), totals: { distanceM: 2000 } },
+    { id: "old", strokes: bulky(), totals: { distanceM: 2000 } },
+  ];
+  const n = app.enforceHistoryBudget(hist, 20000);
+  ok("budget strips oldest session first", n >= 1 && hist[1].strokes === undefined);
+  ok("summaries survive stripping", hist[1].totals.distanceM === 2000);
+  const hist2 = [{ id: "a", strokes: bulky() }];
+  ok("under-budget history untouched", app.enforceHistoryBudget(hist2, 10 * 1024 * 1024) === 0 && !!hist2[0].strokes);
+}
+
+// ---------------------------------------------------------------------
+// 15. Stroke replay (v1.18.0) — capability, timeline, bookmark mapping.
+// ---------------------------------------------------------------------
+group("stroke replay");
+if (app.buildStrokeReplayTimeline && app.mapBookmarksToStrokeTimeline) {
+  const mkStroke = (i, over) => Object.assign({
+    t: i * 2.5, d: i * 10, p: 105, w: 200, r: 24, hr: 150,
+    dl: 1.4, dt: 0.8, rt: 1.6, pf: 150, pt: 0.38,
+  }, over || {});
+  const strokes = Array.from({ length: 60 }, (_, i) => mkStroke(i));
+  const sesh = {
+    title: "Capture test", totals: { distanceM: 600, elapsedS: 150 },
+    results: [{ distanceM: 300, elapsedS: 75, paceS: 105 }, { distanceM: 300, elapsedS: 75, paceS: 105 }],
+    strokes,
+    bookmarks: [{ strokeIndex: 30, distanceM: 296, elapsedS: 74 }],
+  };
+  ok("capability: captured session → stroke", app.getSessionReplayCapability(sesh) === "stroke");
+  ok("capability: intervals only → interval",
+    app.getSessionReplayCapability({ totals: { distanceM: 1 }, results: [{ distanceM: 300, elapsedS: 75 }] }) === "interval");
+  const tl = app.buildStrokeReplayTimeline(sesh);
+  ok("one point per captured stroke", tl.length === 60);
+  ok("compact keys expand to full names", tl[10].distanceM === 100 && tl[10].split === 105 && tl[10].heartRate === 150);
+  eqApprox("ratio derived from drive/recovery", tl[0].ratio, 2.0, 0.01);
+  const noHr = app.buildStrokeReplayTimeline({ strokes: [mkStroke(0, { hr: null }), mkStroke(1, { hr: 0 })] });
+  ok("missing HR → null, never 0", noHr[0].heartRate === null && noHr[1].heartRate === null);
+  ok("no capture → empty timeline", app.buildStrokeReplayTimeline({ results: [] }).length === 0);
+  const marks = app.mapBookmarksToStrokeTimeline(sesh);
+  ok("bookmark maps to nearest stroke", marks.length === 1 && marks[0].strokePos === 30);
+  ok("no bookmarks → empty", app.mapBookmarksToStrokeTimeline({ strokes }).length === 0);
+  const lim = app.summarizeReplayLimitations(sesh);
+  ok("stroke session limits mention session-level curves", lim.some(s => /force.?curve/i.test(s)));
+  ok("stroke session limits stay honest about thinning", lim.some(s => /thinned|smoothed/i.test(s)));
+}
+
+// ---------------------------------------------------------------------
+// 16. Technique drift (v1.18.0) — baseline vs recent, live analyzer.
+// ---------------------------------------------------------------------
+group("technique drift");
+if (app.computeTechniqueDrift) {
+  const mkStroke = (i, over) => Object.assign({
+    t: i * 2.5, d: i * 10, p: 105, w: 200, r: 24, hr: 150,
+    dl: 1.4, dt: 0.8, rt: 1.6, pf: 150, pt: 0.38,
+  }, over || {});
+  const steady = Array.from({ length: 60 }, (_, i) => mkStroke(i));
+  const st = app.computeTechniqueDrift(steady);
+  ok("steady log → stable", st.has === true && st.drifting === false);
+  const fading = Array.from({ length: 60 }, (_, i) => mkStroke(i, i >= 45 ? { dl: 1.28 } : null));
+  const fd = app.computeTechniqueDrift(fading);
+  ok("drive-length fade detected", fd.has && fd.drifting &&
+    fd.items.some(x => x.key === "driveLen" && x.tone === "warn"));
+  const rushed = Array.from({ length: 60 }, (_, i) => mkStroke(i, i >= 45 ? { rt: 1.1 } : null));
+  const rd = app.computeTechniqueDrift(rushed);
+  ok("collapsing ratio detected", rd.has && rd.drifting &&
+    rd.items.some(x => x.key === "ratio" && x.tone === "warn"));
+  ok("too few strokes → has:false", app.computeTechniqueDrift(steady.slice(0, 30)).has === false);
+  ok("null-tolerant", app.computeTechniqueDrift(null).has === false);
+}
+
+// ---------------------------------------------------------------------
+// 17. Efficiency score (v1.18.0) — explained 0-100, never invented.
+// ---------------------------------------------------------------------
+group("efficiency score");
+if (app.computeEfficiencyScore && app.computeEfficiencyTrend) {
+  const mkStroke = (i) => ({ t: i * 2.5, d: i * 10, p: 105, w: 200, r: 24, hr: 150,
+    dl: 1.4, dt: 0.8, rt: 1.6, pf: 150, pt: 0.38 });
+  const strokes = Array.from({ length: 60 }, (_, i) => mkStroke(i));
+  const smooth = Array.from({ length: 64 }, (_, i) => Math.sin(Math.PI * i / 63) * 150);
+  const jagged = Array.from({ length: 64 }, (_, i) => Math.sin(Math.PI * i / 63) * 150 + (i % 2 ? 18 : -18));
+  const good = app.computeEfficiencyScore({ strokes, fc: { avg: smooth, best: smooth, peak: 150, n: 60 } });
+  ok("clean session scores high", good.has && good.score >= 85);
+  ok("all four components present", good.components.length === 4);
+  ok("weights are disclosed", good.components.every(c => c.weight > 0 && c.detail));
+  ok("explanation names the formula", /curve smoothness/i.test(good.explanation));
+  const rough = app.computeEfficiencyScore({ strokes, fc: { avg: jagged, peak: 150, n: 60 } });
+  ok("jagged curve scores lower", rough.has && rough.score < good.score);
+  const strokesOnly = app.computeEfficiencyScore({ strokes });
+  ok("strokes without curves still score", strokesOnly.has &&
+    strokesOnly.components.every(c => c.key !== "curve"));
+  ok("no capture → has:false (never invented)", app.computeEfficiencyScore({ totals: { distanceM: 2000 } }).has === false);
+  ok("null-tolerant", app.computeEfficiencyScore(null).has === false);
+  const trend = app.computeEfficiencyTrend([
+    { id: "a", title: "A", date: "2026-06-30", strokes },
+    { id: "b", title: "B", date: "2026-06-29", totals: {} },   // no capture — skipped
+  ]);
+  ok("trend counts only captured sessions", trend.has && trend.n === 1);
+}
+
+// ---------------------------------------------------------------------
+// 18. Session compare (v1.18.0) — delta table + curve passthrough.
+// ---------------------------------------------------------------------
+group("session compare");
+if (app.buildSessionComparison) {
+  const leg = (d, e, p, w) => ({ distanceM: d, elapsedS: e, paceS: p, watts: w,
+    strokeRate: 28, heartRate: 150, driveLengthM: 1.4, peakForceLbs: 150 });
+  const sesh = (id, split, watts, fc) => ({
+    id, title: id, date: "2026-07-01T12:00:00Z",
+    totals: { distanceM: 2000, elapsedS: split * 4, avgPaceS: split, avgWatts: watts, avgHr: 150, strokes: 200 },
+    results: [leg(1000, split * 2, split, watts), leg(1000, split * 2, split, watts)],
+    fc,
+  });
+  const slow = sesh("slow", 110, 180, { avg: [10, 50, 10], best: [10, 60, 10], peak: 60, n: 100 });
+  const fast = sesh("fast", 105, 205, null);
+  const cmp = app.buildSessionComparison(slow, fast);
+  ok("comparison builds", cmp.has === true);
+  const splitRow = cmp.rows.find(r => r.label === "Avg split");
+  ok("lower split wins for B", splitRow && splitRow.better === "b");
+  const wattsRow = cmp.rows.find(r => r.label === "Avg watts");
+  ok("higher watts wins for B", wattsRow && wattsRow.better === "b");
+  ok("neutral facts aren't scored", cmp.rows.find(r => r.label === "Distance").better === null);
+  ok("delta is signed", /^[+−]/.test(splitRow.deltaText));
+  ok("curves pass through with their kind", cmp.curves.a && cmp.curves.aKind === "avg" && cmp.curves.b === null);
+  ok("null input → has:false", app.buildSessionComparison(null, fast).has === false);
+}
+
+// ---------------------------------------------------------------------
+// 19. Smart targets + training report (v1.18.0).
+// ---------------------------------------------------------------------
+group("smart targets + report");
+if (app.benchmarkPaceOf && app.suggestTargetsForPlan && app.buildTrainingReport) {
+  eqApprox("2k PR 7:00 → 1:45 split", app.benchmarkPaceOf("2k", { benchmarks: { "2k": 420 } }), 105, 0.01);
+  eqApprox("30min 7500m → 2:00 split", app.benchmarkPaceOf("30min", { benchmarks: { "30min": 7500 } }), 120, 0.01);
+  ok("missing PR → null", app.benchmarkPaceOf("2k", { benchmarks: {} }) === null);
+
+  const plan = { intervals: [
+    { kind: "distance", value: 250, restS: 60 },
+    { kind: "distance", value: 5000, restS: 0 },
+    { kind: "time", value: 120, restS: 60 },
+  ] };
+  const sug = app.suggestTargetsForPlan(plan, { benchmarks: { "2k": 420 } });
+  ok("suggestions build from the 2k PR", sug.has && sug.refKey === "2k");
+  eqApprox("sprint interval under 2k pace", sug.targets[0].targetPaceS, 102, 0.6);
+  eqApprox("long interval well over 2k pace", sug.targets[1].targetPaceS, 121, 0.6);
+  eqApprox("time interval sized at 2k pace", sug.targets[2].targetPaceS, 104, 0.6);
+  ok("no PRs → honest refusal", app.suggestTargetsForPlan(plan, { benchmarks: {} }).reason === "no-prs");
+  ok("no intervals → honest refusal", app.suggestTargetsForPlan({ intervals: [] }, { benchmarks: { "2k": 420 } }).reason === "no-intervals");
+
+  const NOWR = Date.parse("2026-07-01T12:00:00Z");
+  const rep = app.buildTrainingReport([
+    { id: "r1", title: "Steady", date: "2026-06-30T10:00:00Z",
+      totals: { distanceM: 8000, elapsedS: 2000, avgPaceS: 125, avgWatts: 170, avgHr: 150 },
+      results: [] },
+  ], { benchmarks: { "2k": 420 }, benchmarkMeta: { "2k": { sessionId: "x", dateISO: "2026-06-01", distanceM: 2000, elapsedS: 420, paceS: 105 } } }, NOWR);
+  ok("report has a title", /# PM5 Dashboard — Training report/.test(rep));
+  ok("report rolls up the week", /Last 7 days/.test(rep) && /8,000 m/.test(rep));
+  ok("report lists PRs", /Personal records/.test(rep) && /2k/.test(rep));
+}
+
+// ---------------------------------------------------------------------
+// 20. Security regressions (v1.18.0) — escaping + untrusted-input
+// sanitization. These lock in the security-pass fixes.
+// ---------------------------------------------------------------------
+group("security");
+if (app.fbEsc && app.sanitizeStrokeLog && app.sanitizeSessionCurves && app.importSessionsFromText) {
+  ok("fbEsc neutralises markup", app.fbEsc('<img src=x onerror=alert(1)>&"') === "&lt;img src=x onerror=alert(1)&gt;&amp;\"");
+  ok("fbEsc tolerates null/undefined", app.fbEsc(null) === "" && app.fbEsc(undefined) === "");
+
+  const hostileStrokes = [
+    { t: 1, d: 10, p: 105, evil: "<img onerror=alert(1)>", __proto__: { hacked: true } },
+    { t: 2, d: 20, hr: 9999, pf: -5, pt: 3 },
+    "not-an-object", null,
+    { t: NaN, d: Infinity },
+  ];
+  const clean = app.sanitizeStrokeLog(hostileStrokes);
+  ok("sanitizer keeps only whitelisted numeric fields",
+    clean && clean.every(s => Object.keys(s).every(k => ["t","d","p","w","r","hr","dl","dt","rt","pf","pt"].includes(k))));
+  ok("sanitizer drops injected keys", clean && clean.every(s => !("evil" in s) && !("hacked" in s)));
+  ok("sanitizer nulls out-of-range values", clean && clean[1].hr === null && clean[1].pf === null && clean[1].pt === null);
+  ok("sanitizer drops non-object and non-finite rows", clean && clean.length === 2);
+  ok("sanitizer caps length", app.sanitizeStrokeLog(Array.from({ length: 5000 }, (_, i) => ({ t: i, d: i })), 2000).length === 2000);
+  ok("sanitizer returns null for garbage", app.sanitizeStrokeLog("junk") === null && app.sanitizeStrokeLog([{}]) === null);
+
+  const fc = app.sanitizeSessionCurves({ best: Array.from({ length: 500 }, () => 1e9), avg: [10, "x", 20], peak: -50, n: 2.7, extra: "nope" });
+  ok("curve sanitizer caps + clamps", fc && fc.best.length === 128 && fc.best[0] === 2000);
+  ok("curve sanitizer zeroes non-numbers", fc && fc.avg[1] === 0);
+  ok("curve sanitizer clamps peak and rounds n", fc && fc.peak === 0 && fc.n === 3);
+  ok("curve sanitizer drops unknown keys", fc && !("extra" in fc));
+  ok("curve sanitizer rejects garbage", app.sanitizeSessionCurves("x") === null && app.sanitizeSessionCurves({}) === null);
+
+  // Hostile import end-to-end: markup titles stay inert data, bulk is
+  // capped, v1.18 fields arrive sanitized.
+  app.state.history = [];
+  const hostile = {
+    kind: "pm5-history-export",
+    history: [{
+      id: "h1", title: "<script>alert(1)</script>", description: { toString: () => "obj" },
+      totals: { distanceM: 1000, elapsedS: 240 },
+      results: [], strokes: hostileStrokes, fc: { best: [1, 2, 3], avg: "junk" },
+    }],
+  };
+  const n = app.importSessionsFromText(JSON.stringify(hostile));
+  ok("hostile import still imports (as data)", n === 1);
+  const imported = app.state.history[0];
+  ok("imported title is a plain bounded string", typeof imported.title === "string" && imported.title.includes("<script>"));
+  ok("imported strokes are sanitized", imported.strokes && imported.strokes.length === 2 && !("evil" in imported.strokes[0]));
+  ok("imported fc is sanitized", imported.fc && imported.fc.best.length === 3 && !imported.fc.avg);
+  app.state.history = [];
+  const flood = { kind: "pm5-history-export", history: Array.from({ length: 2500 }, (_, i) => ({ id: "f" + i, totals: { distanceM: 100, elapsedS: 30 }, results: [] })) };
+  ok("import volume is capped", app.importSessionsFromText(JSON.stringify(flood)) <= 2000);
+  app.state.history = [];
+}
+
+// ---------------------------------------------------------------------
 // 8. Bundle-size guard (#25) — keep the single file under budget.
+// Budget history: 600 KB through v1.17.0; raised to 660 KB in v1.18.0
+// to fund stroke capture + stroke replay + session compare + the
+// efficiency/drift analytics (first raise since the v1.15.1 dead-code
+// reset — the discipline stands, the ceiling moved once for a major
+// feature release).
 // ---------------------------------------------------------------------
 group("bundle size");
 const html = fs.readFileSync(INDEX, "utf8");
 const kb = Buffer.byteLength(html, "utf8") / 1024;
 console.log(`  index.html = ${kb.toFixed(0)} KB`);
-ok("index.html under 600 KB", kb < 600);
+ok("index.html under 660 KB", kb < 660);
 
 // ---------------------------------------------------------------------
 console.log(`\n=== ${pass} passed, ${fail} failed ===`);

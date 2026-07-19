@@ -2,19 +2,17 @@
 
 Open bugs, browser quirks, and limitations I haven't fixed yet. PRs welcome (see [`CONTRIBUTING.md`](../CONTRIBUTING.md)).
 
-## Workout title is not HTML-escaped in the history list
+## ~~Workout title is not HTML-escaped in the history list~~ — fixed in v1.18.0
 
-The history list interpolates the workout title straight into `innerHTML`, so a title containing markup (e.g. `<img onerror=…>`) would execute when the list renders. This is **self-XSS only** — it's a single-user local app, the only way to inject is to type the payload into your own workout title, and there's no cross-user surface except your own Drive sync. Predates the PR feature; flagged during the v1.4.0 review. **Fix planned:** build history rows with `createElement` + `textContent` instead of template-string `innerHTML`.
+**Fixed in v1.18.0:** the title (and the PR-badge tooltip) are now escaped before interpolation. Historical note: the history list used to interpolate the workout title straight into `innerHTML`, so a title containing markup would execute on render — self-XSS only (single-user local app), flagged during the v1.4.0 review.
 
-## PR badge click opens the session summary
+## ~~PR badge click opens the session summary~~ — fixed in v1.18.0
 
-The 🏆 PR badge sits inside the history-row click target, so tapping it opens the session summary (same as clicking the row) rather than showing the PR detail. The detail is in the badge's hover tooltip, which doesn't exist on touch devices. Low-impact UX nit; the summary opening is harmless. **Fix idea:** stop propagation on the badge and surface the PR detail in the summary modal so touch users can see it.
+**Fixed in v1.18.0:** tapping the 🏆 badge now shows the full PR line as a toast (stopping the row click), and the same detail is prepended to the Summary modal's subtitle — so touch users are no longer stuck without the hover tooltip.
 
-## Bluetooth reconnect
+## Bluetooth reconnect — auto-retry since v1.18.0
 
-After the PM5 sleeps (a few minutes of inactivity), Chrome's Web Bluetooth connection sometimes goes stale. Pulling a stroke wakes the erg, but the dashboard doesn't always notice — distance and elapsed stay stuck. **Workaround:** click **Disconnect** then **Connect** again, or refresh the page.
-
-Tracking idea: re-subscribe to the characteristics on `gattserverdisconnected` instead of waiting for the user to notice.
+Since v1.18.0 the dashboard listens for `gattserverdisconnected` and silently retries the GATT connection (1 s / 3 s / 6 s backoff, no chooser — the browser retains device permission). The stale-after-nap case now recovers on its own in most runs; auto-log fires only if all retries fail. Remaining gap: if the PM5 sleeps *without* the OS reporting a disconnect, the app still can't tell silence from rest — a `lastPacketAt` watchdog is the tracking idea for that.
 
 ## Safari / iOS
 
@@ -30,7 +28,7 @@ By design. The dashboard has no backend, so cross-device sync uses your own Driv
 
 ## Service worker takes one reload to update
 
-The app's HTML uses a **network-first** caching strategy specifically so updates land immediately on the next visit. But if you're already in the middle of a session, the open tab won't pick up the new code until you reload it. The version chip in the header shows the cache version (`pm5-v19` at the time of writing) — if it's a step behind a known fresh deploy, hard-refresh.
+The app's HTML uses a **network-first** caching strategy specifically so updates land immediately on the next visit. But if you're already in the middle of a session, the open tab won't pick up the new code until you reload it. The version chip in the header shows the cache version (`pm5-v44` at the time of writing) — if it's a step behind a known fresh deploy, hard-refresh.
 
 ## Brave disables Web Bluetooth by default
 
@@ -48,32 +46,15 @@ The PM5 sends drag factor on its own cadence (~once every few seconds) rather th
 
 The best-stroke and average-stroke ghost buffers are **per-session** only — they exist in memory and reset whenever the session does (or when you tap **Reset best**). They aren't persisted to localStorage or Drive. This is intentional — those overlays should reflect *today's* rowing, not yesterday's.
 
-## Session Replay: interval + bookmark shipped (v1.15.0); stroke + force-curve still need capture
+## Session Replay: stroke-level replay shipped (v1.18.0)
 
-The **interval + bookmark** replay UI shipped in **v1.15.0** (open ▶ from any history row or the Summary modal). It's scoped to exactly what a *saved* session persists, built on `logCurrentWorkout()` and the pure helpers `getSessionReplayCapability()` / `buildIntervalReplayTimeline()` / `mapBookmarksToReplayTimeline()` / `summarizeReplayLimitations()`. The replay modal itself surfaces these limits in a capability-badge row + a "what this replay can't show" panel, so the UI never over-promises.
+The v1.15.1 capture design is now **implemented** (v1.18.0), to its own constraints:
 
-- **Old sessions:** ✅ handled — `schemaVersion 1` and otherwise-minimal sessions never crash; they resolve to `summary-only` or `none` and the modal degrades to a summary/limitation view.
-- **Interval replay:** ✅ **shipped** — per-interval `results` (distance, time, split, watts, rate, HR, drive length) drive the slider + interval list.
-- **Bookmark replay:** ✅ **shipped** — stroke bookmarks (`strokeIndex`, `distanceM`, `elapsedS`) are listed and map onto the interval timeline; clicking one jumps to the nearest interval.
-- **Stroke-level replay:** ❌ **not built** — only interval-level rows are persisted; there are no per-stroke samples in history.
-- **Force-curve replay:** ❌ **not built** — force curves are live-only (the overlay ghosts above are per-session memory; nothing is written to history).
-- **Future capture needed:** to unlock stroke / force-curve replay, the logger must start persisting per-stroke samples and a downsampled force-curve series per session — a new, opt-in, **size-bounded** capture step (per-stroke data is large, so it has to be capped to stay within the Drive `appdata` + localStorage budget).
-
-### Future replay capture (design — not implemented)
-
-The next replay step, when there's bundle + storage room to build it. Design constraints, not yet code:
-
-```text
-Future replay capture:
-- capture per-stroke samples only for future sessions
-- keep old sessions compatible
-- cap stored samples for long workouts
-- store compact fields only: time, distance, pace, watts, rate, HR, drive length, peak force, peak force timing
-- optionally store downsampled forceCurve64 only if size budget allows
-- never save raw BLE dumps
-- make capture opt-in or size-bounded
-- preserve Drive sync performance
-```
+- **Per-stroke capture:** ✅ **shipped** — `logCurrentWorkout()` saves `entry.strokes`: compact per-stroke samples (time, distance, pace, watts, rate, HR, drive length, drive/recovery time, peak force, peak-force timing), capped at **600 samples** with stride-doubling decimation for long rows. Future sessions only; no raw BLE dumps.
+- **Session force curves:** ✅ **shipped** — `entry.fc` stores the session's best + average curves (64 samples, 0.1 lbf) — tiny, and enough for replay inspection and the Compare tab's overlay.
+- **Old sessions:** ✅ still compatible — schema v3 fields are optional; v1/v2 sessions replay at interval or summary fidelity exactly as before, and `getSessionReplayCapability()` never over-reports.
+- **Storage budget:** ✅ enforced — before every save, `enforceHistoryBudget()` strips stroke bulk from the *oldest* sessions if serialized history would exceed ~4 MB; summaries, intervals, and fc curves are always kept.
+- **Per-stroke force curves:** ❌ **still not stored** — one curve per stroke remains too large for the Drive `appdata` + localStorage budget; the replay modal and limitation panel say so honestly. This is the next storage-budget negotiation if it ever pencils out.
 
 ## Heart-rate flickers between values when the strap is weak
 

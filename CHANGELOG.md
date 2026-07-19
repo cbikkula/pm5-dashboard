@@ -7,8 +7,25 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 - Viewer role + read-only session sharing
-- Session replay — stroke-by-stroke + force-curve scrubber (needs new per-stroke + force-curve capture first — see [known-issues](docs/known-issues.md))
+- Multi-erg synchronization (needs a new per-erg Firestore surface + rules — deliberately not built on the club-scoped schema)
 - AI technique analysis (peak-timing trends)
+
+## [v1.18.0] — July 2026 — Stroke Capture & Technique Analytics
+
+The capture release — sessions finally persist what the live monitor sees, and a set of technique features cashes that in immediately. Backward compatible: pre-v1.18 sessions are untouched and every consumer treats the new fields as optional.
+
+- **Per-stroke capture (schema v3)** — every logged session now saves a compact per-stroke sample log (`entry.strokes`: time, distance, pace, watts, rate, HR, drive length, drive/recovery time, peak force, peak timing) plus the session's best/average Force Curves (`entry.fc`, 64 samples each). Exactly the size-bounded design from `docs/known-issues.md`: capped at 600 samples with stride-doubling decimation for long rows, no raw BLE dumps, and a 4 MB history budget that sheds the oldest sessions' stroke bulk before summaries are ever at risk.
+- **Session Replay 2.0** — captured sessions replay **stroke by stroke**: the scrubber walks a synchronized timeline showing every metric at that moment (split, watts, rate, HR, drive length, peak force, peak timing, ratio), the interval list highlights where you are, bookmarks jump to the nearest stroke, and a Force Curve panel shows the session's saved best/avg curves. Pre-v1.18 sessions keep the v1.15 interval replay; capability badges and the limitation panel stay honest either way.
+- **Compare tab is real** — the Performance → Compare placeholder is now a working two-session comparison: pick any two sessions, overlay their Force Curves (A blue, B orange), and read a delta-labelled table (split, watts, rate, HR, drive length, peak force, efficiency score) with the better side bolded.
+- **Live technique-drift detection** — a new **Tech Drift** card (in the Technical preset) compares your last 15 strokes against an early-session baseline on drive length, ratio, peak-force timing, and rate steadiness — recomputed every 5th stroke from the capture log, never per-render. The same analyzer runs on saved sessions in the Summary.
+- **Technical-efficiency score** — a 0-100 score with nothing hidden: four weighted components (curve smoothness 35%, peak-force timing 25%, rhythm 20%, length consistency 20%), each shown with its own bar, detail line, and a "how it's scored" note in the Summary; a cross-session trend joins the Technique tab. Sessions without capture honestly report nothing rather than a made-up number.
+- **✨ Suggest targets** — the workout builder fills per-interval target paces from your PRs (best PR normalised to a 2k-equivalent split via Paul's Law, then banded: sprint / race pace / threshold / sweet spot / steady state). No PRs → it says so.
+- **📄 Training report** — one click in Performance → Overview downloads a markdown report: 7/30-day volume and splits, PRs, technique + efficiency trend, fatigue, and HR summary.
+- **Bluetooth auto-reconnect** — when the PM5 naps mid-session, the dashboard now silently retries the GATT connection (1 s / 3 s / 6 s backoff, no chooser) instead of sitting stale until you notice; auto-log only fires once retries are exhausted. Manual disconnects don't retry.
+- **Fixes** — workout titles are HTML-escaped in the history list (the documented self-XSS); the 🏆 PR badge now shows its detail on tap (toast) and in the Summary subtitle, so touch users aren't stuck without the hover tooltip.
+- **Security pass** — a dedicated audit of the whole attack surface before release, written up in the new root [`SECURITY.md`](SECURITY.md): escaped the two remaining user-text `innerHTML` sinks (saved-plan titles/descriptions, account-chip name — now DOM-built with an `https:`-validated avatar URL); file imports are strictly validated (whitelisted numeric stroke fields with plausible-range clamps, capped array/entry counts, bounded text fields); export filenames sanitized + length-capped; verified the OAuth scope is `drive.appdata` only, tokens are memory-only and revoked on sign-out, and no credential ever reaches localStorage; confirmed the Firebase web API key in old git history is the public-by-design browser key (restriction is a console-side owner action, documented). **18 security regression tests** lock the fixes in.
+- **Bundle budget 600 → 660 KB** — the first raise since the v1.15.1 reset, deliberately spent on this release's capture + replay + compare + analytics. The guard remains a hard test. Bundle 598 → **647 KB**.
+- **Tests 115 → 190** — seven new groups (stroke capture, stroke replay, technique drift, efficiency score, session compare, smart targets + report, security), all pure-helper-level and deterministic. ⚠ Session schema bumped to **v3** (additive — old sessions need no migration). No Firestore-rules changes.
 
 ## [v1.17.0] — June 2026 — Live Monitor 2.0
 

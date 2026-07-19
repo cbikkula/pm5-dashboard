@@ -4822,7 +4822,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.18.0";
+const APP_VERSION = "1.18.1";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 // v3 (1.18.0) adds optional entry.strokes (compact per-stroke samples)
@@ -4831,6 +4831,15 @@ const APP_VERSION = "1.18.0";
 const SESSION_SCHEMA_VERSION = 3;
 
 const RELEASE_NOTES = {
+  "1.18.1": {
+    date: "July 2026",
+    headline: "Import hardening",
+    items: [
+      "Imported files are now fully validated: every field is whitelisted, bounded, and type-checked",
+      "Oversized or malformed imports are trimmed safely instead of bloating storage",
+      "No visible changes for normal use — existing exports import exactly as before",
+    ],
+  },
   "1.18.0": {
     date: "July 2026",
     headline: "Stroke capture, Replay 2.0 & session compare",
@@ -6322,6 +6331,141 @@ function sanitizeStrokeLog(strokes, cap) {
     out.push(row);
   }
   return out.length >= 2 ? out : null;
+}
+
+// v1.18.1 — bounds for the remaining imported per-entry collections.
+// Sized to comfortably cover legitimate erg data: a marathon logged at
+// 100 m splits is ~422 result rows; bookmarks are one manual keypress
+// each; tags are short comma-separated words.
+const IMPORT_MAX_RESULTS = 500;
+const IMPORT_MAX_BOOKMARKS = 200;
+const IMPORT_MAX_TAGS = 50;
+const IMPORT_MAX_TAG_LEN = 60;
+const IMPORT_MAX_BOOKMARK_LABEL_LEN = 80;
+const IMPORT_MAX_RESULT_LABEL_LEN = 80;
+const IMPORT_MAX_PLAN_INTERVALS = 200;
+
+// Shared coercers for import sanitization. Strings accept only string/
+// number primitives — objects (incl. toString tricks) never survive.
+function _impNum(v, lo, hi) {
+  return (typeof v === "number" && isFinite(v) && v >= lo && v <= hi) ? v : null;
+}
+function _impStr(v, cap) {
+  return (typeof v === "string" || typeof v === "number") ? String(v).slice(0, cap) : null;
+}
+
+// Imported per-interval result rows: documented ResultRow fields only,
+// malformed rows discarded (a real row always has time or distance).
+function sanitizeResultRows(rows, cap) {
+  if (!Array.isArray(rows)) return [];
+  cap = cap || IMPORT_MAX_RESULTS;
+  const out = [];
+  for (const r of rows.slice(0, cap)) {
+    if (!r || typeof r !== "object") continue;
+    const row = {
+      intervalIdx: (Number.isInteger(r.intervalIdx) && r.intervalIdx >= 0 && r.intervalIdx <= 100000)
+        ? r.intervalIdx : out.length + 1,
+      label: _impStr(r.label, IMPORT_MAX_RESULT_LABEL_LEN) || "",
+      elapsedS: _impNum(r.elapsedS, 0, 864000), distanceM: _impNum(r.distanceM, 0, 1e6),
+      paceS: _impNum(r.paceS, 0, 3600), watts: _impNum(r.watts, 0, 5000),
+      strokeRate: _impNum(r.strokeRate, 0, 300), heartRate: _impNum(r.heartRate, 0, 300),
+      restS: _impNum(r.restS, 0, 86400) || 0,
+      driveLengthM: _impNum(r.driveLengthM, 0, 10), peakForceLbs: _impNum(r.peakForceLbs, 0, 2000),
+    };
+    if (row.elapsedS == null && row.distanceM == null) continue;
+    out.push(row);
+  }
+  return out;
+}
+
+// Imported bookmarks: the live-bookmark numeric fields, plus an
+// optional short label (this app doesn't write one today; a bounded
+// plain string is harmless and future-proof).
+function sanitizeBookmarks(marks, cap) {
+  if (!Array.isArray(marks)) return null;
+  cap = cap || IMPORT_MAX_BOOKMARKS;
+  const out = [];
+  for (const b of marks.slice(0, cap)) {
+    if (!b || typeof b !== "object") continue;
+    const row = {
+      strokeIndex: _impNum(b.strokeIndex, 0, 1e6), distanceM: _impNum(b.distanceM, 0, 1e6),
+      elapsedS: _impNum(b.elapsedS, 0, 864000), paceS: _impNum(b.paceS, 0, 3600),
+      watts: _impNum(b.watts, 0, 5000), strokeRate: _impNum(b.strokeRate, 0, 300),
+      heartRate: _impNum(b.heartRate, 0, 300), driveLengthM: _impNum(b.driveLengthM, 0, 10),
+    };
+    if (row.distanceM == null && row.elapsedS == null && row.strokeIndex == null) continue;
+    const label = _impStr(b.label, IMPORT_MAX_BOOKMARK_LABEL_LEN);
+    if (label) row.label = label;
+    out.push(row);
+  }
+  return out.length ? out : null;
+}
+
+// Imported tags: short plain strings, empties dropped.
+function sanitizeTags(tags) {
+  if (!Array.isArray(tags)) return null;
+  const out = [];
+  for (const t of tags.slice(0, IMPORT_MAX_TAGS)) {
+    const s = _impStr(t, IMPORT_MAX_TAG_LEN);
+    if (s && s.trim()) out.push(s.trim());
+  }
+  return out.length ? out : null;
+}
+
+// Imported PR stamp: keys restricted to real benchmark ids, values to
+// finite numbers. Anything else is dropped whole.
+function sanitizeImportedPr(pr) {
+  if (!pr || typeof pr !== "object" || !Array.isArray(pr.keys)) return null;
+  const known = new Set(BENCHMARKS.map(b => b.key));
+  const keys = pr.keys.filter(k => typeof k === "string" && known.has(k)).slice(0, 20);
+  if (!keys.length) return null;
+  const numMap = src => {
+    const m = {};
+    if (src && typeof src === "object") {
+      for (const k of keys) if (typeof src[k] === "number" && isFinite(src[k])) m[k] = src[k];
+    }
+    return m;
+  };
+  return { keys, achievement: numMap(pr.achievement), delta: numMap(pr.delta) };
+}
+
+// Imported plan: bounded strings + whitelisted numeric intervals.
+function sanitizeImportedPlan(plan) {
+  if (!plan || typeof plan !== "object") return null;
+  const out = {
+    id: _impStr(plan.id, 80) || uid(),
+    title: _impStr(plan.title, 300) || "",
+    description: _impStr(plan.description, 2000) || "",
+    timeCapS: _impNum(plan.timeCapS, 0, 864000),
+    intervals: [],
+  };
+  if (Array.isArray(plan.intervals)) {
+    for (const iv of plan.intervals.slice(0, IMPORT_MAX_PLAN_INTERVALS)) {
+      if (!iv || typeof iv !== "object") continue;
+      const kind = iv.kind === "time" ? "time" : (iv.kind === "distance" ? "distance" : null);
+      const value = _impNum(iv.value, 0, 1e6);
+      if (!kind || value == null || value <= 0) continue;
+      out.intervals.push({
+        kind, value,
+        targetPaceS: _impNum(iv.targetPaceS, 0, 3600), targetWatts: _impNum(iv.targetWatts, 0, 5000),
+        targetSpm: _impNum(iv.targetSpm, 0, 300), restS: _impNum(iv.restS, 0, 86400) || 0,
+      });
+    }
+  }
+  const known = new Set(BENCHMARKS.map(b => b.key));
+  if (typeof plan.benchKey === "string" && known.has(plan.benchKey)) out.benchKey = plan.benchKey;
+  return out;
+}
+
+// Imported totals: numeric whitelist, zeros for the required pair.
+function sanitizeImportedTotals(t) {
+  if (!t || typeof t !== "object") return { elapsedS: 0, distanceM: 0 };
+  return {
+    elapsedS: _impNum(t.elapsedS, 0, 864000) || 0,
+    distanceM: _impNum(t.distanceM, 0, 1e6) || 0,
+    avgWatts: _impNum(t.avgWatts, 0, 5000), avgPaceS: _impNum(t.avgPaceS, 0, 3600),
+    strokes: _impNum(t.strokes, 0, 1e6), avgHr: _impNum(t.avgHr, 0, 300),
+  };
 }
 
 // Same idea for imported session curves: arrays of finite numbers only,
@@ -14621,7 +14765,7 @@ function openReplay(session) {
   if (session && session.pr && session.pr.keys && session.pr.keys.length)
     badges.push(["🏆 PR " + session.pr.keys.join(", "), true]);
   document.getElementById("replayBadges").innerHTML =
-    badges.map(([t, on]) => `<span class="rpl-badge${on ? " on" : ""}">${t}</span>`).join("");
+    badges.map(([t, on]) => `<span class="rpl-badge${on ? " on" : ""}">${fbEsc(t)}</span>`).join("");
 
   // Force Curve inspection (v1.18.0) — the session's saved best/avg
   // curves, drawn with the same colors as the live monitor's ghosts.
@@ -15214,24 +15358,27 @@ function importSessionsFromText(raw) {
   incoming = incoming.slice(0, 2000);
   // Normalise: ensure id + date + schemaVersion exist. Text fields are
   // coerced to bounded strings (they're data — renderers escape them).
+  // v1.18.1 — EVERY field now passes through an explicit sanitizer:
+  // whitelisted keys, bounded strings, finite plausible numbers, capped
+  // array lengths. Malformed pieces are discarded, never preserved as
+  // arbitrary objects. The parsed input is never mutated.
   const norm = incoming.filter(e => e && typeof e === "object").map(e => ({
-    schemaVersion: e.schemaVersion || 1,
-    appVersion: String(e.appVersion || "imported").slice(0, 40),
-    id: String(e.id || uid()).slice(0, 80),
-    date: String(e.date || new Date().toISOString()).slice(0, 40),
-    title: String(e.title || "Imported session").slice(0, 300),
-    description: String(e.description || "").slice(0, 2000),
-    plan: e.plan || null,
-    results: e.results || [],
-    totals: e.totals || {},
-    ...(e.pr ? { pr: e.pr } : {}),
-    ...(e.bookmarks ? { bookmarks: e.bookmarks } : {}),
-    ...(e.notes ? { notes: e.notes } : {}),
-    ...(e.rating ? { rating: e.rating } : {}),
-    ...(e.tags ? { tags: e.tags } : {}),
-    ...(e.recovered ? { recovered: e.recovered } : {}),
-    // v1.18 fields are sanitized, never copied raw — imported files are
-    // untrusted input (whitelisted numeric fields, capped lengths).
+    schemaVersion: (Number.isInteger(e.schemaVersion) && e.schemaVersion > 0 && e.schemaVersion <= 99)
+      ? e.schemaVersion : 1,
+    appVersion: _impStr(e.appVersion, 40) || "imported",
+    id: _impStr(e.id, 80) || uid(),
+    date: _impStr(e.date, 40) || new Date().toISOString(),
+    title: _impStr(e.title, 300) || "Imported session",
+    description: _impStr(e.description, 2000) || "",
+    plan: e.plan ? sanitizeImportedPlan(e.plan) : null,
+    results: sanitizeResultRows(e.results),
+    totals: sanitizeImportedTotals(e.totals),
+    ...((() => { const p = sanitizeImportedPr(e.pr); return p ? { pr: p } : {}; })()),
+    ...((() => { const b = sanitizeBookmarks(e.bookmarks); return b ? { bookmarks: b } : {}; })()),
+    ...((() => { const n = _impStr(e.notes, 5000); return n ? { notes: n } : {}; })()),
+    ...((Number.isInteger(e.rating) && e.rating >= 1 && e.rating <= 10) ? { rating: e.rating } : {}),
+    ...((() => { const t = sanitizeTags(e.tags); return t ? { tags: t } : {}; })()),
+    ...(e.recovered === true ? { recovered: true } : {}),
     ...((() => { const s = sanitizeStrokeLog(e.strokes); return s ? { strokes: s } : {}; })()),
     ...((() => { const f = sanitizeSessionCurves(e.fc); return f ? { fc: f } : {}; })()),
     imported: true,

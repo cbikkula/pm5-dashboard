@@ -83,3 +83,11 @@ silence secret scanners; an old copy of the key exists in git history, which is 
 - Export filenames are sanitized and length-capped.
 - OAuth: `drive.appdata` remains the only scope; sign-out revokes the token.
 - 18 security regression tests keep these locked in (`npm test`, "security" group).
+
+## Hardening shipped in v1.18.1
+
+- Import validation now covers **every** field of an imported session, not just the
+  v1.18 capture fields: `results` / `bookmarks` / `tags` / `plan` / `pr` / `totals` /
+  `notes` / `rating` are whitelisted, length-capped, and type-coerced; hostile nested
+  objects are discarded rather than stored. Replay badges are escaped as defense in
+  depth. 22 further regression tests ("import bounds" group).

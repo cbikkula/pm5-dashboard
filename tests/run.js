@@ -713,6 +713,88 @@ if (app.fbEsc && app.sanitizeStrokeLog && app.sanitizeSessionCurves && app.impor
 }
 
 // ---------------------------------------------------------------------
+// 21. Import bounds (v1.18.1) — the remaining per-entry collections are
+// whitelisted, capped, and coerced; malformed pieces are discarded.
+// ---------------------------------------------------------------------
+group("import bounds");
+if (app.sanitizeResultRows && app.sanitizeBookmarks && app.sanitizeTags &&
+    app.sanitizeImportedPr && app.sanitizeImportedPlan && app.sanitizeImportedTotals) {
+  // Oversized arrays are capped.
+  const bigResults = Array.from({ length: 1000 }, (_, i) => ({ distanceM: 100, elapsedS: 30, label: "leg " + i }));
+  ok("results capped at IMPORT_MAX_RESULTS", app.sanitizeResultRows(bigResults).length === app.IMPORT_MAX_RESULTS);
+  const bigMarks = Array.from({ length: 500 }, (_, i) => ({ distanceM: i * 10 }));
+  ok("bookmarks capped at IMPORT_MAX_BOOKMARKS", app.sanitizeBookmarks(bigMarks).length === app.IMPORT_MAX_BOOKMARKS);
+  ok("tags capped at IMPORT_MAX_TAGS", app.sanitizeTags(Array.from({ length: 100 }, (_, i) => "t" + i)).length === app.IMPORT_MAX_TAGS);
+
+  // Malformed entries are discarded, not preserved.
+  const rows = app.sanitizeResultRows([
+    { distanceM: 500, elapsedS: 120, paceS: 120, watts: 180, strokeRate: 26, heartRate: 150, restS: 60, driveLengthM: 1.4, peakForceLbs: 150, label: "500m", intervalIdx: 1 },
+    { paceS: 120 },                      // no time/distance → dropped
+    "junk", null, 42,                    // non-objects → dropped
+    { distanceM: NaN, elapsedS: Infinity },
+  ]);
+  ok("malformed result rows discarded", rows.length === 1);
+  ok("valid result row preserved exactly", rows[0].distanceM === 500 && rows[0].paceS === 120 &&
+    rows[0].driveLengthM === 1.4 && rows[0].label === "500m" && rows[0].intervalIdx === 1);
+
+  // Unknown properties are stripped; hostile nested objects don't survive.
+  const dirty = app.sanitizeResultRows([{ distanceM: 100, elapsedS: 30, evil: "<x>", nested: { a: 1 }, label: { toString: () => "obj" } }])[0];
+  ok("unknown result props stripped", !("evil" in dirty) && !("nested" in dirty));
+  ok("object-valued label rejected, not coerced", dirty.label === "");
+  const bm = app.sanitizeBookmarks([{ distanceM: 100, hacked: {}, label: "x".repeat(500) }])[0];
+  ok("unknown bookmark props stripped", !("hacked" in bm));
+  ok("bookmark label truncated", bm.label.length === app.IMPORT_MAX_BOOKMARK_LABEL_LEN);
+  ok("tag strings truncated", app.sanitizeTags(["y".repeat(300)])[0].length === app.IMPORT_MAX_TAG_LEN);
+  ok("object tags dropped", app.sanitizeTags([{ evil: 1 }, ["arr"], "ok"]).length === 1);
+
+  // PR / plan / totals whitelisting.
+  ok("pr keys restricted to real benchmarks",
+    app.sanitizeImportedPr({ keys: ["2k", "<img>", "bogus"], achievement: { "2k": 420, "<img>": 1 }, delta: "junk" }).keys.join() === "2k");
+  ok("pr with no valid keys dropped whole", app.sanitizeImportedPr({ keys: [{}, "nope"] }) === null);
+  const plan = app.sanitizeImportedPlan({ title: "T".repeat(500), benchKey: "evil", intervals: [
+    { kind: "distance", value: 500, restS: 60, junk: true }, { kind: "weird", value: 100 }, "junk",
+    ...Array.from({ length: 300 }, () => ({ kind: "time", value: 60 })) ] });
+  ok("plan title bounded + bad benchKey dropped", plan.title.length === 300 && !("benchKey" in plan));
+  // 303 candidates slice to 200, of which 2 are invalid → 198 survive.
+  ok("plan intervals whitelisted + capped", plan.intervals.length === 198 && !("junk" in plan.intervals[0]));
+  const tot = app.sanitizeImportedTotals({ distanceM: 2000, elapsedS: 480, avgHr: 9999, avgWatts: { evil: 1 }, extra: "x" });
+  ok("totals numeric whitelist", tot.distanceM === 2000 && tot.avgHr === null && tot.avgWatts === null && !("extra" in tot));
+
+  // Valid imports remain unchanged end-to-end; input object not mutated.
+  app.state.history = [];
+  const good = {
+    kind: "pm5-history-export",
+    history: [{ id: "OK-1", date: "2026-07-01T10:00:00Z", title: "5x500", schemaVersion: 2,
+      totals: { distanceM: 2500, elapsedS: 600, avgPaceS: 120, avgWatts: 180, avgHr: 152, strokes: 260 },
+      results: Array.from({ length: 5 }, (_, i) => ({ intervalIdx: i + 1, label: "500m", distanceM: 500, elapsedS: 120, paceS: 120, watts: 180, strokeRate: 26, heartRate: 150, restS: 60, driveLengthM: 1.4, peakForceLbs: 150 })),
+      bookmarks: [{ strokeIndex: 30, distanceM: 750, elapsedS: 180 }],
+      tags: ["test", "steady-state"], notes: "felt strong", rating: 8 }],
+  };
+  const goodJson = JSON.stringify(good);
+  ok("valid import accepted", app.importSessionsFromText(goodJson) === 1);
+  const ge = app.state.history[0];
+  ok("valid results unchanged", ge.results.length === 5 && ge.results[2].watts === 180 && ge.results[2].label === "500m");
+  ok("valid bookmarks/tags/notes/rating unchanged",
+    ge.bookmarks.length === 1 && ge.bookmarks[0].strokeIndex === 30 &&
+    ge.tags.join() === "test,steady-state" && ge.notes === "felt strong" && ge.rating === 8);
+  ok("original import object not mutated", JSON.stringify(good) === goodJson);
+
+  // Hostile end-to-end: markup/script payloads stay inert data.
+  app.state.history = [];
+  app.importSessionsFromText(JSON.stringify({ kind: "pm5-history-export", history: [{
+    id: "EVIL-1", title: "<script>x</script>", totals: { distanceM: 100, elapsedS: 30 },
+    results: [{ distanceM: 100, elapsedS: 30, label: "<img onerror=x>" }],
+    bookmarks: [{ distanceM: 50, label: "<svg onload=x>" }],
+    tags: ["<b>tag</b>"], notes: { evil: true }, rating: "11", pr: { keys: ["<x>"] },
+    plan: { title: "<script>", intervals: { not: "array" } } }] }));
+  const ev = app.state.history[0];
+  ok("hostile strings stay plain strings", typeof ev.title === "string" && typeof ev.results[0].label === "string" &&
+    typeof ev.bookmarks[0].label === "string" && typeof ev.tags[0] === "string");
+  ok("hostile objects don't survive", !("notes" in ev) && !("rating" in ev) && !("pr" in ev) && ev.plan.intervals.length === 0);
+  app.state.history = [];
+}
+
+// ---------------------------------------------------------------------
 // 8. Bundle-size guard (#25) — keep the single file under budget.
 // Budget history: 600 KB through v1.17.0; raised to 660 KB in v1.18.0
 // to fund stroke capture + stroke replay + session compare + the

@@ -119,6 +119,11 @@ function load() {
     "buildTrainingReport",
     // v1.18 security pass
     "fbEsc", "sanitizeStrokeLog", "sanitizeSessionCurves",
+    // v1.18.1 import bounds
+    "sanitizeResultRows", "sanitizeBookmarks", "sanitizeTags",
+    "sanitizeImportedPr", "sanitizeImportedPlan", "sanitizeImportedTotals",
+    "IMPORT_MAX_RESULTS", "IMPORT_MAX_BOOKMARKS", "IMPORT_MAX_TAGS",
+    "IMPORT_MAX_TAG_LEN", "IMPORT_MAX_BOOKMARK_LABEL_LEN",
   ];
   const shim = "\n;globalThis.__APP = {" +
     exposed.map((n) => `${n}: (typeof ${n}!=="undefined"?${n}:undefined)`).join(",") +

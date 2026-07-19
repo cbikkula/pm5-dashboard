@@ -10,6 +10,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Multi-erg synchronization (needs a new per-erg Firestore surface + rules — deliberately not built on the club-scoped schema)
 - AI technique analysis (peak-timing trends)
 
+## [v1.18.1] — July 2026 — Import Hardening
+
+A minimal security patch closing the import-validation gap flagged in the v1.18.0 post-release verification. No feature changes; valid existing exports import exactly as before.
+
+- **Every imported field is now sanitized** — the v1.18.0 pass covered `strokes`/`fc`; this patch extends the same pure-sanitizer architecture to the rest of the entry: `results` (≤ 500 rows, documented ResultRow fields only), `bookmarks` (≤ 200, live-bookmark fields + optional 80-char label), `tags` (≤ 50, 60-char strings), plus `plan` (≤ 200 whitelisted intervals, bounded title/description, benchKey checked against real benchmark ids), `pr` (keys restricted to real benchmark ids, numeric values only), `totals` (numeric whitelist), and bounded `notes`/`rating`. Only string/number primitives coerce to strings — hostile nested objects are discarded, and the parsed input is never mutated.
+- **Defense in depth** — replay capability badges are HTML-escaped (PR keys were the one code path where imported strings could reach `innerHTML` unescaped).
+- **Tests 190 → 212** — a new "import bounds" group: caps, malformed-entry discards, unknown-property stripping, string truncation, valid-import round-trip, hostile nested objects, end-to-end markup inertness.
+- Bundle 647 → **654 KB** — still under the unchanged 660 KB guard (not raised). Service worker cache `pm5-v45`. No Firestore-rules changes.
+
 ## [v1.18.0] — July 2026 — Stroke Capture & Technique Analytics
 
 The capture release — sessions finally persist what the live monitor sees, and a set of technique features cashes that in immediately. Backward compatible: pre-v1.18 sessions are untouched and every consumer treats the new fields as optional.

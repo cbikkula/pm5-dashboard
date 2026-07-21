@@ -826,6 +826,30 @@
     margin-top: -4px;
   }
 
+  /* v1.20.0 — baseline + live-cue preferences */
+  .baseline-prefs { display: flex; flex-direction: column; gap: 8px; }
+  .bp-row { display: flex; align-items: center; gap: 10px; }
+  .bp-lbl { flex: 0 0 130px; color: var(--text); font-size: 13px; font-weight: 600; }
+  .bp-row select { flex: 1; background: var(--bg-panel); color: var(--text);
+    border: 1px solid var(--border-bright); border-radius: 8px; padding: 6px 10px; font-size: 12.5px; }
+  .bp-info { color: var(--text-muted); font-size: 11.5px; line-height: 1.5; }
+  /* v1.20.0 — Race Lab builder row + live race chip */
+  .race-lab-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .race-lab-row select, .race-lab-row input { background: var(--bg-panel); color: var(--text);
+    border: 1px solid var(--border-bright); border-radius: 8px; padding: 7px 10px; font-size: 12.5px; }
+  .wb-race { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 12px;
+    padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border-bright); }
+  .wb-race.ahead { color: var(--good); border-color: var(--good); }
+  .wb-race.on { color: var(--accent); border-color: var(--accent); }
+  .wb-race.behind { color: var(--warn); border-color: var(--warn); }
+  /* v1.20.0 — power profile grid */
+  .pp-grid { display: grid; grid-template-columns: .7fr .8fr .9fr .8fr 1.8fr; gap: 4px 10px;
+    background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 16px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  .pp-grid .pp-h { color: var(--text-dim); font-size: 10px; font-weight: 700; letter-spacing: .8px; }
+  .pp-grid .pp-src { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pp-grid .pp-miss { grid-column: 2 / 6; color: var(--text-dim); font-style: italic; }
+
   .theme-picker {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -2650,6 +2674,17 @@
   .sa-eff-detail { margin:2px 0 4px 178px; font-size:11.5px; color:var(--text-dim); }
   .sa-eff-how { margin-top:8px; padding-top:8px; border-top:1px solid var(--border);
     font-size:11.5px; color:var(--text-dim); line-height:1.5; }
+  /* v1.20.0 — race debrief */
+  .sa-race { background:var(--bg-base); border:1px solid var(--border); border-radius:10px;
+    padding:10px 14px; display:flex; flex-direction:column; gap:8px; }
+  .sa-race-title { font-size:11px; font-weight:700; letter-spacing:1px; color:var(--text-muted);
+    display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+  .sa-race-title span { font-weight:600; letter-spacing:.2px; }
+  .sa-race-grid { display:grid; grid-template-columns:1.4fr .8fr .8fr .7fr .5fr .6fr; gap:3px 8px;
+    font-size:12px; font-variant-numeric:tabular-nums; color:var(--text); }
+  .sa-race-grid .sr-h { color:var(--text-dim); font-size:10px; font-weight:700; letter-spacing:.8px; }
+  .sa-race-grid .sr-good { color:var(--good); }
+  .sa-race-grid .sr-bad { color:var(--warn); }
   @media (max-width: 600px) {
     .sa-eff-lab { flex-basis:120px; }
     .sa-eff-detail { margin-left:0; }
@@ -2967,6 +3002,7 @@
     <div class="wb-info">
       <div class="wb-title" id="wbTitle">—</div>
       <div class="wb-meta" id="wbMeta"></div>
+      <span class="wb-race" id="wbRace" style="display:none;"></span>
     </div>
     <div class="wb-progress-wrap">
       <div class="wb-progress">
@@ -3006,6 +3042,10 @@
         <div class="label">FORCE CURVE</div>
         <div class="row" style="gap: 10px; align-items: center;">
           <div class="hint" id="fcHint">waiting for first stroke…</div>
+          <button id="fcLockBtn" class="fc-mini-btn"
+                  title="Lock today's average stroke as your reference — the baseline you row against until you change it">
+            ⭑ Lock ref
+          </button>
           <button id="fcResetBtn" class="fc-mini-btn"
                   title="Clear best & average overlays for this session">
             Reset best
@@ -3441,6 +3481,24 @@
       <button id="suggestTargetsBtn" title="Fill interval target paces from your PRs">✨ Suggest targets</button>
       <span id="suggestTargetsNote" style="font-size:11.5px; color:var(--text-dim);"></span>
     </div>
+    <div class="field-label" style="margin-top:14px;">RACE LAB</div>
+    <div class="race-lab-row">
+      <select id="raceDist" aria-label="Race distance">
+        <option value="500">500 m</option><option value="1000">1k</option>
+        <option value="2000" selected>2k</option><option value="5000">5k</option>
+        <option value="6000">6k</option><option value="10000">10k</option>
+        <option value="custom">Custom…</option>
+      </select>
+      <input type="text" id="raceDistCustom" placeholder="meters" style="display:none; width:80px;">
+      <select id="raceStrategy" aria-label="Pacing strategy">
+        <option value="even">Even split</option>
+        <option value="negative">Negative split</option>
+        <option value="positive">Positive split</option>
+      </select>
+      <input type="text" id="raceBasePace" placeholder="base split e.g. 1:45" style="width:130px;">
+      <button id="raceCreateBtn" class="accent">Create race plan</button>
+    </div>
+    <div class="bp-info" id="raceNote" style="margin-top:4px;">Builds start · settle · base · push · sprint segments around your base split, predicts your finish, and coaches you against the plan while you row. Time deltas are estimates relative to this plan.</div>
     <div class="modal-buttons">
       <button class="left" id="clearPlanBtn">Clear plan</button>
       <button id="cancelBuilderBtn">Cancel</button>
@@ -3492,9 +3550,34 @@
           <label class="fc-overlay-row">
             <input type="checkbox" id="prefFcRef">
             <span class="fc-overlay-sw" style="background:#9ba7bd;"></span>
-            <span class="fc-overlay-lbl">Previous-session ghost</span>
-            <span class="fc-overlay-hint">Your last saved session's average curve, for day-to-day shape comparison.</span>
+            <span class="fc-overlay-lbl">Baseline ghost</span>
+            <span class="fc-overlay-hint">Your chosen reference curve, for day-to-day shape comparison.</span>
           </label>
+        </div>
+        <div class="section-title" style="margin-top:14px;">PERSONAL BASELINE &amp; LIVE CUES</div>
+        <div class="baseline-prefs">
+          <label class="bp-row"><span class="bp-lbl">Baseline source</span>
+            <select id="prefBaselineSource">
+              <option value="auto">Previous compatible session (auto)</option>
+              <option value="rolling">Rolling — recent comparable sessions</option>
+              <option value="locked">Locked reference</option>
+              <option value="section">Steadiest section of this session</option>
+              <option value="off">Off</option>
+            </select></label>
+          <div class="bp-info" id="baselineInfo"></div>
+          <label class="bp-row"><span class="bp-lbl">Live cues</span>
+            <select id="prefCueMode">
+              <option value="normal">On — one cue at a time</option>
+              <option value="quiet">Quiet — record events, show nothing</option>
+              <option value="off">Off</option>
+            </select></label>
+          <label class="bp-row"><span class="bp-lbl">Cue sensitivity</span>
+            <select id="prefCueSensitivity">
+              <option value="low">Relaxed — only big sustained changes</option>
+              <option value="normal">Normal</option>
+              <option value="high">Attentive — smaller changes qualify</option>
+            </select></label>
+          <div class="bp-info">Cues need a sustained change (~15 strokes), show one at a time, and rest before repeating. Your baseline is evidence from your own rowing — not a universal ideal.</div>
         </div>
       </div>
       <div class="settings-section">
@@ -4261,7 +4344,9 @@
         </div>
         <div class="rpl-nav">
           <button id="replayPrev">‹ Prev</button>
+          <button id="replayEvPrev" title="Previous drift event ([)" style="display:none;">‹ ⚠</button>
           <button id="replayPlay" title="Play through the session (Space)">▶ Play</button>
+          <button id="replayEvNext" title="Next drift event (])" style="display:none;">⚠ ›</button>
           <button id="replayNext">Next ›</button>
         </div>
         <div class="rpl-list" id="replayList"></div>
@@ -4712,7 +4797,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.19.0";
+const APP_VERSION = "1.20.0";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 // v3 (1.18.0) adds optional entry.strokes (compact per-stroke samples)
@@ -4721,6 +4806,17 @@ const APP_VERSION = "1.19.0";
 const SESSION_SCHEMA_VERSION = 3;
 
 const RELEASE_NOTES = {
+  "1.20.0": {
+    date: "July 2026",
+    headline: "Personal Race & Technique Intelligence",
+    items: [
+      "Personal baseline: row against your own evidence — previous session, rolling average, steadiest section, or a ⭑ locked reference",
+      "Live cues: one conservative, plain-English cue at a time (what changed, how much, vs which baseline) with quiet mode and sensitivity control",
+      "Race Lab: build a paced race plan (even/negative/positive), see live ahead/behind + projected finish, then a segment-by-segment debrief with ≤3 prioritized findings",
+      "Replay: drift-event markers and navigation, baseline curve overlay, race-segment context, exact vs-baseline deltas at any stroke",
+      "Rowing power profile: best watts over 1:00 / 4:00 / 8:00 / 20:00 with pace equivalents — and a critical-power estimate only when two real Tests support it",
+    ],
+  },
   "1.19.0": {
     date: "July 2026",
     headline: "Force Curve Intelligence",
@@ -4813,12 +4909,19 @@ const state = {
   // recomputed every 5th stroke from it.
   strokeCapture: null,
   techDrift: null,
-  // v1.19.0 — previous-session reference curve (the newest saved
-  // session's average Force Curve), its short label, and the cached
-  // shape similarity of today's average stroke against it.
+  // v1.19.0 — reference curve for the live ghost + cached similarity.
+  // v1.20.0 — both now come from the Personal Baseline Engine below:
+  // refCurve/refLabel mirror state.baseline so the v1.19 renderer and
+  // metric card keep working unchanged.
   refCurve: null,
   refLabel: "",
   refSimilarity: null,
+  // v1.20.0 — active baseline object ({source,label,curve,stats,n,
+  // dateRange,confidence}), the live-cue governor state, and this
+  // session's recorded drift events (persisted at log time).
+  baseline: null,
+  cueGov: null,
+  cueEvents: [],
   // secondary
   strokeRate: null, paceS: null, avgPaceS: null,
   watts: null, heartRate: null,
@@ -6166,28 +6269,52 @@ function sessionCurveSnapshot() {
 function resetStrokeCapture() {
   state.strokeCapture = { log: [], stride: 1, seen: 0 };
   state.techDrift = null;
-  // Session boundary — also refresh the previous-session reference
-  // curve so today's overlay compares against the latest saved row.
+  state.cueGov = null;
+  state.cueEvents = [];
+  // Session boundary — re-resolve the baseline so today's overlay
+  // compares against the athlete's chosen reference.
   loadReferenceCurve();
 }
 
-// v1.19.0 — pick the reference curve for the live "prev session" ghost:
-// the newest history entry with saved curves (average preferred — it
-// represents the typical stroke, not the single best pull).
+// v1.20.0 — resolve the active baseline via the Baseline Engine and
+// mirror it into refCurve/refLabel (which the v1.19 renderer, legend,
+// and Vs-Baseline card already consume). Name kept for compatibility.
 function loadReferenceCurve() {
-  state.refCurve = null;
-  state.refLabel = "";
+  const pref = (state.userPrefs && state.userPrefs.baselineSource) || "auto";
+  const cur = { plan: state.localPlan,
+    totals: { distanceM: state.distanceM || 0, elapsedS: state.elapsedTimeS || 0 } };
+  const meaningful = cur.totals.distanceM > 200;
+  state.baseline = resolveBaseline(pref, {
+    history: state.history || [],
+    lockedBaseline: state.userPrefs && state.userPrefs.lockedBaseline,
+    currentSamples: state.strokeCapture ? state.strokeCapture.log : [],
+    currentEntryLike: meaningful ? cur : null,
+  });
+  state.refCurve = state.baseline ? state.baseline.curve : null;
+  state.refLabel = state.baseline ? state.baseline.label : "";
   state.refSimilarity = null;
-  for (const h of (state.history || [])) {
-    const c = h && h.fc && (h.fc.avg || h.fc.best);
-    if (c && c.length >= 8) {
-      state.refCurve = c;
-      const d = new Date(h.date);
-      state.refLabel = isNaN(d) ? "prev session"
-        : d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-      return;
-    }
+}
+
+// Lock today's average stroke as the reference the athlete rows
+// against until they change or clear it. Stored in prefs (Drive-synced).
+function lockCurrentBaseline() {
+  if (!state.avgStrokeCurve || state.avgStrokeCount < 10) {
+    setToast("Row at least 10 strokes first — the locked reference uses today's average.", "warn");
+    return;
   }
+  const today = new Date().toISOString().slice(0, 10);
+  state.userPrefs.lockedBaseline = {
+    curve: Array.from(state.avgStrokeCurve, v => Math.round(v * 10) / 10),
+    stats: strokeStatsOf(state.strokeCapture ? state.strokeCapture.log : []),
+    n: state.avgStrokeCount,
+    label: `locked ${today}`,
+    date: today,
+  };
+  state.userPrefs.baselineSource = "locked";
+  persistUserPrefs();
+  loadReferenceCurve();
+  render();
+  setToast(`Reference locked: today's average of ${state.avgStrokeCount} strokes.`, "ok");
 }
 
 // Capture hook — called from commitCompletedStroke, which all three
@@ -6210,12 +6337,36 @@ function captureStroke(curve) {
     pf: r1(state.peakForceLbs), pt: r2(strokePeakTiming(curve)),
   };
   strokeCaptureAppend(state.strokeCapture, sample, STROKE_LOG_CAP);
-  // Refresh the live drift analysis + reference similarity every 5th
-  // stroke — cheap (log and curves are capped) and far below
-  // per-render frequency.
+  // Every 5th stroke (never per-render): evaluate live cues against the
+  // active baseline, run them through the governor (persistence +
+  // hysteresis + cooldown + one-at-a-time), refresh baseline similarity,
+  // and record drift events for replay.
   if (state.strokeCapture.seen % 5 === 0) {
-    state.techDrift = applyDriftHysteresis(state.techDrift,
-      computeTechniqueDrift(state.strokeCapture.log));
+    const mode = (state.userPrefs && state.userPrefs.cueMode) || "normal";
+    if (mode === "off") {
+      state.techDrift = null;
+    } else {
+      const cues = computeLiveCues(state.strokeCapture.log, state.baseline,
+        { sensitivity: (state.userPrefs && state.userPrefs.cueSensitivity) || "normal" });
+      state.cueGov = applyCueGovernor(state.cueGov, cues, { quiet: mode === "quiet" });
+      const gov = state.cueGov;
+      // The Tech Drift card keeps its v1.18 shape: has/drifting/items/headline.
+      state.techDrift = state.strokeCapture.log.length >= 40
+        ? { has: true, drifting: !!gov.active,
+            items: gov.active ? [{ key: gov.active.id, label: gov.active.id, tone: "warn", text: gov.active.text }] : [],
+            headline: gov.active
+              ? `${gov.active.text} — sustained ~${gov.active.persistEvals * 5} strokes (${gov.active.confidence} confidence)`
+              : "Technique stable" }
+        : null;
+      if (gov.event && gov.event.startEval) {
+        state.cueEvents.push({ t: Math.round((state.elapsedTimeS || 0) * 10) / 10,
+          d: Math.round(state.distanceM || 0), id: gov.event.id, text: gov.event.text });
+        if (state.cueEvents.length > 50) state.cueEvents.shift();
+      } else if (gov.event && gov.event.endEval) {
+        const open = state.cueEvents.filter(ev => ev.id === gov.event.id && ev.tEnd == null).pop();
+        if (open) open.tEnd = Math.round((state.elapsedTimeS || 0) * 10) / 10;
+      }
+    }
     state.refSimilarity = (state.refCurve && state.avgStrokeCurve)
       ? curveSimilarity(state.avgStrokeCurve, state.refCurve) : null;
   }
@@ -6838,6 +6989,29 @@ function renderWorkoutPanel() {
     bar.style.display = "none";
     return;
   }
+
+  // Race Lab chip (v1.20.0) — live plan delta + projected finish.
+  // Rolling pace = mean of the last ~10 captured strokes, so the
+  // projection assumes you keep rowing like the last minute.
+  const raceEl = document.getElementById("wbRace");
+  if (raceEl) {
+    const race = state.localPlan && state.localPlan.race;
+    if (race && state.distanceM > 30 && state.elapsedTimeS > 5) {
+      const tail = (state.strokeCapture ? state.strokeCapture.log : []).slice(-10);
+      const paces = tail.map(s => s.p).filter(v => v != null && v > 0);
+      const rolling = paces.length >= 4 ? paces.reduce((a, b) => a + b, 0) / paces.length : (state.paceS || null);
+      const rs = computeRaceStatus(race, state.distanceM, state.elapsedTimeS, rolling);
+      if (rs) {
+        const word = rs.status === "ahead" ? "ahead" : rs.status === "behind" ? "behind" : "on plan";
+        raceEl.className = "wb-race " + rs.status;
+        raceEl.textContent =
+          `${rs.segment ? rs.segment.phase.toUpperCase() + " · " : ""}${word} ` +
+          `${rs.deltaS > 0 ? "+" : ""}${rs.deltaS.toFixed(1)}s` +
+          (rs.projectedFinishS ? ` · proj ${fmtTime(rs.projectedFinishS)}` : "");
+        raceEl.style.display = "";
+      } else raceEl.style.display = "none";
+    } else raceEl.style.display = "none";
+  }
   bar.style.display = "";
 
   const titleEl = document.getElementById("wbTitle");
@@ -7380,6 +7554,12 @@ function savePlanFromForm() {
       timeCapS,
       intervals,
     };
+    // v1.20.0 — race meta survives a manual edit as long as the
+    // segment structure is intact; structural edits drop it honestly.
+    if (state.localPlan && state.localPlan.race &&
+        intervals.length === state.localPlan.intervals.length) {
+      plan.race = state.localPlan.race;
+    }
     state.localPlan = plan;
     upsertSavedPlan(plan);
   }
@@ -7394,6 +7574,48 @@ function savePlanFromForm() {
   // can see the plan in their library and decide whether to row it.
   if (state.view === "home") renderHomeView();
   else                       render();
+}
+
+// Race Lab (v1.20.0) — build a race plan from the form controls,
+// load it as the active plan, and save it to the library so a good
+// race plan is immediately reusable as a workout.
+function createRacePlanFromForm() {
+  const note = document.getElementById("raceNote");
+  const distSel = document.getElementById("raceDist").value;
+  const dist = distSel === "custom"
+    ? parseDistInput(document.getElementById("raceDistCustom").value)
+    : parseInt(distSel, 10);
+  if (!(dist >= 300)) { note.textContent = "Pick a distance of at least 300 m."; return; }
+  const strategy = document.getElementById("raceStrategy").value;
+  let base = parseTimeInput(document.getElementById("raceBasePace").value.trim());
+  if (!base) {
+    // Fall back to a PR-derived suggestion, adjusted to this distance.
+    const p2k = benchmarkPaceOf("2k", state.userPrefs);
+    if (p2k) base = Math.round((p2k + 5 * (Math.log(dist / 2000) / Math.LN2)) * 10) / 10;
+  }
+  if (!(base > 60)) { note.textContent = "Enter a base split (e.g. 1:45) — or row a benchmark Test so one can be suggested."; return; }
+  const rp = buildRacePlan(dist, strategy, base);
+  if (!rp) { note.textContent = "Couldn't build a plan from those numbers."; return; }
+  const distLabel = dist >= 1000 && dist % 1000 === 0 ? `${dist / 1000}k` : `${dist}m`;
+  const plan = {
+    id: uid(),
+    title: `${distLabel} race — ${strategy} split`,
+    description: `Race Lab · base ${fmtPace(base)} · predicted ${fmtTime(rp.predictedFinishS)}`,
+    timeCapS: null,
+    intervals: racePlanToIntervals(rp),
+    race: rp,
+  };
+  state.localPlan = plan;
+  upsertSavedPlan(plan);
+  state.planCurrentIdx = 0;
+  state.planStartTimeS = null;
+  state.planStartDistM = null;
+  state.planResults = [];
+  resetStrokeCapture();
+  persistPlan();
+  closeBuilder();
+  setToast(`Race plan ready: ${plan.title}, predicted ${fmtTime(rp.predictedFinishS)}. Row when ready.`, "ok");
+  if (state.view === "home") renderHomeView(); else render();
 }
 
 function clearPlanFromForm() {
@@ -7681,6 +7903,10 @@ function logCurrentWorkout({ silent = false } = {}) {
   }
   const fcSnap = sessionCurveSnapshot();
   if (fcSnap) entry.fc = fcSnap;
+  // v1.20.0 — drift events recorded by the cue governor this session.
+  if (state.cueEvents && state.cueEvents.length) {
+    entry.driftEvents = JSON.parse(JSON.stringify(state.cueEvents));
+  }
   // PR detection — runs BEFORE the unshift so the evaluator only sees
   // the prior history when comparing. Only credits when the plan has
   // a benchKey (i.e. came from a real benchmark test). If a PR was
@@ -12724,6 +12950,35 @@ function renderSummaryAnalysis(entry) {
         dr.items.filter(i => i.tone === "warn").map(i => fbEsc(i.text)).join(" · ") + `</div>`;
     }
   }
+  // Race Lab debrief (v1.20.0) — when this session ran a race plan.
+  if (entry && entry.plan && entry.plan.race) {
+    const rd = computeRaceDebrief(entry);
+    if (rd.has) {
+      html += `<div class="sa-race"><div class="sa-race-title">RACE DEBRIEF <span>` +
+        `${fbEsc(entry.plan.race.strategy)} plan` +
+        `${rd.plannedFinishS ? " · planned " + fmtTime(rd.plannedFinishS) : ""}` +
+        `${rd.actualFinishS ? " · actual " + fmtTime(rd.actualFinishS) : ""}` +
+        `${rd.totalDeltaS != null ? " · net " + (rd.totalDeltaS > 0 ? "+" : "") + rd.totalDeltaS.toFixed(1) + "s*" : ""}</span></div>`;
+      html += `<div class="sa-race-grid"><div class="sr-h">Segment</div><div class="sr-h">Plan</div>` +
+        `<div class="sr-h">Actual</div><div class="sr-h">Δ time*</div><div class="sr-h">spm</div><div class="sr-h">DL m</div>`;
+      for (const s of rd.segments) {
+        html += `<div>${fbEsc(s.phase)} ${Math.round(s.fromM)}–${Math.round(s.toM)}</div>` +
+          `<div>${fmtPace(s.planPaceS)}</div>` +
+          `<div>${s.actualPaceS != null ? fmtPace(s.actualPaceS) : "—"}</div>` +
+          `<div class="${s.deltaS != null && s.deltaS > 0.5 ? "sr-bad" : s.deltaS != null && s.deltaS < -0.5 ? "sr-good" : ""}">` +
+          `${s.deltaS != null ? (s.deltaS > 0 ? "+" : "") + s.deltaS.toFixed(1) + "s" : "—"}</div>` +
+          `<div>${s.rate != null ? Math.round(s.rate) : "—"}</div>` +
+          `<div>${s.dl != null ? s.dl.toFixed(2) : "—"}</div>`;
+      }
+      html += `</div>`;
+      for (const f of rd.findings) {
+        const tone = f.type === "success" ? "positive" : f.type === "improve" ? "warn" : "tech";
+        html += `<div class="sa-card sa-${tone}"><div class="sa-card-title">${fbEsc(f.title)}</div>` +
+          `<div class="sa-card-body">${fbEsc(f.body)}</div></div>`;
+      }
+      html += `<div class="sa-eff-how">* ${fbEsc(rd.method)}</div></div>`;
+    }
+  }
   // Fatigue headline.
   if (hasFatigue && a.fatigue.mainIssue) {
     html += `<div class="sa-fatigue"><b>Main:</b> ${a.fatigue.mainIssue}`;
@@ -13025,6 +13280,29 @@ function renderPerfFitness() {
     <div class="perf-diagnosis">${fbEsc(hr.text)}</div>`;
   } else {
     html += `<div class="perf-mini-empty">${fbEsc(hr.text)}</div>`;
+  }
+
+  // Rowing power profile (v1.20.0) — best recorded watts over standard
+  // windows, estimate-labelled, with honest insufficient-data states.
+  const pp = computePowerProfile(state.history, Date.now());
+  html += `<div class="perf-section-headline" style="margin-top:18px;">Rowing power profile.</div>`;
+  if (pp.has) {
+    html += `<div class="pp-grid"><div class="pp-h">Window</div><div class="pp-h">Best</div><div class="pp-h">Pace eq.</div><div class="pp-h">90-day</div><div class="pp-h">From</div>`;
+    for (const r of pp.rows) {
+      html += r.sufficient
+        ? `<div>${r.label}</div><div><b>${r.best.watts} W</b></div><div>${fmtPace(r.paceS)}</div>` +
+          `<div>${r.recent ? r.recent.watts + " W" : "—"}</div><div class="pp-src">${fbEsc(r.best.dateISO)} · ${fbEsc(r.best.title)}</div>`
+        : `<div>${r.label}</div><div class="pp-miss">needs ${fbEsc(r.need)}</div>`;
+    }
+    html += `</div>`;
+    if (pp.cp) {
+      html += `<div class="perf-diagnosis">Critical power (estimate): <b>${pp.cp.watts} W</b> (${fmtPace(pp.cp.paceS)} /500) · W′ ≈ ${(pp.cp.wPrimeJ / 1000).toFixed(1)} kJ — from your ${pp.cp.fromTests.map(fbEsc).join(" + ")} Tests. ${fbEsc(pp.cp.method)}</div>`;
+    } else {
+      html += `<div class="perf-mini-empty">${fbEsc(pp.cpNeed)}</div>`;
+    }
+    html += `<div class="perf-mini-empty">${fbEsc(pp.method)}</div>`;
+  } else {
+    html += `<div class="perf-mini-empty">No power windows yet — they unlock from sessions saved with stroke capture (v1.18+). Row and log a session to start the profile.</div>`;
   }
   el.innerHTML = html;
 }
@@ -13774,7 +14052,25 @@ function openReplay(session) {
   const marks = strokeMode
     ? mapBookmarksToStrokeTimeline(session)
     : mapBookmarksToReplayTimeline(session);
-  _replay = { mode: strokeMode ? "stroke" : "interval", tl, ivTl, marks, pos: 0 };
+  _replay = { mode: strokeMode ? "stroke" : "interval", tl, ivTl, marks, pos: 0, session };
+  // Drift events (v1.20.0) mapped onto the active timeline.
+  _replay.events = [];
+  for (const ev of (Array.isArray(session && session.driftEvents) ? session.driftEvents : [])) {
+    let idx = null;
+    if (strokeMode) {
+      let bestErr = Infinity;
+      for (const p of tl) {
+        const err = (ev.t != null && p.elapsedS != null) ? Math.abs(p.elapsedS - ev.t)
+                  : (ev.d != null && p.distanceM != null) ? Math.abs(p.distanceM - ev.d) : null;
+        if (err != null && err < bestErr) { bestErr = err; idx = p.index; }
+      }
+    } else if (ev.d != null && ivTl.length) {
+      const hit = ivTl.find(p => p.cumulativeDistanceM >= ev.d);
+      idx = hit ? hit.index : ivTl.length - 1;
+    }
+    if (idx != null) _replay.events.push({ idx, id: ev.id, text: ev.text });
+  }
+  _replay.events.sort((a, b) => a.idx - b.idx);
 
   const plan = session && session.plan, T = (session && session.totals) || {};
   document.getElementById("replayTitle").textContent =
@@ -13809,6 +14105,8 @@ function openReplay(session) {
   }
   if (session && session.pr && session.pr.keys && session.pr.keys.length)
     badges.push(["🏆 PR " + session.pr.keys.join(", "), true]);
+  if (_replay.events.length) badges.push([`⚠ ${_replay.events.length} drift event${_replay.events.length === 1 ? "" : "s"}`, false]);
+  if (session && session.plan && session.plan.race) badges.push(["Race plan", true]);
   document.getElementById("replayBadges").innerHTML =
     badges.map(([t, on]) => `<span class="rpl-badge${on ? " on" : ""}">${fbEsc(t)}</span>`).join("");
 
@@ -13819,11 +14117,17 @@ function openReplay(session) {
   if (fc && (fc.best || fc.avg)) {
     fcBox.style.display = "";
     const sets = [];
+    // v1.20.0 — the athlete's ACTIVE baseline curve underlays the
+    // session's own curves so replay is always vs the chosen reference.
+    if (state.baseline && state.baseline.curve) {
+      sets.push({ samples: state.baseline.curve, color: "rgba(155,167,189,0.5)", dashed: true, width: 1.5 });
+    }
     if (fc.avg)  sets.push({ samples: fc.avg,  color: "rgba(255,143,60,0.8)", dashed: true, width: 2 });
     if (fc.best) sets.push({ samples: fc.best, color: "rgba(86,249,179,0.9)", width: 2.5 });
     const leg = [];
     if (fc.best) leg.push(`— best${fc.peak ? " " + Math.round(fc.peak) + " lbf" : ""}`);
     if (fc.avg)  leg.push(`- - avg${fc.n ? " of " + fc.n + " strokes" : ""}`);
+    if (state.baseline && state.baseline.curve) leg.push(`· · baseline (${state.baseline.label})`);
     document.getElementById("replayFcLegend").textContent = leg.join("   ");
     // The canvas has no layout until the modal is visible — draw just
     // after .open lands (setTimeout, not rAF — see drawCurveSet).
@@ -13881,6 +14185,12 @@ function openReplay(session) {
   } else {
     le.style.display = "none";
   }
+
+  // Drift-event navigation buttons only appear when events exist.
+  const evPrev = document.getElementById("replayEvPrev");
+  const evNext = document.getElementById("replayEvNext");
+  if (evPrev) evPrev.style.display = _replay.events.length ? "" : "none";
+  if (evNext) evNext.style.display = _replay.events.length ? "" : "none";
 
   document.getElementById("replayModal").classList.add("open");
   // The timeline canvas has no layout until .open lands — repaint just
@@ -13962,6 +14272,12 @@ function renderReplayTimeline() {
     ctx.moveTo(px - 3, 0); ctx.lineTo(px + 3, 0); ctx.lineTo(px, 6);
     ctx.closePath(); ctx.fill();
   }
+  // drift-event ticks (v1.20.0) — bottom edge, warn-red
+  ctx.fillStyle = "rgba(255,107,107,0.9)";
+  for (const ev of (_replay.events || [])) {
+    const px = x(Math.min(ev.idx, n - 1));
+    ctx.fillRect(px - 1.5, H - 6, 3, 6);
+  }
   // cursor + point
   const cx = x(_replay.pos);
   const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#4cc2ff";
@@ -14038,8 +14354,15 @@ function renderReplayPos() {
   const i = Math.max(0, Math.min(tl.length - 1, _replay.pos));
   _replay.pos = i;
   const p = tl[i];
+  // v1.20.0 — race-segment context at the scrub position.
+  let posExtra = "";
+  const sess = _replay.session;
+  if (stroke && sess && sess.plan && sess.plan.race && p.distanceM != null) {
+    const at = raceSegmentAt(sess.plan.race, p.distanceM);
+    if (at && at.seg) posExtra = ` · ${at.seg.phase}`;
+  }
   document.getElementById("replayPos").textContent =
-    `${stroke ? "Stroke" : "Interval"} ${i + 1} of ${tl.length}`;
+    `${stroke ? "Stroke" : "Interval"} ${i + 1} of ${tl.length}${posExtra}`;
   const bits = [];
   if (stroke) {
     if (p.distanceM != null) bits.push(`${Math.round(p.distanceM).toLocaleString()} m`);
@@ -14052,6 +14375,14 @@ function renderReplayPos() {
     if (p.peakForceLbs != null) bits.push(Math.round(p.peakForceLbs) + " lbf");
     if (p.peakTiming != null) bits.push("peak @ " + Math.round(p.peakTiming * 100) + "%");
     if (p.ratio != null) bits.push(p.ratio.toFixed(1) + " : 1");
+    // v1.20.0 — exact deltas vs the active baseline at this stroke.
+    const bs = state.baseline && state.baseline.stats;
+    if (bs) {
+      if (p.driveLengthM != null && bs.dl)
+        bits.push(`DL ${p.driveLengthM - bs.dl.mean >= 0 ? "+" : ""}${(p.driveLengthM - bs.dl.mean).toFixed(2)} vs bl`);
+      if (p.ratio != null && bs.ratio)
+        bits.push(`ratio ${p.ratio - bs.ratio.mean >= 0 ? "+" : ""}${(p.ratio - bs.ratio.mean).toFixed(1)} vs bl`);
+    }
   } else {
     bits.push(`${Math.round(p.cumulativeDistanceM).toLocaleString()} m`, fmtTime(p.cumulativeTimeS));
     if (p.split != null) bits.push(fmtPace(p.split) + " /500");
@@ -14082,6 +14413,19 @@ function replayStep(d) {
   if (!_replay || !_replay.tl.length) return;
   _replay.pos = Math.max(0, Math.min(_replay.tl.length - 1, _replay.pos + d));
   renderReplayPos();
+}
+
+// Jump to the next/previous recorded drift event (v1.20.0).
+function replayJumpEvent(dir) {
+  if (!_replay || !_replay.events || !_replay.events.length) return;
+  const target = dir > 0
+    ? _replay.events.find(e => e.idx > _replay.pos)
+    : _replay.events.slice().reverse().find(e => e.idx < _replay.pos);
+  if (target) {
+    _replay.pos = target.idx;
+    renderReplayPos();
+    setToast(`⚠ ${target.text}`, "warn");
+  }
 }
 
 function closeReplay() {
@@ -14215,6 +14559,21 @@ function openSettings() {
   document.getElementById("prefFcBest").checked = fco.best !== false;
   document.getElementById("prefFcAvg").checked  = fco.avg  !== false;
   document.getElementById("prefFcRef").checked  = fco.ref  !== false;
+  // v1.20.0 — baseline + cue preferences, with a transparency line
+  // showing exactly what the current baseline is built from.
+  document.getElementById("prefBaselineSource").value = state.userPrefs.baselineSource || "auto";
+  document.getElementById("prefCueMode").value = state.userPrefs.cueMode || "normal";
+  document.getElementById("prefCueSensitivity").value = state.userPrefs.cueSensitivity || "normal";
+  const bInfo = document.getElementById("baselineInfo");
+  if (bInfo) {
+    const b = state.baseline;
+    bInfo.textContent = b
+      ? `Current baseline: ${b.label} — ${b.n} strokes` +
+        (b.dateRange ? ` (${b.dateRange.from}${b.dateRange.to !== b.dateRange.from ? " → " + b.dateRange.to : ""})` : "") +
+        ` · confidence ${b.confidence.level} (${b.confidence.why})` +
+        (state.userPrefs.lockedBaseline ? " · a locked reference is stored" : "")
+      : "No baseline yet — save a session with stroke capture, or lock today's average from the Force Curve card.";
+  }
   // Benchmarks form (moved out of its own modal into Settings).
   buildBenchmarksForm();
   // Target zones (#9).
@@ -14444,6 +14803,18 @@ function applySettingsFromDialog() {
     state.userPrefs.fcOverlays = { best: fcBest, avg: fcAvg, ref: fcRef };
     prefsChanged = true;
   }
+  // v1.20.0 — baseline + cue preferences.
+  const bSrc = document.getElementById("prefBaselineSource").value;
+  const cMode = document.getElementById("prefCueMode").value;
+  const cSens = document.getElementById("prefCueSensitivity").value;
+  if (state.userPrefs.baselineSource !== bSrc || state.userPrefs.cueMode !== cMode ||
+      state.userPrefs.cueSensitivity !== cSens) {
+    state.userPrefs.baselineSource = bSrc;
+    state.userPrefs.cueMode = cMode;
+    state.userPrefs.cueSensitivity = cSens;
+    prefsChanged = true;
+    loadReferenceCurve();
+  }
   // Benchmarks (moved into Settings). Always read — it's cheap and
   // lets us bypass per-field change detection.
   readBenchmarksFromForm();
@@ -14538,6 +14909,7 @@ function importSessionsFromText(raw) {
     ...(e.recovered === true ? { recovered: true } : {}),
     ...((() => { const s = sanitizeStrokeLog(e.strokes); return s ? { strokes: s } : {}; })()),
     ...((() => { const f = sanitizeSessionCurves(e.fc); return f ? { fc: f } : {}; })()),
+    ...((() => { const ev = sanitizeDriftEvents(e.driftEvents); return ev ? { driftEvents: ev } : {}; })()),
     imported: true,
   }));
   const before = state.history.length;
@@ -14770,6 +15142,11 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("summaryBtn").addEventListener("click", openSummary);
   document.getElementById("addIntervalBtn").addEventListener("click", () => addIntervalRow());
   document.getElementById("suggestTargetsBtn").addEventListener("click", applySuggestedTargets);
+  document.getElementById("raceCreateBtn").addEventListener("click", createRacePlanFromForm);
+  document.getElementById("raceDist").addEventListener("change", (ev) => {
+    document.getElementById("raceDistCustom").style.display =
+      ev.target.value === "custom" ? "" : "none";
+  });
   document.getElementById("savePlanBtn").addEventListener("click", savePlanFromForm);
   document.getElementById("clearPlanBtn").addEventListener("click", clearPlanFromForm);
   document.getElementById("cancelBuilderBtn").addEventListener("click", closeBuilder);
@@ -14815,6 +15192,8 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("replayPrev").addEventListener("click", () => replayStep(-1));
   document.getElementById("replayNext").addEventListener("click", () => replayStep(1));
   document.getElementById("replayPlay").addEventListener("click", replayTogglePlay);
+  document.getElementById("replayEvPrev").addEventListener("click", () => replayJumpEvent(-1));
+  document.getElementById("replayEvNext").addEventListener("click", () => replayJumpEvent(1));
   document.getElementById("replaySlider").addEventListener("input", (ev) => {
     if (_replay) { _replay.pos = parseInt(ev.target.value, 10) || 0; renderReplayPos(); }
   });
@@ -14840,6 +15219,8 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (ev.key === " ") { replayTogglePlay(); ev.preventDefault(); }
     else if (ev.key === "Home") { _replay.pos = 0; renderReplayPos(); ev.preventDefault(); }
     else if (ev.key === "End") { _replay.pos = _replay.tl.length - 1; renderReplayPos(); ev.preventDefault(); }
+    else if (ev.key === "[") { replayJumpEvent(-1); ev.preventDefault(); }
+    else if (ev.key === "]") { replayJumpEvent(1); ev.preventDefault(); }
   });
   document.getElementById("summaryReplayBtn").addEventListener("click", () => {
     // Replay the saved entry when viewing one from history; otherwise the
@@ -15111,6 +15492,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Force-curve "Reset best" — clears the best & average ghost
   // overlays without ending the session. Useful for "I just warmed
   // up, ignore those strokes" or starting a new piece mid-row.
+  const fcLock = document.getElementById("fcLockBtn");
+  if (fcLock) fcLock.addEventListener("click", lockCurrentBaseline);
   const fcReset = document.getElementById("fcResetBtn");
   if (fcReset) {
     fcReset.addEventListener("click", () => {

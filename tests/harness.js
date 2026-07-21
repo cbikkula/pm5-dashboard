@@ -131,6 +131,14 @@ function load() {
     // v1.19 curve intelligence
     "curveShapeMetrics", "curveSimilarity", "applyDriftHysteresis",
     "DRIFT_LATCH_EVALS", "loadReferenceCurve",
+    // v1.20 baseline / cues / race lab / power profile
+    "strokeStatsOf", "sessionsCompatible", "baselineConfidence",
+    "buildBaselineFromEntry", "buildRollingBaseline", "bestConsistentSection",
+    "baselineFromInterval", "resolveBaseline",
+    "computeLiveCues", "applyCueGovernor", "sanitizeDriftEvents",
+    "buildRacePlan", "racePlanToIntervals", "planTimeAtDistance",
+    "raceSegmentAt", "computeRaceStatus", "computeRaceDebrief", "sanitizeRaceMeta",
+    "bestRollingPower", "wattsToPace", "computePowerProfile",
   ];
   const shim = "\n;globalThis.__APP = {" +
     exposed.map((n) => `${n}: (typeof ${n}!=="undefined"?${n}:undefined)`).join(",") +

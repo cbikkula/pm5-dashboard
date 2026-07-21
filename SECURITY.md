@@ -84,6 +84,19 @@ silence secret scanners; an old copy of the key exists in git history, which is 
 - OAuth: `drive.appdata` remains the only scope; sign-out revokes the token.
 - 18 security regression tests keep these locked in (`npm test`, "security" group).
 
+## Hardening shipped in v1.20.0
+
+- The two new persisted fields ride the existing import sanitizer: **race-plan meta**
+  (whitelisted phases, numeric ranges, ≤ 40 segments) and **drift events** (≤ 50 per
+  session, bounded text) are scrubbed on import and verified inert through the debrief
+  and replay renderers by regression tests.
+- The analysis layer moved to `pm5web/analysis.js`; it and `index.html` are both served
+  network-first by the service worker so a page load can never mix code from two
+  releases. The size guard now covers the total offline app.
+- What's stored gains one item: recorded drift-event summaries (time, distance, cue id,
+  one-line text) inside your own sessions — same localStorage/Drive scope as everything
+  else, nothing new leaves the device.
+
 ## Hardening shipped in v1.18.1
 
 - Import validation now covers **every** field of an imported session, not just the

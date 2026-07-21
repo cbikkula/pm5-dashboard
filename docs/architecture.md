@@ -165,7 +165,7 @@ On sign-in (or page load if a token survived), we pull the Drive copy and merge:
 //   Don't touch — let the browser handle them directly.
 ```
 
-Cache version is bumped on every meaningful deploy (`pm5-v1` → `pm5-v46` and counting). Old caches are deleted in the `activate` handler.
+Cache version is bumped on every meaningful deploy (`pm5-v1` → `pm5-v47` and counting). Old caches are deleted in the `activate` handler.
 
 ## Why PWA over native
 
@@ -196,3 +196,8 @@ The security reasoning, threat model, and the adversarial-review findings that h
 
 ### Still ahead
 Real-time presence, workout assignment to lineups (v1.13.0), and a read-only viewer role + signed session-sharing URLs (v1.14.0).
+
+
+## v1.20.0 — two-script split
+
+The pure analysis layer (sanitizers, curve/shape math, baseline engine, cue governor, Race Lab, power profile — all DOM-free) lives in `pm5web/analysis.js`, loaded as a classic script before the main inline script. Both are served network-first by the service worker so a page can never mix releases, and both are cached for offline. The size guard in `tests/run.js` measures the total offline app (index.html + analysis.js + sw.js < 768 KB) and still caps index.html at 660 KB. `tests/harness.js` concatenates the two scripts into one vm sandbox; `scripts/syntax-check.js` parses each. Formulas: `docs/analysis-methods.md`.

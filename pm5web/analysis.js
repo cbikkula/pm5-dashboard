@@ -133,6 +133,9 @@ function sanitizeImportedPlan(plan) {
   }
   const known = new Set(BENCHMARKS.map(b => b.key));
   if (typeof plan.benchKey === "string" && known.has(plan.benchKey)) out.benchKey = plan.benchKey;
+  // v1.20.0 — race-plan meta is sanitized alongside the plan it rides.
+  const race = sanitizeRaceMeta(plan.race);
+  if (race) out.race = race;
   return out;
 }
 
@@ -942,4 +945,635 @@ function buildTrainingReport(history, prefs, nowMs) {
   L.push("---");
   L.push("Exported from PM5 Dashboard.");
   return L.join("\n");
+}
+
+// =====================================================================
+// Personal Baseline Engine (v1.20.0)
+// =====================================================================
+// A baseline is EVIDENCE from the athlete's own rowing — never a
+// universal biomechanical ideal. Shape:
+//   { source, label, curve|null (64 samples), stats|null, n,
+//     dateRange: {from,to}|null, confidence: {level, why} }
+// stats = { dl, ratio, pace, rate } each { mean, cv } plus n.
+
+// Per-stroke aggregate stats over a capture log. null-tolerant.
+function strokeStatsOf(samples) {
+  if (!Array.isArray(samples) || samples.length < 10) return null;
+  const agg = (f) => {
+    const vs = samples.map(f).filter(v => v != null && isFinite(v) && v > 0);
+    if (vs.length < 10) return null;
+    const mean = vs.reduce((a, b) => a + b, 0) / vs.length;
+    if (!mean) return null;
+    const sd = Math.sqrt(vs.reduce((a, b) => a + (b - mean) * (b - mean), 0) / vs.length);
+    return { mean, cv: (sd / mean) * 100 };
+  };
+  const stats = {
+    dl: agg(s => s.dl), ratio: agg(s => (s.dt && s.rt) ? s.rt / s.dt : null),
+    pace: agg(s => s.p), rate: agg(s => s.r),
+    peakTiming: agg(s => (s.pt != null && s.pt > 0) ? s.pt : null),
+    n: samples.length,
+  };
+  return (stats.dl || stats.ratio || stats.pace) ? stats : null;
+}
+
+// Two sessions are comparable when they are the same kind of work:
+// identical benchmark, or total distance within ±20%, or total
+// duration within ±20%. Both must carry v1.18+ capture data to
+// contribute curves/stats to a baseline.
+function sessionsCompatible(a, b) {
+  if (!a || !b) return false;
+  const ka = a.plan && a.plan.benchKey, kb = b.plan && b.plan.benchKey;
+  if (ka && kb) return ka === kb;
+  const da = a.totals && a.totals.distanceM, db = b.totals && b.totals.distanceM;
+  if (da > 0 && db > 0 && Math.abs(da - db) / Math.max(da, db) <= 0.2) return true;
+  const ta = a.totals && a.totals.elapsedS, tb = b.totals && b.totals.elapsedS;
+  if (ta > 0 && tb > 0 && Math.abs(ta - tb) / Math.max(ta, tb) <= 0.2) return true;
+  return false;
+}
+
+// Confidence is about DATA SUFFICIENCY, nothing else.
+function baselineConfidence(strokeN, sessionN, hasCurve) {
+  if (sessionN >= 3 && strokeN >= 150 && hasCurve) {
+    return { level: "high", why: `${sessionN} comparable sessions, ${strokeN} strokes, curves saved` };
+  }
+  if (strokeN >= 40 && hasCurve) {
+    return { level: "medium", why: `${strokeN} strokes${sessionN > 1 ? ` across ${sessionN} sessions` : ""}, curves saved` };
+  }
+  return { level: "low", why: strokeN < 40 ? `only ${strokeN} strokes` : "no curves saved" };
+}
+
+// Baseline from one saved session (the "previous workout" source).
+function buildBaselineFromEntry(entry) {
+  if (!entry) return null;
+  const curve = entry.fc && (entry.fc.avg || entry.fc.best) || null;
+  const stats = strokeStatsOf(entry.strokes);
+  if (!curve && !stats) return null;
+  const d = entry.date ? String(entry.date).slice(0, 10) : null;
+  const n = (entry.strokes || []).length;
+  return {
+    source: "session", label: entry.title || "previous session",
+    curve, stats, n,
+    dateRange: d ? { from: d, to: d } : null,
+    confidence: baselineConfidence(n, 1, !!curve),
+  };
+}
+
+// Rolling personal baseline: average of up to `maxSessions` recent
+// sessions comparable to `ref` (or to each other when ref is null).
+function buildRollingBaseline(history, ref, maxSessions) {
+  maxSessions = maxSessions || 5;
+  const pool = [];
+  for (const h of (history || [])) {
+    if (!h || (!h.fc && !h.strokes)) continue;
+    const anchor = ref || pool[0] || h;
+    if (pool.length && !sessionsCompatible(anchor, h)) continue;
+    if (ref && !sessionsCompatible(ref, h)) continue;
+    pool.push(h);
+    if (pool.length >= maxSessions) break;
+  }
+  if (pool.length < 2) return null;
+  // Average the sessions' average curves at FC_SAMPLES resolution.
+  const curves = pool.map(h => h.fc && (h.fc.avg || h.fc.best)).filter(Boolean)
+    .map(c => c.length === FC_SAMPLES ? c : resampleCurve(Array.from(c), FC_SAMPLES))
+    .filter(Boolean);
+  let curve = null;
+  if (curves.length >= 2) {
+    curve = new Array(FC_SAMPLES).fill(0);
+    for (const c of curves) for (let i = 0; i < FC_SAMPLES; i++) curve[i] += c[i] / curves.length;
+    curve = curve.map(v => Math.round(v * 10) / 10);
+  }
+  const allStrokes = pool.flatMap(h => Array.isArray(h.strokes) ? h.strokes : []);
+  const stats = strokeStatsOf(allStrokes);
+  if (!curve && !stats) return null;
+  const dates = pool.map(h => String(h.date || "").slice(0, 10)).filter(Boolean).sort();
+  return {
+    source: "rolling", label: `rolling · ${pool.length} sessions`,
+    curve, stats, n: allStrokes.length,
+    dateRange: dates.length ? { from: dates[0], to: dates[dates.length - 1] } : null,
+    confidence: baselineConfidence(allStrokes.length, pool.length, !!curve),
+  };
+}
+
+// Best consistent section of the current session: the `win`-stroke
+// window with the lowest pace CV. Returns a baseline built from it.
+function bestConsistentSection(samples, win) {
+  win = win || 20;
+  if (!Array.isArray(samples) || samples.length < win + 10) return null;
+  let best = null;
+  for (let i = 10; i + win <= samples.length; i++) {   // skip warm-up strokes
+    const sl = samples.slice(i, i + win);
+    const paces = sl.map(s => s.p).filter(v => v != null && v > 0);
+    if (paces.length < win * 0.8) continue;
+    const m = paces.reduce((a, b) => a + b, 0) / paces.length;
+    const cv = Math.sqrt(paces.reduce((a, b) => a + (b - m) * (b - m), 0) / paces.length) / m * 100;
+    if (!best || cv < best.cv) best = { cv, start: i };
+  }
+  if (!best) return null;
+  const section = samples.slice(best.start, best.start + win);
+  const stats = strokeStatsOf(section.concat(section));   // agg needs >=10 per field; window is 20 — fine
+  return {
+    source: "section", label: `steadiest ${win} strokes (from stroke ${best.start + 1})`,
+    curve: null, stats, n: win, dateRange: null,
+    confidence: { level: "medium", why: `${win}-stroke steadiest section of this session (pace cv ${best.cv.toFixed(1)}%)` },
+  };
+}
+
+// Stats-only baseline for one interval of a saved session (strokes
+// windowed by the interval's cumulative distance bounds).
+function baselineFromInterval(entry, intervalIdx) {
+  if (!entry || !Array.isArray(entry.results) || !Array.isArray(entry.strokes)) return null;
+  let from = 0, to = 0;
+  for (let i = 0; i < entry.results.length; i++) {
+    const d = entry.results[i] && entry.results[i].distanceM || 0;
+    if (i < intervalIdx) from += d;
+    to += d;
+    if (i === intervalIdx) break;
+  }
+  if (to <= from) return null;
+  const section = entry.strokes.filter(s => s && s.d != null && s.d >= from && s.d < to);
+  const stats = strokeStatsOf(section);
+  if (!stats) return null;
+  return {
+    source: "interval", label: `interval ${intervalIdx + 1}`,
+    curve: null, stats, n: section.length, dateRange: null,
+    confidence: baselineConfidence(section.length, 1, false),
+  };
+}
+
+// Resolve the athlete's chosen baseline source into a concrete
+// baseline. Pure: everything arrives via ctx.
+//   sourcePref: "auto" (previous compatible session) | "rolling" |
+//               "locked" | "section" | "off"
+function resolveBaseline(sourcePref, ctx) {
+  ctx = ctx || {};
+  const history = ctx.history || [];
+  if (sourcePref === "off") return null;
+  if (sourcePref === "locked") {
+    const lb = ctx.lockedBaseline;
+    if (lb && (lb.curve || lb.stats)) {
+      return { source: "locked", label: lb.label || "locked reference",
+        curve: lb.curve || null, stats: lb.stats || null, n: lb.n || 0,
+        dateRange: lb.date ? { from: lb.date, to: lb.date } : null,
+        confidence: lb.n >= 40 ? { level: "medium", why: `locked reference (${lb.n} strokes)` }
+                              : { level: "low", why: "locked reference with few strokes" } };
+    }
+    return null;
+  }
+  if (sourcePref === "rolling") return buildRollingBaseline(history, ctx.currentEntryLike || null, 5);
+  if (sourcePref === "section") return bestConsistentSection(ctx.currentSamples || [], 20);
+  // "auto": newest compatible session with capture data.
+  for (const h of history) {
+    if (!h || (!h.fc && !h.strokes)) continue;
+    if (ctx.currentEntryLike && !sessionsCompatible(ctx.currentEntryLike, h)) continue;
+    const b = buildBaselineFromEntry(h);
+    if (b) { b.source = "auto"; return b; }
+  }
+  return null;
+}
+
+// =====================================================================
+// Live Technique Intelligence (v1.20.0) — cue engine + governor
+// =====================================================================
+// computeLiveCues evaluates candidate cues against the session log and
+// the active baseline. Every cue reports: what changed, by how much,
+// versus which baseline, and its confidence. The governor decides what
+// (if anything) the athlete actually sees: minimum persistence,
+// hysteresis, cooldown, one cue at a time, quiet mode, sensitivity.
+
+// Sensitivity scales thresholds: "low" = less sensitive (bigger changes
+// needed), "high" = more sensitive. Multiplies the base thresholds.
+const CUE_SENS = { low: 1.5, normal: 1.0, high: 0.7 };
+
+function computeLiveCues(samples, baseline, opts) {
+  opts = opts || {};
+  const k = CUE_SENS[opts.sensitivity] || 1.0;
+  const cues = [];
+  if (!Array.isArray(samples) || samples.length < 40) return { cues };
+  const recent = samples.slice(-15);
+  const base = samples.slice(10, 25);
+  const mean = (rows, f) => {
+    const vs = rows.map(f).filter(v => v != null && isFinite(v) && v > 0);
+    return vs.length >= 5 ? vs.reduce((a, b) => a + b, 0) / vs.length : null;
+  };
+  const blab = baseline ? baseline.label : "this session's early strokes";
+  const bstats = baseline && baseline.stats;
+
+  // 1. Drive Length shortening — vs baseline stats when present, else
+  //    the session's own early strokes.
+  const dlRef = (bstats && bstats.dl) ? bstats.dl.mean : mean(base, s => s.dl);
+  const dlNow = mean(recent, s => s.dl);
+  if (dlRef && dlNow) {
+    const pct = ((dlNow - dlRef) / dlRef) * 100;
+    if (pct < -3 * k) cues.push({ id: "driveLen", priority: 1,
+      text: `Drive Length shortened ${Math.abs(pct).toFixed(1)}% vs ${bstats && bstats.dl ? blab : "early strokes"}`,
+      deltaText: `${dlNow.toFixed(2)} m vs ${dlRef.toFixed(2)} m`,
+      baselineLabel: bstats && bstats.dl ? blab : "session start",
+      confidence: recent.length >= 15 ? "medium" : "low" });
+  }
+  // 2. Ratio collapse/stretch.
+  const ratioOf = s => (s.dt && s.rt) ? s.rt / s.dt : null;
+  const rRef = (bstats && bstats.ratio) ? bstats.ratio.mean : mean(base, ratioOf);
+  const rNow = mean(recent, ratioOf);
+  if (rRef && rNow) {
+    const pct = ((rNow - rRef) / rRef) * 100;
+    if (Math.abs(pct) > 12 * k) cues.push({ id: "ratio", priority: 2,
+      text: `Ratio ${pct < 0 ? "collapsed" : "stretched"} ${Math.abs(pct).toFixed(0)}% vs ${bstats && bstats.ratio ? blab : "early strokes"}`,
+      deltaText: `${rNow.toFixed(1)}:1 vs ${rRef.toFixed(1)}:1`,
+      baselineLabel: bstats && bstats.ratio ? blab : "session start",
+      confidence: "medium" });
+  }
+  // 3. Peak-force timing shift vs baseline curve (needs a baseline curve).
+  if (baseline && baseline.curve) {
+    const bShape = curveShapeMetrics(baseline.curve);
+    const ptNow = mean(recent, s => (s.pt != null && s.pt > 0) ? s.pt : null);
+    if (bShape && ptNow != null) {
+      const shift = ptNow - bShape.peakPos;
+      if (Math.abs(shift) > 0.06 * k) cues.push({ id: "peakTiming", priority: 3,
+        text: `Force Curve peak is ${Math.round(Math.abs(shift) * 100)}% ${shift > 0 ? "later" : "earlier"} in the drive than ${blab}`,
+        deltaText: `${Math.round(ptNow * 100)}% vs ${Math.round(bShape.peakPos * 100)}% of drive`,
+        baselineLabel: blab, confidence: "medium" });
+    }
+  }
+  // 4. Pace fading while rate rises — the classic "working harder,
+  //    going slower" pattern. Session-internal only.
+  const pEarly = mean(base, s => s.p), pNow = mean(recent, s => s.p);
+  const rateEarly = mean(base, s => s.r), rateNow = mean(recent, s => s.r);
+  if (pEarly && pNow && rateEarly && rateNow) {
+    const paceLossPct = ((pNow - pEarly) / pEarly) * 100;    // + = slower
+    const rateGain = rateNow - rateEarly;
+    if (paceLossPct > 2.5 * k && rateGain > 1) cues.push({ id: "paceFade", priority: 4,
+      text: `Pace faded ${paceLossPct.toFixed(1)}% while rate rose ${rateGain.toFixed(1)} spm vs early strokes`,
+      deltaText: `${pNow.toFixed(1)}s vs ${pEarly.toFixed(1)}s /500 · ${rateNow.toFixed(0)} vs ${rateEarly.toFixed(0)} spm`,
+      baselineLabel: "session start", confidence: "medium" });
+  }
+  cues.sort((a, b) => a.priority - b.priority);
+  return { cues };
+}
+
+// Governor state machine. state = { active|null, streaks:{}, cooldown:{},
+// stableStreak, events:[] } — pass the previous return value back in.
+// latchEvals: consecutive evaluations (≈5 strokes each) required before
+// a cue shows. cooldownEvals: evaluations after a cue clears during
+// which the same cue id stays silent.
+function applyCueGovernor(prev, cueResult, opts) {
+  opts = opts || {};
+  const latchEvals = opts.latchEvals || 3;
+  const cooldownEvals = opts.cooldownEvals || 6;
+  const st = {
+    active: prev && prev.active || null,
+    streaks: Object.assign({}, prev && prev.streaks),
+    cooldown: Object.assign({}, prev && prev.cooldown),
+    stableStreak: prev && prev.stableStreak || 0,
+    event: null,
+  };
+  // tick cooldowns
+  for (const id of Object.keys(st.cooldown)) {
+    st.cooldown[id]--;
+    if (st.cooldown[id] <= 0) delete st.cooldown[id];
+  }
+  if (opts.quiet) {           // quiet mode: never surface, still decay state
+    st.active = null; st.streaks = {}; return st;
+  }
+  const cues = (cueResult && cueResult.cues) || [];
+  const present = new Set(cues.map(c => c.id));
+  // streak bookkeeping
+  for (const c of cues) st.streaks[c.id] = (st.streaks[c.id] || 0) + 1;
+  for (const id of Object.keys(st.streaks)) if (!present.has(id)) delete st.streaks[id];
+
+  if (st.active) {
+    if (present.has(st.active.id)) {
+      // still sustained — refresh text/persistence, stay up
+      const c = cues.find(x => x.id === st.active.id);
+      st.active = Object.assign({}, c, { persistEvals: (st.active.persistEvals || latchEvals) + 1 });
+      st.stableStreak = 0;
+      return st;
+    }
+    st.stableStreak++;
+    if (st.stableStreak >= latchEvals) {
+      // recovered — clear, start cooldown, close the event
+      st.cooldown[st.active.id] = cooldownEvals;
+      st.event = { id: st.active.id, text: st.active.text, endEval: true };
+      st.active = null;
+      st.stableStreak = 0;
+    }
+    return st;
+  }
+  // no active cue: promote the highest-priority sustained, non-cooling cue
+  for (const c of cues) {
+    if ((st.streaks[c.id] || 0) >= latchEvals && !st.cooldown[c.id]) {
+      st.active = Object.assign({}, c, { persistEvals: latchEvals });
+      st.event = { id: c.id, text: c.text, startEval: true };
+      st.stableStreak = 0;
+      return st;
+    }
+  }
+  return st;
+}
+
+// Sanitize imported drift-event lists (v1.20.0 persisted field).
+function sanitizeDriftEvents(events) {
+  if (!Array.isArray(events)) return null;
+  const out = [];
+  for (const e of events.slice(0, 50)) {
+    if (!e || typeof e !== "object") continue;
+    const row = {
+      t: _impNum(e.t, 0, 864000), d: _impNum(e.d, 0, 1e6),
+      id: _impStr(e.id, 20) || "cue",
+      text: _impStr(e.text, 200) || "",
+    };
+    const tEnd = _impNum(e.tEnd, 0, 864000);
+    if (tEnd != null) row.tEnd = tEnd;
+    if (row.t == null && row.d == null) continue;
+    out.push(row);
+  }
+  return out.length ? out : null;
+}
+
+// =====================================================================
+// Race Lab (v1.20.0) — plan, execute, debrief
+// =====================================================================
+// A race plan is segments over a distance, each with a target split
+// (and optional rate), built from a pacing strategy around the
+// athlete's chosen base split. Predicted finish is arithmetic over the
+// segment targets — an estimate relative to this plan, nothing more.
+
+function buildRacePlan(distanceM, strategy, basePaceS, opts) {
+  opts = opts || {};
+  if (!(distanceM >= 300) || !(basePaceS > 60) || !(basePaceS < 300)) return null;
+  const sprintLen = Math.min(300, Math.max(200, Math.round(distanceM * 0.1 / 50) * 50));
+  const startLen = Math.max(100, Math.round(distanceM * 0.05 / 50) * 50);
+  const settleLen = Math.max(150, Math.round(distanceM * 0.1 / 50) * 50);
+  // strategy offset applied to the BASE section only; start/sprint are
+  // always faster than base, settle slightly slower than start.
+  const off = { even: [0, 0], negative: [1.5, -1.5], positive: [-1.5, 1.5] }[strategy] || [0, 0];
+  const segs = [];
+  const push = (fromM, toM, phase, pace, spm) => {
+    if (toM > fromM) segs.push({ fromM, toM, phase, targetPaceS: Math.round(pace * 10) / 10,
+      targetSpm: spm || null });
+  };
+  const baseFrom = startLen + settleLen;
+  const baseTo = distanceM - sprintLen;
+  const mid = Math.round((baseFrom + baseTo) / 2 / 50) * 50;
+  push(0, startLen, "start", basePaceS - 4, opts.startSpm || null);
+  push(startLen, baseFrom, "settle", basePaceS + 1, opts.baseSpm || null);
+  if (baseTo > baseFrom) {
+    if (strategy === "even") {
+      push(baseFrom, baseTo, "base", basePaceS, opts.baseSpm || null);
+    } else {
+      push(baseFrom, mid, "base", basePaceS + off[0], opts.baseSpm || null);
+      push(mid, baseTo, "push", basePaceS + off[1], opts.baseSpm || null);
+    }
+  }
+  push(baseTo, distanceM, "sprint", basePaceS - 3, opts.sprintSpm || null);
+  let predicted = 0;
+  for (const s of segs) predicted += (s.toM - s.fromM) / 500 * s.targetPaceS;
+  return {
+    distanceM, strategy: strategy || "even", basePaceS,
+    segments: segs, predictedFinishS: Math.round(predicted * 10) / 10,
+  };
+}
+
+// Turn a race plan into ordinary builder intervals (one per segment)
+// so the whole existing tracker/summary/persistence path just works.
+function racePlanToIntervals(plan) {
+  if (!plan || !Array.isArray(plan.segments)) return [];
+  return plan.segments.map(s => ({
+    kind: "distance", value: s.toM - s.fromM,
+    targetPaceS: s.targetPaceS, targetWatts: null,
+    targetSpm: s.targetSpm, restS: 0,
+  }));
+}
+
+// Where the athlete stands against the plan RIGHT NOW.
+//   deltaS < 0 → ahead of plan. Bands: ±1.5 s = "on".
+// Projected finish uses the rolling pace over the recent strokes —
+// deliberately conservative: it assumes you keep rowing like the last
+// minute, not like your best split.
+function planTimeAtDistance(plan, d) {
+  let t = 0;
+  for (const s of plan.segments) {
+    if (d <= s.fromM) break;
+    const cover = Math.min(d, s.toM) - s.fromM;
+    if (cover > 0) t += cover / 500 * s.targetPaceS;
+  }
+  return t;
+}
+function raceSegmentAt(plan, d) {
+  for (let i = 0; i < plan.segments.length; i++) {
+    if (d < plan.segments[i].toM) return { seg: plan.segments[i], idx: i };
+  }
+  const last = plan.segments.length - 1;
+  return last >= 0 ? { seg: plan.segments[last], idx: last } : null;
+}
+function computeRaceStatus(plan, distanceM, elapsedS, rollingPaceS) {
+  if (!plan || !(distanceM >= 0) || !(elapsedS > 0)) return null;
+  const planT = planTimeAtDistance(plan, distanceM);
+  const deltaS = Math.round((elapsedS - planT) * 10) / 10;
+  const status = deltaS < -1.5 ? "ahead" : deltaS > 1.5 ? "behind" : "on";
+  const at = raceSegmentAt(plan, distanceM);
+  const remaining = Math.max(0, plan.distanceM - distanceM);
+  const pace = (rollingPaceS && rollingPaceS > 0) ? rollingPaceS : null;
+  const projectedFinishS = pace ? Math.round((elapsedS + remaining / 500 * pace) * 10) / 10 : null;
+  return { deltaS, status, segment: at && at.seg || null, segIdx: at ? at.idx : null,
+    planTimeAtD: Math.round(planT * 10) / 10, projectedFinishS };
+}
+
+// Post-race debrief over a saved entry whose plan carried race meta.
+// Per-segment actuals come from the captured stroke log (distance-
+// windowed). "Time gained/lost" is (actual − planned) segment time —
+// an ESTIMATE relative to the selected race plan only.
+function computeRaceDebrief(entry) {
+  if (!entry || !entry.plan || !entry.plan.race || !Array.isArray(entry.strokes) ||
+      entry.strokes.length < 10) return { has: false };
+  const plan = entry.plan.race;
+  const strokes = entry.strokes;
+  const inWin = (s, a, b) => s && s.d != null && s.d >= a && s.d < b;
+  const mean = (rows, f) => {
+    const vs = rows.map(f).filter(v => v != null && isFinite(v) && v > 0);
+    return vs.length >= 3 ? vs.reduce((x, y) => x + y, 0) / vs.length : null;
+  };
+  const segRows = [];
+  for (const s of plan.segments) {
+    const win = strokes.filter(x => inWin(x, s.fromM, s.toM));
+    const actualPace = mean(win, x => x.p);
+    const planT = (s.toM - s.fromM) / 500 * s.targetPaceS;
+    const actualT = actualPace != null ? (s.toM - s.fromM) / 500 * actualPace : null;
+    segRows.push({
+      phase: s.phase, fromM: s.fromM, toM: s.toM,
+      planPaceS: s.targetPaceS, actualPaceS: actualPace != null ? Math.round(actualPace * 10) / 10 : null,
+      deltaS: actualT != null ? Math.round((actualT - planT) * 10) / 10 : null,   // + = time lost vs plan (estimate)
+      rate: mean(win, x => x.r), dl: mean(win, x => x.dl),
+      ratio: mean(win, x => (x.dt && x.rt) ? x.rt / x.dt : null),
+      pf: mean(win, x => x.pf), strokes: win.length,
+    });
+  }
+  const known = segRows.filter(r => r.deltaS != null);
+  if (known.length < 2) return { has: false };
+  const totalDelta = Math.round(known.reduce((a, r) => a + r.deltaS, 0) * 10) / 10;
+  // fade: last base/push segment pace vs first base pace; sprint lift:
+  // sprint pace vs preceding segment.
+  const baseRows = segRows.filter(r => (r.phase === "base" || r.phase === "push") && r.actualPaceS != null);
+  const fadePct = baseRows.length >= 2
+    ? Math.round(((baseRows[baseRows.length - 1].actualPaceS - baseRows[0].actualPaceS) / baseRows[0].actualPaceS) * 1000) / 10
+    : null;
+  const sprintRow = segRows.find(r => r.phase === "sprint");
+  const beforeSprint = segRows[segRows.indexOf(sprintRow) - 1];
+  const sprintLiftPct = (sprintRow && sprintRow.actualPaceS != null && beforeSprint && beforeSprint.actualPaceS != null)
+    ? Math.round(((beforeSprint.actualPaceS - sprintRow.actualPaceS) / beforeSprint.actualPaceS) * 1000) / 10
+    : null;
+  // findings: worst time loss, best gain, technique change in the worst
+  // segment — max three, prioritized by |time delta|.
+  const findings = [];
+  const worst = known.slice().sort((a, b) => b.deltaS - a.deltaS)[0];
+  const bestSeg = known.slice().sort((a, b) => a.deltaS - b.deltaS)[0];
+  if (bestSeg && bestSeg.deltaS < -0.5) findings.push({ type: "success",
+    title: `Strongest vs plan: ${bestSeg.phase} (${bestSeg.fromM}–${bestSeg.toM} m)`,
+    body: `≈${Math.abs(bestSeg.deltaS).toFixed(1)} s faster than planned (estimate vs this plan).` });
+  if (worst && worst.deltaS > 0.5) {
+    let tech = "";
+    const firstBase = baseRows[0];
+    if (worst.dl != null && firstBase && firstBase.dl != null && firstBase.dl > 0) {
+      const dlPct = ((worst.dl - firstBase.dl) / firstBase.dl) * 100;
+      if (dlPct < -2.5) tech = ` Drive Length there averaged ${worst.dl.toFixed(2)} m, ${Math.abs(dlPct).toFixed(1)}% shorter than your opening base pace — worth a look, though pacing and technique influence each other.`;
+    }
+    findings.push({ type: "improve",
+      title: `Biggest opportunity: ${worst.phase} (${worst.fromM}–${worst.toM} m)`,
+      body: `≈${worst.deltaS.toFixed(1)} s slower than planned (estimate vs this plan).${tech}` });
+  }
+  if (fadePct != null && fadePct > 1.5) findings.push({ type: "pattern",
+    title: "Pace faded through the middle",
+    body: `Base pace drifted ${fadePct.toFixed(1)}% slower from first to last base segment.` });
+  else if (sprintLiftPct != null && sprintLiftPct > 1) findings.push({ type: "pattern",
+    title: "Real finishing sprint",
+    body: `Sprint pace was ${sprintLiftPct.toFixed(1)}% faster than the preceding segment.` });
+  return {
+    has: true, segments: segRows, totalDeltaS: totalDelta,
+    plannedFinishS: plan.predictedFinishS || null,
+    actualFinishS: entry.totals && entry.totals.elapsedS || null,
+    fadePct, sprintLiftPct,
+    findings: findings.slice(0, 3),
+    method: "Segment actuals are averaged from the captured stroke log windowed by distance; time gained/lost per segment = actual − planned segment time, an estimate relative to this race plan only.",
+  };
+}
+
+// Sanitize imported race meta on plans (rides sanitizeImportedPlan).
+function sanitizeRaceMeta(race) {
+  if (!race || typeof race !== "object") return null;
+  const distanceM = _impNum(race.distanceM, 300, 100000);
+  const basePaceS = _impNum(race.basePaceS, 60, 300);
+  if (distanceM == null || basePaceS == null || !Array.isArray(race.segments)) return null;
+  const segs = [];
+  for (const s of race.segments.slice(0, 40)) {
+    if (!s || typeof s !== "object") continue;
+    const fromM = _impNum(s.fromM, 0, 100000), toM = _impNum(s.toM, 0, 100000);
+    const pace = _impNum(s.targetPaceS, 60, 300);
+    if (fromM == null || toM == null || toM <= fromM || pace == null) continue;
+    segs.push({ fromM, toM, targetPaceS: pace,
+      phase: ["start","settle","base","push","sprint"].includes(s.phase) ? s.phase : "base",
+      targetSpm: _impNum(s.targetSpm, 10, 60) });
+  }
+  if (segs.length < 2) return null;
+  return { distanceM, basePaceS, segments: segs,
+    strategy: ["even","negative","positive"].includes(race.strategy) ? race.strategy : "even",
+    predictedFinishS: _impNum(race.predictedFinishS, 30, 86400) };
+}
+
+// =====================================================================
+// Rowing Power Profile (v1.20.0)
+// =====================================================================
+// Best recorded average power over supported durations, from captured
+// per-stroke samples (and whole-piece watts for short pieces). Honest
+// by construction: estimates are labeled, ordinary rows are never
+// treated as maximal tests, and insufficient data says exactly what
+// benchmark would unlock the number.
+
+const POWER_DURATIONS = [
+  { s: 60, label: "1:00" }, { s: 240, label: "4:00" },
+  { s: 480, label: "8:00" }, { s: 1200, label: "20:00" },
+];
+
+// Best rolling average watts over `durS` inside one session's stroke
+// log. Requires sample coverage ≥ 80% of the window's expected strokes.
+function bestRollingPower(samples, durS) {
+  if (!Array.isArray(samples) || samples.length < 10) return null;
+  const pts = samples.filter(s => s && s.t != null && s.w != null && s.w > 0);
+  if (pts.length < 10) return null;
+  let best = null;
+  let j = 0, sum = 0;
+  for (let i = 0; i < pts.length; i++) {
+    sum += pts[i].w;
+    while (pts[i].t - pts[j].t > durS) { sum -= pts[j].w; j++; }
+    const span = pts[i].t - pts[j].t;
+    const count = i - j + 1;
+    if (span >= durS * 0.9 && count >= (durS / 3) * 0.8) {   // ≥80% stroke coverage at ~20 spm floor
+      const avg = sum / count;
+      if (!best || avg > best.watts) best = { watts: Math.round(avg), startT: pts[j].t };
+    }
+  }
+  return best;
+}
+
+function wattsToPace(w) { return (w > 0) ? Math.pow(2.8 / w, 1 / 3) * 500 : null; }
+
+function computePowerProfile(history, nowMs) {
+  history = history || [];
+  const rows = [];
+  const RECENT_MS = 90 * 86400000;
+  for (const d of POWER_DURATIONS) {
+    let allTime = null, recent = null;
+    for (const h of history) {
+      if (!Array.isArray(h.strokes)) continue;
+      const b = bestRollingPower(h.strokes, d.s);
+      if (!b) continue;
+      const when = Date.parse(h.date);
+      const rec = { watts: b.watts, dateISO: String(h.date || "").slice(0, 10), title: h.title || "" };
+      if (!allTime || b.watts > allTime.watts) allTime = rec;
+      if (!isNaN(when) && nowMs - when <= RECENT_MS && (!recent || b.watts > recent.watts)) recent = rec;
+    }
+    rows.push({
+      durS: d.s, label: d.label,
+      best: allTime, recent,
+      paceS: allTime ? Math.round(wattsToPace(allTime.watts) * 10) / 10 : null,
+      sufficient: !!allTime,
+      need: allTime ? null : `a captured session with ≥${d.label} of continuous work`,
+    });
+  }
+  // Critical power: only from ≥2 benchmark TESTS with distinct
+  // durations (ratio ≥ 2×) — ordinary rows never qualify.
+  const tests = history.filter(h => h && h.plan && h.plan.benchKey &&
+    h.totals && h.totals.avgWatts > 0 && h.totals.elapsedS > 120);
+  let cp = null;
+  if (tests.length >= 2) {
+    const pts = [];
+    const seen = new Set();
+    for (const t of tests) {
+      if (seen.has(t.plan.benchKey)) continue;
+      seen.add(t.plan.benchKey);
+      pts.push({ t: t.totals.elapsedS, work: t.totals.avgWatts * t.totals.elapsedS, key: t.plan.benchKey });
+    }
+    if (pts.length >= 2) {
+      const tMin = Math.min(...pts.map(p => p.t)), tMax = Math.max(...pts.map(p => p.t));
+      if (tMax / tMin >= 2) {
+        // linear work-time model: W = CP·t + W′  (least squares)
+        const n = pts.length;
+        const sx = pts.reduce((a, p) => a + p.t, 0), sy = pts.reduce((a, p) => a + p.work, 0);
+        const sxx = pts.reduce((a, p) => a + p.t * p.t, 0), sxy = pts.reduce((a, p) => a + p.t * p.work, 0);
+        const denom = n * sxx - sx * sx;
+        if (denom > 0) {
+          const cpW = (n * sxy - sx * sy) / denom;
+          const wPrime = (sy - cpW * sx) / n;
+          if (cpW > 40 && cpW < 1000 && wPrime > 0) {
+            cp = { watts: Math.round(cpW), wPrimeJ: Math.round(wPrime),
+              paceS: Math.round(wattsToPace(cpW) * 10) / 10,
+              fromTests: pts.map(p => p.key),
+              method: "Estimate from the linear work–time model (W = CP·t + W′) over your benchmark tests. Only formal Tests count — training rows are never treated as maximal." };
+          }
+        }
+      }
+    }
+  }
+  const cpNeed = cp ? null :
+    "Two benchmark Tests of clearly different lengths (e.g. a 2k and a 10k or 30:00) are needed for a critical-power estimate.";
+  return { has: rows.some(r => r.sufficient), rows, cp, cpNeed,
+    method: "Best rolling average watts inside captured sessions (≥90% window span, ≥80% stroke coverage). Pace equivalents via pace = (2.8/W)^(1/3) × 500. All values are estimates from saved data — not lab measurements." };
 }

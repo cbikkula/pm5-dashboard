@@ -63,3 +63,8 @@ When releasing a new version I walk through this checklist:
 | Bundle size | < 400 KB | 332 KB |
 
 Tested on a 2024 mid-tier laptop (Ryzen 5, integrated graphics).
+
+
+## v1.20.0 note
+
+The suite (316 assertions) runs both app scripts — `analysis.js` + the inline main script — concatenated in one Node vm sandbox. New-engine groups (baseline, live cues, Race Lab, power profile, v1.20 compat) use deterministic synthetic fixtures only; no personal workout data is committed.

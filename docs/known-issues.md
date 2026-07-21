@@ -1,5 +1,19 @@
 # Known issues
 
+## Race meta is dropped if you restructure a race plan's intervals
+
+A Race Lab plan stays a race plan through renames and target tweaks, but editing it in
+the builder in a way that changes the *number* of intervals drops the race meta (the
+segment map would no longer match). The plan keeps working as a normal interval workout;
+rebuild it in Race Lab to get the live delta and debrief back. Deliberate, but worth
+knowing.
+
+## Live cues need capture data
+
+Live cues, baselines, the race debrief, and the power profile are all built on the
+v1.18+ per-stroke capture. Sessions logged before v1.18 (or imported without `strokes`)
+contribute nothing to them — the UI says so rather than guessing.
+
 Open bugs, browser quirks, and limitations I haven't fixed yet. PRs welcome (see [`CONTRIBUTING.md`](../CONTRIBUTING.md)).
 
 ## ~~Workout title is not HTML-escaped in the history list~~ — fixed in v1.18.0

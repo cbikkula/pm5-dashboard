@@ -876,6 +876,275 @@ if (app.curveShapeMetrics && app.curveSimilarity && app.applyDriftHysteresis) {
 }
 
 // ---------------------------------------------------------------------
+// 23. Baseline engine (v1.20.0) — deterministic synthetic fixtures.
+// ---------------------------------------------------------------------
+group("baseline engine");
+if (app.strokeStatsOf && app.resolveBaseline && app.buildRollingBaseline) {
+  const bell = (peak, at) => Array.from({ length: 64 }, (_, i) => {
+    const x = i / 63; const ph = x < at ? x / (2 * at) : 0.5 + (x - at) / (2 * (1 - at));
+    return Math.round(peak * Math.pow(Math.sin(Math.PI * ph), 1.4) * 10) / 10;
+  });
+  const mkStrokes = (n, over) => Array.from({ length: n }, (_, i) => Object.assign({
+    t: i * 2.5, d: i * 11, p: 118, w: 190, r: 25, hr: 148,
+    dl: 1.42, dt: 0.8, rt: 1.6, pf: 145, pt: 0.38 }, over || {}));
+  const mkSesh = (id, daysOld, dist, over) => Object.assign({
+    id, date: new Date(Date.parse("2026-07-01T10:00:00Z") - daysOld * 86400000).toISOString(),
+    title: id, totals: { distanceM: dist, elapsedS: dist / 500 * 118 },
+    results: [], strokes: mkStrokes(60),
+    fc: { avg: bell(140, 0.38), best: bell(155, 0.38), peak: 155, n: 60 } }, over || {});
+
+  const stats = app.strokeStatsOf(mkStrokes(60));
+  ok("stroke stats: means computed", Math.abs(stats.dl.mean - 1.42) < 0.001 && Math.abs(stats.ratio.mean - 2.0) < 0.001);
+  ok("stroke stats: zero-variance cv ≈ 0", stats.dl.cv < 0.001);
+  ok("stroke stats: insufficient → null", app.strokeStatsOf(mkStrokes(5)) === null && app.strokeStatsOf(null) === null);
+
+  ok("compatible: same benchmark", app.sessionsCompatible(
+    { plan: { benchKey: "2k" }, totals: {} }, { plan: { benchKey: "2k" }, totals: {} }));
+  ok("incompatible: different benchmark", !app.sessionsCompatible(
+    { plan: { benchKey: "2k" }, totals: {} }, { plan: { benchKey: "10k" }, totals: {} }));
+  ok("compatible: distance within 20%", app.sessionsCompatible(
+    { totals: { distanceM: 2000 } }, { totals: { distanceM: 2300 } }));
+  ok("incompatible: distance beyond 20%", !app.sessionsCompatible(
+    { totals: { distanceM: 2000 } }, { totals: { distanceM: 6000 } }));
+
+  const b1 = app.buildBaselineFromEntry(mkSesh("A", 1, 2000));
+  ok("entry baseline built with curve+stats", b1.curve.length === 64 && b1.stats.dl.mean > 1.4 && b1.n === 60);
+  ok("entry baseline confidence explains itself", /strokes/.test(b1.confidence.why));
+
+  const hist = [mkSesh("r1", 1, 2000), mkSesh("r2", 3, 2100), mkSesh("r3", 5, 1950), mkSesh("far", 7, 9000)];
+  const histSnapshot = JSON.stringify(hist);
+  const roll = app.buildRollingBaseline(hist, null, 5);
+  ok("rolling baseline pools only compatible sessions", roll.label.includes("3 sessions"));
+  ok("rolling baseline averages curves at 64 samples", roll.curve.length === 64);
+  ok("rolling baseline date range spans the pool", roll.dateRange.from < roll.dateRange.to);
+  ok("rolling baseline is high confidence with 3×60 strokes", roll.confidence.level === "high");
+  ok("baseline building does not mutate history", JSON.stringify(hist) === histSnapshot);
+  ok("rolling baseline needs ≥2 sessions", app.buildRollingBaseline([mkSesh("solo", 1, 2000)], null, 5) === null);
+
+  const wobble = mkStrokes(80).map((s, i) => (i >= 30 && i < 50) ? s : { ...s, p: 118 + (i % 7) });
+  const sect = app.bestConsistentSection(wobble, 20);
+  ok("steadiest section found inside the calm window", sect.label.includes("stroke 3"));
+  ok("section baseline needs enough strokes", app.bestConsistentSection(mkStrokes(20), 20) === null);
+
+  const iv = app.baselineFromInterval({ results: [{ distanceM: 330 }, { distanceM: 330 }],
+    strokes: mkStrokes(60) }, 1);
+  ok("interval baseline windows by distance", iv && iv.n > 10 && iv.label === "interval 2");
+
+  ok("resolve: off → null", app.resolveBaseline("off", { history: hist }) === null);
+  const locked = app.resolveBaseline("locked", { lockedBaseline: { curve: bell(150, 0.4), stats: stats, n: 60, label: "locked 2026-06-30", date: "2026-06-30" } });
+  ok("resolve: locked honoured with label", locked.source === "locked" && /locked/.test(locked.label));
+  ok("resolve: locked missing → null", app.resolveBaseline("locked", {}) === null);
+  const auto = app.resolveBaseline("auto", { history: hist });
+  ok("resolve: auto = newest capture-bearing session", auto && auto.label === "r1");
+  const autoCompat = app.resolveBaseline("auto", { history: hist, currentEntryLike: { totals: { distanceM: 9100 } } });
+  ok("resolve: auto respects compatibility with current work", autoCompat && autoCompat.label === "far");
+}
+
+// ---------------------------------------------------------------------
+// 24. Live cues (v1.20.0) — cue detection + governor discipline.
+// ---------------------------------------------------------------------
+group("live cues");
+if (app.computeLiveCues && app.applyCueGovernor) {
+  const mkStrokes = (n, mut) => Array.from({ length: n }, (_, i) => {
+    const s = { t: i * 2.5, d: i * 11, p: 118, w: 190, r: 25, hr: 148,
+      dl: 1.42, dt: 0.8, rt: 1.6, pf: 145, pt: 0.38 };
+    return mut ? mut(s, i) : s;
+  });
+  ok("too few strokes → no cues", app.computeLiveCues(mkStrokes(30), null, {}).cues.length === 0);
+  ok("steady rowing → no cues", app.computeLiveCues(mkStrokes(80), null, {}).cues.length === 0);
+  const shortDl = mkStrokes(80, (s, i) => i >= 65 ? { ...s, dl: 1.30 } : s);
+  const c1 = app.computeLiveCues(shortDl, null, {});
+  ok("drive-length cue fires with delta + baseline", c1.cues.length &&
+    c1.cues[0].id === "driveLen" && /8\.\d%/.test(c1.cues[0].text) && /early strokes|session start/.test(c1.cues[0].baselineLabel));
+  const baseline = { label: "rolling · 3 sessions", curve: null,
+    stats: { dl: { mean: 1.5, cv: 2 }, ratio: { mean: 2.0, cv: 3 }, pace: { mean: 118, cv: 2 }, rate: { mean: 25, cv: 2 }, n: 180 } };
+  const c2 = app.computeLiveCues(mkStrokes(80), baseline, {});
+  ok("baseline stats change the reference (1.42 vs 1.5 → cue)", c2.cues.some(c => c.id === "driveLen" && c.baselineLabel === baseline.label));
+  // 1.42 vs 1.48 = −4.05%: over the normal 3% threshold, under the
+  // relaxed 4.5% threshold — exactly what sensitivity should gate.
+  const nearBaseline = { ...baseline, stats: { ...baseline.stats, dl: { mean: 1.48, cv: 2 } } };
+  ok("normal sensitivity flags a −4% drive change", app.computeLiveCues(mkStrokes(80), nearBaseline, {}).cues.some(c => c.id === "driveLen"));
+  ok("low sensitivity suppresses the same change", app.computeLiveCues(mkStrokes(80), nearBaseline, { sensitivity: "low" }).cues.every(c => c.id !== "driveLen"));
+  const fade = mkStrokes(90, (s, i) => i >= 70 ? { ...s, p: 123, r: 27.5 } : s);
+  ok("pace-fade-with-rate-rise detected", app.computeLiveCues(fade, null, {}).cues.some(c => c.id === "paceFade"));
+
+  // Governor: latch, single cue, cooldown, recovery, quiet.
+  const drift = { cues: [{ id: "driveLen", priority: 1, text: "Drive Length shortened 5.0%", confidence: "medium" },
+                         { id: "ratio", priority: 2, text: "Ratio collapsed 15%", confidence: "medium" }] };
+  const calm = { cues: [] };
+  let g = null;
+  g = app.applyCueGovernor(g, drift, {}); ok("eval 1: nothing shown yet", g.active === null);
+  g = app.applyCueGovernor(g, drift, {}); ok("eval 2: still nothing", g.active === null);
+  g = app.applyCueGovernor(g, drift, {});
+  ok("eval 3: highest-priority cue latches alone", g.active && g.active.id === "driveLen" && g.event && g.event.startEval);
+  g = app.applyCueGovernor(g, drift, {});
+  ok("sustained cue persists and counts evals", g.active.persistEvals === 4 && !g.event);
+  g = app.applyCueGovernor(g, calm, {});
+  ok("one calm eval doesn't clear (hysteresis)", g.active !== null);
+  g = app.applyCueGovernor(g, calm, {}); g = app.applyCueGovernor(g, calm, {});
+  ok("3 calm evals clear + emit end event + start cooldown", g.active === null && g.event && g.event.endEval && g.cooldown.driveLen > 0);
+  g = app.applyCueGovernor(g, drift, {}); g = app.applyCueGovernor(g, drift, {}); g = app.applyCueGovernor(g, drift, {});
+  ok("cooldown suppresses an immediate refire of the same cue; next cue takes over",
+    g.active && g.active.id === "ratio");
+  let q = app.applyCueGovernor(null, drift, { quiet: true });
+  q = app.applyCueGovernor(q, drift, { quiet: true }); q = app.applyCueGovernor(q, drift, { quiet: true });
+  ok("quiet mode never surfaces a cue", q.active === null);
+}
+if (app.sanitizeDriftEvents) {
+  const evs = app.sanitizeDriftEvents([
+    { t: 120, d: 500, id: "driveLen", text: "<b>Drive</b> shortened", tEnd: 180, evil: {} },
+    { t: NaN }, "junk", ...Array.from({ length: 80 }, (_, i) => ({ t: i, id: "x", text: "y" })),
+  ]);
+  // 83 candidates slice to 50, of which 2 are invalid → 48 survive.
+  ok("drift events sanitized: whitelist + cap", evs.length === 48 && !("evil" in evs[0]) && evs[0].tEnd === 180);
+  ok("drift events: markup stays inert string data", typeof evs[0].text === "string" && evs[0].text.includes("<b>"));
+  ok("drift events: garbage → null", app.sanitizeDriftEvents("x") === null && app.sanitizeDriftEvents([{}]) === null);
+}
+
+// ---------------------------------------------------------------------
+// 25. Race Lab (v1.20.0) — plan construction, live status, debrief.
+// ---------------------------------------------------------------------
+group("race lab");
+if (app.buildRacePlan && app.computeRaceStatus && app.computeRaceDebrief) {
+  const plan = app.buildRacePlan(2000, "even", 105);
+  ok("plan built with the classic phases", plan.segments.map(s => s.phase).join(",") === "start,settle,base,sprint");
+  ok("segments tile the full distance", plan.segments[0].fromM === 0 &&
+    plan.segments.every((s, i) => i === 0 || s.fromM === plan.segments[i - 1].toM) &&
+    plan.segments[plan.segments.length - 1].toM === 2000);
+  ok("start and sprint are faster than base", plan.segments[0].targetPaceS < 105 &&
+    plan.segments[plan.segments.length - 1].targetPaceS < 105);
+  const evenT = plan.predictedFinishS;
+  eqApprox("predicted finish is segment arithmetic", evenT,
+    plan.segments.reduce((a, s) => a + (s.toM - s.fromM) / 500 * s.targetPaceS, 0), 0.11);
+  const neg = app.buildRacePlan(2000, "negative", 105);
+  ok("negative split: second half faster than first", neg.segments.some(s => s.phase === "push") &&
+    neg.segments.find(s => s.phase === "push").targetPaceS < neg.segments.find(s => s.phase === "base").targetPaceS);
+  ok("custom distance works", app.buildRacePlan(3500, "even", 110).segments.slice(-1)[0].toM === 3500);
+  ok("invalid inputs → null", app.buildRacePlan(100, "even", 105) === null && app.buildRacePlan(2000, "even", 20) === null);
+  const ivs = app.racePlanToIntervals(plan);
+  ok("plan converts to plain intervals", ivs.length === plan.segments.length &&
+    ivs.every(iv => iv.kind === "distance" && iv.targetPaceS > 0 && iv.restS === 0));
+
+  eqApprox("plan time at 1000 m", app.planTimeAtDistance(plan, 1000),
+    (100 / 500) * 101 + (200 / 500) * 106 + (700 / 500) * 105, 0.11);
+  const behind = app.computeRaceStatus(plan, 1000, app.planTimeAtDistance(plan, 1000) + 4, 106);
+  ok("behind detected with projection", behind.status === "behind" && behind.deltaS >= 3.9 &&
+    behind.projectedFinishS > 0 && behind.segment.phase === "base");
+  const ahead = app.computeRaceStatus(plan, 1000, app.planTimeAtDistance(plan, 1000) - 4, 104);
+  ok("ahead detected", ahead.status === "ahead" && ahead.deltaS <= -3.9);
+  ok("on-plan band is ±1.5s", app.computeRaceStatus(plan, 1000, app.planTimeAtDistance(plan, 1000) + 1, 105).status === "on");
+
+  // Debrief over a synthetic race: on plan early, fades in base, sprints.
+  const raceStrokes = [];
+  for (let d = 5, t = 0; d < 2000; d += 10) {
+    const seg = app.raceSegmentAt(plan, d).seg;
+    let pace = seg.targetPaceS;
+    if (seg.phase === "base" && d > 1000) pace += 3;          // mid-race fade
+    if (seg.phase === "sprint") pace -= 1;
+    t += 10 / 500 * pace;
+    raceStrokes.push({ t: Math.round(t * 10) / 10, d, p: pace, w: 200, r: 28, hr: 165,
+      dl: d > 1000 && d < 1750 ? 1.34 : 1.42, dt: 0.75, rt: 1.5, pf: 150, pt: 0.4 });
+  }
+  const entry = { plan: { title: "2k race", race: plan },
+    totals: { distanceM: 2000, elapsedS: raceStrokes[raceStrokes.length - 1].t },
+    strokes: raceStrokes, results: [] };
+  const snapshot = JSON.stringify(entry);
+  const rd = app.computeRaceDebrief(entry);
+  ok("debrief builds per-segment actuals", rd.has && rd.segments.length === plan.segments.length &&
+    rd.segments.every(s => s.actualPaceS > 0));
+  ok("time lost concentrates in the faded base", rd.segments.find(s => s.phase === "base").deltaS > 1);
+  ok("sprint shows a gain or near-plan", rd.segments.find(s => s.phase === "sprint").deltaS < 1);
+  ok("findings are capped at three and prioritized", rd.findings.length >= 1 && rd.findings.length <= 3);
+  ok("estimate methodology is attached", /estimate relative to this race plan/i.test(rd.method));
+  ok("debrief does not mutate the entry", JSON.stringify(entry) === snapshot);
+  ok("no race meta → has:false", app.computeRaceDebrief({ plan: {}, strokes: raceStrokes }).has === false);
+  ok("too few strokes → has:false", app.computeRaceDebrief({ plan: { race: plan }, strokes: raceStrokes.slice(0, 5) }).has === false);
+
+  const hostile = app.sanitizeRaceMeta({ distanceM: 2000, basePaceS: 105, strategy: "<evil>",
+    segments: [{ fromM: 0, toM: 1000, targetPaceS: 105, phase: "<img>", junk: {} },
+               { fromM: 1000, toM: 2000, targetPaceS: 9999 }, "junk",
+               { fromM: 1000, toM: 2000, targetPaceS: 106 }] });
+  ok("race meta sanitized: phases whitelisted, junk dropped", hostile.strategy === "even" &&
+    hostile.segments.length === 2 && hostile.segments[0].phase === "base" && !("junk" in hostile.segments[0]));
+  ok("race meta: too few valid segments → null", app.sanitizeRaceMeta({ distanceM: 2000, basePaceS: 105, segments: [{}] }) === null);
+}
+
+// ---------------------------------------------------------------------
+// 26. Power profile (v1.20.0) — honest best-power windows + CP gate.
+// ---------------------------------------------------------------------
+group("power profile");
+if (app.bestRollingPower && app.computePowerProfile) {
+  const NOWP = Date.parse("2026-07-01T12:00:00Z");
+  const steady = (n, w) => Array.from({ length: n }, (_, i) => ({ t: i * 2.5, d: i * 11, p: 118, w, r: 25 }));
+  const surge = steady(300, 180).map((s, i) => (i >= 100 && i < 125) ? { ...s, w: 260 } : s);
+  const b60 = app.bestRollingPower(surge, 60);
+  ok("60s window finds the surge", b60 && b60.watts >= 250);
+  ok("window longer than the session → null", app.bestRollingPower(steady(30, 200), 240) === null);
+  ok("watts→pace equivalence", Math.abs(app.wattsToPace(200) - Math.pow(2.8 / 200, 1 / 3) * 500) < 0.01);
+
+  const hist = [
+    { id: "p1", date: "2026-06-28T10:00:00Z", title: "Steady 20:00", strokes: steady(500, 190),
+      totals: { distanceM: 5000, elapsedS: 1250, avgWatts: 190 } },
+    { id: "p2", date: "2025-12-01T10:00:00Z", title: "Old harder row", strokes: steady(500, 205),
+      totals: { distanceM: 5000, elapsedS: 1250, avgWatts: 205 } },
+  ];
+  const pp = app.computePowerProfile(hist, NOWP);
+  const r60 = pp.rows.find(r => r.durS === 60);
+  ok("all-time vs 90-day separated", r60.best.watts === 205 && r60.recent.watts === 190);
+  const r20 = pp.rows.find(r => r.durS === 1200);
+  ok("20:00 window met by long sessions", r20.sufficient === true);
+  ok("no CP from ordinary rows (not Tests)", pp.cp === null && /benchmark Tests/.test(pp.cpNeed));
+
+  const tests = hist.concat([
+    { id: "t2k", date: "2026-06-20T10:00:00Z", title: "2k Test", plan: { benchKey: "2k" },
+      totals: { distanceM: 2000, elapsedS: 420, avgWatts: 280 }, strokes: [] },
+    { id: "t30", date: "2026-06-10T10:00:00Z", title: "30:00 Test", plan: { benchKey: "30min" },
+      totals: { distanceM: 7200, elapsedS: 1800, avgWatts: 210 }, strokes: [] },
+  ]);
+  const pp2 = app.computePowerProfile(tests, NOWP);
+  ok("CP estimated only from two distinct-duration Tests", pp2.cp && pp2.cp.fromTests.length === 2 &&
+    pp2.cp.watts > 150 && pp2.cp.watts < 280);
+  ok("CP is labelled as an estimate from Tests", /never treated as maximal/i.test(pp2.cp.method));
+  ok("insufficient data explains what's needed", app.computePowerProfile([], NOWP).rows.every(r => !r.sufficient && /captured session/.test(r.need)));
+}
+
+// ---------------------------------------------------------------------
+// 27. v1.20 compatibility & security — old sessions untouched by the
+// new consumers; hostile race/drift data inert end-to-end.
+// ---------------------------------------------------------------------
+group("v1.20 compat");
+if (app.computeRaceDebrief && app.resolveBaseline && app.importSessionsFromText) {
+  const legacy = { schemaVersion: 2, id: "L1", date: "2026-05-01T10:00:00Z", title: "Legacy 5k",
+    totals: { distanceM: 5000, elapsedS: 1250, avgPaceS: 125, avgWatts: 170 },
+    results: [{ intervalIdx: 1, label: "5000m", distanceM: 5000, elapsedS: 1250, paceS: 125, watts: 170, strokeRate: 24, heartRate: 150, restS: 0, driveLengthM: 1.4, peakForceLbs: 140 }] };
+  const legacySnap = JSON.stringify(legacy);
+  ok("legacy session: replay capability unchanged", app.getSessionReplayCapability(legacy) === "interval");
+  ok("legacy session: no fabricated race debrief", app.computeRaceDebrief(legacy).has === false);
+  ok("legacy session: no fabricated baseline", app.buildBaselineFromEntry(legacy) === null);
+  ok("legacy session: power profile skips it silently", app.computePowerProfile([legacy], Date.parse("2026-07-01")).rows.every(r => !r.sufficient));
+  ok("legacy session object untouched by all consumers", JSON.stringify(legacy) === legacySnap);
+
+  app.state.history = [];
+  app.importSessionsFromText(JSON.stringify({ kind: "pm5-history-export", history: [{
+    id: "H-RACE", title: "hostile race", totals: { distanceM: 2000, elapsedS: 480 },
+    results: [{ distanceM: 2000, elapsedS: 480 }],
+    plan: { title: "p", intervals: [{ kind: "distance", value: 2000 }],
+      race: { distanceM: 2000, basePaceS: 105, strategy: "<script>",
+        segments: [{ fromM: 0, toM: 1000, targetPaceS: 105, phase: "<img onerror=x>" },
+                   { fromM: 1000, toM: 2000, targetPaceS: { evil: 1 } },
+                   { fromM: 1000, toM: 2000, targetPaceS: 107 }] } },
+    driftEvents: [{ t: 60, id: "<svg>", text: "<script>alert(1)</script>", nested: { deep: true } }],
+  }] }));
+  const hr2 = app.state.history[0];
+  ok("hostile race meta arrives whitelisted", hr2.plan.race && hr2.plan.race.strategy === "even" &&
+    hr2.plan.race.segments.length === 2 && hr2.plan.race.segments.every(s => ["start","settle","base","push","sprint"].includes(s.phase)));
+  ok("hostile drift events arrive bounded + inert", hr2.driftEvents.length === 1 &&
+    typeof hr2.driftEvents[0].text === "string" && !("nested" in hr2.driftEvents[0]));
+  ok("race status computes safely on sanitized meta", app.computeRaceStatus(hr2.plan.race, 500, 110, 106) !== null);
+  app.state.history = [];
+}
+
+// ---------------------------------------------------------------------
 // 8. App-size guard (#25) — keep the whole offline app under budget.
 // Budget history: 600 KB (index.html only) through v1.17.0; 660 KB in
 // v1.18.0; v1.20.0 split the pure analysis layer into analysis.js and

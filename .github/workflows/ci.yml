@@ -18,7 +18,7 @@ jobs:
         with:
           node-version: "20"
 
-      - name: JS syntax check (main app script)
+      - name: JS syntax check (analysis + main app script)
         run: node scripts/syntax-check.js
 
       - name: Unit tests
@@ -26,3 +26,6 @@ jobs:
 
       - name: Service-worker syntax check
         run: node --check pm5web/sw.js
+
+      - name: Analysis-layer syntax check
+        run: node --check pm5web/analysis.js

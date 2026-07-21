@@ -15,6 +15,7 @@ const vm = require("vm");
 const path = require("path");
 
 const INDEX = path.join(__dirname, "..", "pm5web", "index.html");
+const ANALYSIS = path.join(__dirname, "..", "pm5web", "analysis.js");
 
 function stubNode() {
   const n = {
@@ -82,7 +83,10 @@ function extractMainScript(html) {
 
 function load() {
   const html = fs.readFileSync(INDEX, "utf8");
-  const src = extractMainScript(html);
+  // v1.20.0 — the app is two classic scripts: analysis.js (pure layer)
+  // then the main inline script. Concatenate in load order so the
+  // sandbox sees the same global scope the browser builds.
+  const src = fs.readFileSync(ANALYSIS, "utf8") + "\n;\n" + extractMainScript(html);
   const sb = makeSandbox();
   const ctx = vm.createContext(sb);
   // Re-export the top-level declarations we test onto globalThis so the
@@ -135,4 +139,4 @@ function load() {
   return sb.__APP;
 }
 
-module.exports = { load, extractMainScript, makeSandbox, INDEX };
+module.exports = { load, extractMainScript, makeSandbox, INDEX, ANALYSIS };

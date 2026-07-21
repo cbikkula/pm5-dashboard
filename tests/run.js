@@ -4,7 +4,7 @@
 // =====================================================================
 const fs = require("fs");
 const path = require("path");
-const { load, extractMainScript, INDEX } = require("./harness");
+const { load, extractMainScript, INDEX, ANALYSIS } = require("./harness");
 
 let pass = 0, fail = 0;
 const fails = [];
@@ -876,18 +876,25 @@ if (app.curveShapeMetrics && app.curveSimilarity && app.applyDriftHysteresis) {
 }
 
 // ---------------------------------------------------------------------
-// 8. Bundle-size guard (#25) — keep the single file under budget.
-// Budget history: 600 KB through v1.17.0; raised to 660 KB in v1.18.0
-// to fund stroke capture + stroke replay + session compare + the
-// efficiency/drift analytics (first raise since the v1.15.1 dead-code
-// reset — the discipline stands, the ceiling moved once for a major
-// feature release).
+// 8. App-size guard (#25) — keep the whole offline app under budget.
+// Budget history: 600 KB (index.html only) through v1.17.0; 660 KB in
+// v1.18.0; v1.20.0 split the pure analysis layer into analysis.js and
+// the guard now measures the TOTAL offline application (index.html +
+// analysis.js + sw.js) so the modular split cannot be used to evade
+// the discipline. 768 KB total, and index.html alone must stay under
+// the old 660 KB ceiling.
 // ---------------------------------------------------------------------
-group("bundle size");
+group("app size");
 const html = fs.readFileSync(INDEX, "utf8");
-const kb = Buffer.byteLength(html, "utf8") / 1024;
-console.log(`  index.html = ${kb.toFixed(0)} KB`);
-ok("index.html under 660 KB", kb < 660);
+const analysisSrc = fs.readFileSync(ANALYSIS, "utf8");
+const swSrc = fs.readFileSync(path.join(path.dirname(INDEX), "sw.js"), "utf8");
+const idxKb = Buffer.byteLength(html, "utf8") / 1024;
+const anaKb = Buffer.byteLength(analysisSrc, "utf8") / 1024;
+const swKb = Buffer.byteLength(swSrc, "utf8") / 1024;
+const totalKb = idxKb + anaKb + swKb;
+console.log(`  index.html = ${idxKb.toFixed(0)} KB · analysis.js = ${anaKb.toFixed(0)} KB · sw.js = ${swKb.toFixed(0)} KB · total = ${totalKb.toFixed(0)} KB`);
+ok("index.html under 660 KB", idxKb < 660);
+ok("total offline app under 768 KB", totalKb < 768);
 
 // ---------------------------------------------------------------------
 console.log(`\n=== ${pass} passed, ${fail} failed ===`);

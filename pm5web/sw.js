@@ -20,6 +20,7 @@ const SHELL = [
   "./icon-192.png",
   "./icon-512.png",
   "./firebase-config.js",
+  "./analysis.js",
 ];
 
 self.addEventListener("install", (event) => {
@@ -47,9 +48,12 @@ self.addEventListener("fetch", (event) => {
 
   // The HTML document and our JS are network-first, falling back to
   // cache only when offline. This guarantees the latest deploy is
-  // picked up on every visit — critical for fixes like auth flows.
+  // picked up on every visit — critical because index.html and
+  // analysis.js (v1.20.0 split) must never be served from different
+  // releases in the same page load.
   const isShellDoc = url.pathname.endsWith(".html") || url.pathname === "/" ||
-                     url.pathname === "" || req.mode === "navigate";
+                     url.pathname === "" || req.mode === "navigate" ||
+                     url.pathname.endsWith("/analysis.js");
   if (isShellDoc) {
     event.respondWith(
       fetch(req).then((resp) => {

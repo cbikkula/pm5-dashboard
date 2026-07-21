@@ -795,6 +795,87 @@ if (app.sanitizeResultRows && app.sanitizeBookmarks && app.sanitizeTags &&
 }
 
 // ---------------------------------------------------------------------
+// 22. Curve intelligence (v1.19.0) — shape metrics, similarity, drift
+// hysteresis. All fixtures are deterministic synthetic curves.
+// ---------------------------------------------------------------------
+group("curve intelligence");
+if (app.curveShapeMetrics && app.curveSimilarity && app.applyDriftHysteresis) {
+  // Deterministic fixtures: smooth bells with a controllable peak position.
+  const bell = (peak, at, n) => Array.from({ length: n || 64 }, (_, i) => {
+    const x = i / ((n || 64) - 1);
+    const ph = x < at ? x / (2 * at) : 0.5 + (x - at) / (2 * (1 - at));
+    return peak * Math.pow(Math.sin(Math.PI * ph), 1.4);
+  });
+  const centered = bell(150, 0.5);
+  const front = bell(150, 0.33);
+  const noisy = centered.map((v, i) => v + (i % 2 ? 12 : -12));
+
+  const shC = app.curveShapeMetrics(centered);
+  eqApprox("centered bell: peak position ~0.5", shC.peakPos, 0.5, 0.02);
+  eqApprox("centered bell: front-load ~0.5", shC.frontLoad, 0.5, 0.04);
+  ok("centered bell: smooth", shC.smoothness >= 85);
+  ok("centered bell: peak preserved", Math.abs(shC.peak - 150) < 1);
+  const shF = app.curveShapeMetrics(front);
+  ok("front-shifted bell: earlier peak, higher front-load",
+    shF.peakPos < 0.4 && shF.frontLoad > shC.frontLoad);
+  ok("noisy curve scores less smooth", app.curveShapeMetrics(noisy).smoothness < shC.smoothness);
+  ok("shape metrics: garbage → null",
+    app.curveShapeMetrics(null) === null && app.curveShapeMetrics([1, 2, 3]) === null &&
+    app.curveShapeMetrics(new Array(64).fill(0)) === null);
+
+  ok("similarity: identical curves = 100", app.curveSimilarity(centered, centered) === 100);
+  ok("similarity: scaled copy = 100 (shape, not power)",
+    app.curveSimilarity(centered, centered.map(v => v * 2)) === 100);
+  const simFront = app.curveSimilarity(centered, front);
+  ok("similarity: shifted shape scores lower but sane", simFront > 50 && simFront < 100);
+  ok("similarity: different sample counts align", app.curveSimilarity(bell(150, 0.5, 30), centered) >= 99);
+  ok("similarity: unusable input → null",
+    app.curveSimilarity(null, centered) === null && app.curveSimilarity([1], centered) === null);
+
+  // Drift hysteresis: one noisy evaluation must not flip the card.
+  const drifting = { has: true, drifting: true, items: [], headline: "Drive shortened" };
+  const stable = { has: true, drifting: false, items: [], headline: "Technique stable" };
+  let s = null;
+  s = app.applyDriftHysteresis(s, drifting);
+  ok("1st drifting eval does not latch", s.drifting === false);
+  s = app.applyDriftHysteresis(s, drifting);
+  ok("2nd drifting eval does not latch", s.drifting === false);
+  s = app.applyDriftHysteresis(s, drifting);
+  ok("3rd consecutive drifting eval latches", s.drifting === true);
+  s = app.applyDriftHysteresis(s, stable);
+  ok("one stable eval does not clear the latch", s.drifting === true);
+  ok("latched headline explains the drift, not 'stable'", /shortened/i.test(s.headline));
+  s = app.applyDriftHysteresis(s, stable);
+  s = app.applyDriftHysteresis(s, stable);
+  ok("3 consecutive stable evals clear the latch", s.drifting === false);
+  let n2 = app.applyDriftHysteresis(null, drifting);
+  n2 = app.applyDriftHysteresis(n2, stable);
+  n2 = app.applyDriftHysteresis(n2, drifting);
+  n2 = app.applyDriftHysteresis(n2, drifting);
+  ok("interrupted streaks never latch", n2.drifting === false);
+  ok("insufficient data resets cleanly", app.applyDriftHysteresis(s, { has: false }).has === false);
+
+  // Efficiency transparency: unscored components are listed with a why.
+  const mkStroke = i => ({ t: i * 2.5, d: i * 10, p: 105, w: 200, r: 24, hr: 150,
+    dl: 1.4, dt: 0.8, rt: 1.6, pf: 150, pt: 0.38 });
+  const noCurves = app.computeEfficiencyScore({ strokes: Array.from({ length: 60 }, (_, i) => mkStroke(i)) });
+  ok("efficiency lists unscored components", noCurves.has &&
+    noCurves.missing.some(m => m.key === "curve" && /no session curves/i.test(m.why)));
+
+  // Reference-curve loader: newest session with curves wins; avg preferred.
+  app.state.history = [
+    { id: "n1", date: "2026-07-18T10:00:00Z", totals: {} },                       // no curves
+    { id: "n2", date: "2026-07-17T10:00:00Z", fc: { avg: centered, best: front, peak: 150, n: 50 }, totals: {} },
+    { id: "n3", date: "2026-07-10T10:00:00Z", fc: { best: front }, totals: {} },
+  ];
+  app.loadReferenceCurve();
+  ok("reference loader picks newest session's avg curve", app.state.refCurve === app.state.history[1].fc.avg);
+  app.state.history = [];
+  app.loadReferenceCurve();
+  ok("reference loader clears when history is empty", app.state.refCurve === null);
+}
+
+// ---------------------------------------------------------------------
 // 8. Bundle-size guard (#25) — keep the single file under budget.
 // Budget history: 600 KB through v1.17.0; raised to 660 KB in v1.18.0
 // to fund stroke capture + stroke replay + session compare + the

@@ -10,6 +10,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Multi-erg synchronization (needs a new per-erg Firestore surface + rules — deliberately not built on the club-scoped schema)
 - AI technique analysis (peak-timing trends)
 
+## [v1.19.0] — July 2026 — Force Curve Intelligence
+
+The Force Curve stops being a per-session picture and becomes a comparison instrument — against your previous session live, between any two sessions, and inside replay. Everything is computed from data the PM5 actually provides; shape scores are explained, session-relative guidance, never absolute coaching truth.
+
+- **Previous-session ghost** — the live Force Curve now overlays your last saved session's average curve as a muted dashed reference (Settings → Force Curve Overlays toggle), with the axis scaled to fit and the legend naming the session date. The card hint shows a live **shape similarity %** against it once ≥10 strokes are averaged, and a new **Vs Last Row** metric card (Technical preset) carries the same number.
+- **Curve shape analysis** — new pure helpers: `curveShapeMetrics` (peak, peak position, front-load = share of force area in the first half of the drive, smoothness 0-100) and `curveSimilarity` (cosine similarity of peak-normalised curves, 0-100 — a shape measure, deliberately blind to raw power).
+- **Compare tab, sharper** — a **normalize** toggle switches between absolute lbf and peak-normalised shape view (clearly labelled either way); the delta table gains peak-timing, front-load, and smoothness rows; a one-line **shape similarity** readout explains itself in plain words. Sessions without saved curves still compare on numbers only.
+- **Synchronized replay timeline** — a metric strip (split preferred, falling back to watts / rate / HR) under the scrubber with a synced cursor, bookmark ticks, and click-to-seek; **▶ play/pause** steps through the session (~8 strokes/s at stroke fidelity); **keyboard navigation** while the modal is open: ← → step, Space play/pause, Home/End jump. The series is computed once per open — seeking repaints one small canvas, never the history.
+- **Drift detection with hysteresis** — the live Tech Drift card now requires **3 consecutive drifting evaluations (~15 strokes)** to warn and 3 stable ones to clear (`applyDriftHysteresis`, pure + tested), so a single ragged stroke can't flicker the card. The latched headline keeps naming the drifted metric and its baseline.
+- **Efficiency transparency** — the Summary breakdown now lists every component that could **not** be scored ("Not scored: curve smoothness — no session curves saved; remaining weights renormalised") and states that scores are session-relative guidance, not a universal ranking.
+- **Bundle discipline, guard unchanged** — funded by deleting dead weight, not raising the cap: the in-file duplicate of `firestore.rules` (~5.7 KB) is now a pointer to the canonical `/firestore.rules`, and pre-1.18.1 `RELEASE_NOTES` entries were trimmed (full history stays in this file). Bundle 654 → **658 KB**, still under the untouched **660 KB** guard.
+- **Tests 212 → 235** — a "curve intelligence" group with deterministic synthetic curve fixtures: shape metrics, similarity invariants (scaled copy = 100), hysteresis latching/clearing sequences, efficiency missing-component reporting, and reference-curve loader selection. No club / Firestore / security changes.
+
 ## [v1.18.1] — July 2026 — Import Hardening
 
 A minimal security patch closing the import-validation gap flagged in the v1.18.0 post-release verification. No feature changes; valid existing exports import exactly as before.

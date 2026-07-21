@@ -165,7 +165,7 @@ On sign-in (or page load if a token survived), we pull the Drive copy and merge:
 //   Don't touch — let the browser handle them directly.
 ```
 
-Cache version is bumped on every meaningful deploy (`pm5-v1` → `pm5-v44` and counting). Old caches are deleted in the `activate` handler.
+Cache version is bumped on every meaningful deploy (`pm5-v1` → `pm5-v46` and counting). Old caches are deleted in the `activate` handler.
 
 ## Why PWA over native
 

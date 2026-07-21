@@ -124,6 +124,9 @@ function load() {
     "sanitizeImportedPr", "sanitizeImportedPlan", "sanitizeImportedTotals",
     "IMPORT_MAX_RESULTS", "IMPORT_MAX_BOOKMARKS", "IMPORT_MAX_TAGS",
     "IMPORT_MAX_TAG_LEN", "IMPORT_MAX_BOOKMARK_LABEL_LEN",
+    // v1.19 curve intelligence
+    "curveShapeMetrics", "curveSimilarity", "applyDriftHysteresis",
+    "DRIFT_LATCH_EVALS", "loadReferenceCurve",
   ];
   const shim = "\n;globalThis.__APP = {" +
     exposed.map((n) => `${n}: (typeof ${n}!=="undefined"?${n}:undefined)`).join(",") +

@@ -21,7 +21,7 @@
 
 > Open in Chrome or Edge on a desktop or Android phone. Click **Connect**, pair the PM5 over Bluetooth, and row.
 
-**Current release: `v1.18.1`** ([changelog](CHANGELOG.md)) · single 654 KB `index.html`, no framework, no build step.
+**Current release: `v1.19.0`** ([changelog](CHANGELOG.md)) · single 658 KB `index.html`, no framework, no build step.
 
 ---
 
@@ -32,7 +32,7 @@ The part I'd want a reviewer to see first:
 - 🔐 **Role-based access control with no server.** A full multi-coach club system (owner / admin / coach / athlete) enforced *entirely* by **Firestore Security Rules** — on Firebase's free Spark plan there are no Cloud Functions, so [the rules **are** the backend](firestore.rules). Invite/approval flows with unguessable bearer-token join codes, an append-only audit log that **nobody — not even the owner — can edit or delete**, and a client permission engine that mirrors the rules so the UI never offers what the server will reject.
 - 🛡️ **Designed adversarially.** I wrote the rules, then tried to break them — a pass that found **5 root-cause auth holes** (invite-bypass join, self-chosen athlete link, availability null-trap, audit backdating, revoked-invite readability). Then I reviewed the client across **5 dimensions and fixed 12 more bugs** (3 data-loss-critical) before release. The whole threat model + findings table is in [`docs/security.md`](docs/security.md).
 - 📡 **Reverse-engineered the PM5 BLE protocol** from the Concept2 GATT spec — 64-sample force-curve resampling, ~20 Hz stroke parsing, `< 10 ms` render — documented in [`docs/ble-protocol.md`](docs/ble-protocol.md) (including the off-by-3 byte bug I shipped first).
-- 🧪 **Tested & CI'd.** A 212-assertion zero-dependency test suite (`npm test`) — including a dedicated security-regression group — runs in GitHub Actions on every push alongside a syntax check and a bundle-size guard.
+- 🧪 **Tested & CI'd.** A 235-assertion zero-dependency test suite (`npm test`) — including a dedicated security-regression group — runs in GitHub Actions on every push alongside a syntax check and a bundle-size guard.
 - ⚙️ **One file, zero dependencies, $0/mo.** ~15,100 lines of vanilla HTML/CSS/JS in a single installable PWA. No framework, no bundler, no server I run.
 
 ---
@@ -41,14 +41,14 @@ The part I'd want a reviewer to see first:
 
 | | |
 |---|---|
-| **Live force curve** | Reads the raw force-vs-position curve from the PM5 every stroke, draws it smoothed in real time, and overlays your **best stroke** and **session average** as ghost curves. Peak-force markers show where in the drive the peak occurs — early peak vs late peak is the most actionable technique signal you can give a rower. |
+| **Live force curve** | Reads the raw force-vs-position curve from the PM5 every stroke, draws it smoothed in real time, and overlays your **best stroke**, **session average**, and *(v1.19)* your **previous session's average** as ghost curves, with a live shape-similarity % against last time. Peak-force markers show where in the drive the peak occurs — early peak vs late peak is the most actionable technique signal you can give a rower. |
 | **Multi-coach club system** *(v1.11)* | A full role-based club: **owner / admin / coach / athlete**, invite links + expiring join codes, pending-request approval, a members panel (change role, suspend, remove, link a member to a roster athlete), an append-only **audit log**, and athlete self-service availability. Enforced end-to-end by Firestore Security Rules — see [Engineering highlights](#engineering-highlights) and [`docs/security.md`](docs/security.md). |
 | **Cloud sync (Firebase)** *(v1.10)* | Sign in from the Clubs view and your club, roster, shells, oars, and lineups sync to **Cloud Firestore** with real-time `onSnapshot` updates across every device. Separate from, and complementary to, the Google Drive sync of your personal workout history. |
 | **Performance page** *(v1.3)* | A real top-level analysis area (not a teaser): tabs for **Overview / Insights / Technique / Fitness / Goals / Compare** that answer *"am I getting faster / fitter / more consistent?"* with trends, fatigue, technique drift, and rule-based per-workout insights. |
-| **Session replay** *(v1.15, stroke fidelity v1.18)* | Replay a saved session **stroke by stroke** — the scrubber walks a synchronized timeline showing every captured metric at that moment (split, watts, rate, HR, drive length, peak force, peak timing, ratio), with the session's **best/avg Force Curves** inspectable in the modal and **🔖 bookmarks** that jump to the nearest stroke. Pre-v1.18 sessions replay interval-by-interval; capability badges + a limitations panel say exactly what each session's data supports. |
+| **Session replay** *(v1.15 · stroke fidelity v1.18 · synchronized timeline v1.19)* | Replay a saved session **stroke by stroke** — ▶ play/pause, keyboard scrubbing (← → · Space · Home/End), and a synchronized metric timeline with click-to-seek; the scrubber shows showing every captured metric at that moment (split, watts, rate, HR, drive length, peak force, peak timing, ratio), with the session's **best/avg Force Curves** inspectable in the modal and **🔖 bookmarks** that jump to the nearest stroke. Pre-v1.18 sessions replay interval-by-interval; capability badges + a limitations panel say exactly what each session's data supports. |
 | **Stroke capture + session compare** *(v1.18)* | Sessions persist a compact, size-bounded per-stroke log and their best/average Force Curves. **Performance → Compare** overlays any two sessions' curves with a delta table; a live **Tech Drift** card flags mid-piece form fade; a **technical-efficiency score (0-100)** explains exactly how it's computed; ✨ PR-derived target-pace suggestions in the builder; 📄 one-click markdown training report. |
 | **PR tracking + live PR pace** *(v1.4)* | Auto-detects personal records from benchmark Test sessions (500 m / 1k / 2k / 5k / 6k / 10k / 30 min) with full provenance and a 🏆 badge on history rows. During a test, a live **PR Δ** (*"ahead by 2.8 s"*) and projected finish update every stroke. |
-| **49 live metrics** | Stroke rate, pace, watts, distance, peak force, avg force, work/stroke, drive length, drive ratio, slip (catch/release), peak force timing, meters/stroke, drag factor, calories, splits, live tech drift, and 20 HR-specific metrics (current zone, % max, % HRR, time-in-zone, drift, decoupling, recovery deltas, TRIMP load). |
+| **50 live metrics** | Stroke rate, pace, watts, distance, peak force, avg force, work/stroke, drive length, drive ratio, slip (catch/release), peak force timing, meters/stroke, drag factor, calories, splits, live tech drift, prev-session curve similarity, and 20 HR-specific metrics (current zone, % max, % HRR, time-in-zone, drift, decoupling, recovery deltas, TRIMP load). |
 | **Tier-based layouts + 6 focus presets** | Cards size themselves by importance tier (primary / secondary / passive). Six curated presets — Balanced, Technical, Power, Heart Rate, Endurance, Race — rewrite the entire screen in one tap. Race mode pins **split** as a 168 px primary; Heart Rate mode swaps the force curve out for HR-zone-driven metrics. Each preset enforces **locked metrics** that can't be removed without breaking the mode. |
 | **Workout builder + benchmark tests** | Build interval workouts (1 min · 500 m · 1k · 2k · 5k · 6k · 10k · 30 min · 1 hour · half & full marathon). One-tap tests for the standard distances pre-fill the right interval structure (e.g. 2k → 8×250 m, no rest). Plans sync across devices. |
 | **Demo Mode** *(v1.2)* | Don't have a PM5? Open Settings → DEMO MODE → **Start Demo Mode** and the dashboard runs against synthetic stroke data — force curve, pace, watts, HR all move realistically. Drive sync auto-pauses so demo workouts never leak into your real history. Lets coaches and visitors explore every screen before practice. |
@@ -180,8 +180,8 @@ The part I'd want a reviewer to see first:
 |                                  |               |
 |----------------------------------|---------------|
 | Lines of code (web app)          | **~15,100** (single `index.html`) |
-| Shipped bundle                   | **654 KB**    |
-| Live metrics                     | **49**        |
+| Shipped bundle                   | **658 KB**    |
+| Live metrics                     | **50**        |
 | Of those, heart-rate metrics     | **20**        |
 | Focus presets                    | **6**         |
 | Roles enforced by Firestore rules | **4** (owner / admin / coach / athlete) |
@@ -193,7 +193,7 @@ The part I'd want a reviewer to see first:
 | Render time (mid-tier hardware)  | < 10 ms       |
 | Offline-capable                  | yes (after first load) |
 | Crash-resistant                  | yes (auto-save recovery every 5 s) |
-| Released versions                | **27** (v1.0.0 → v1.18.1; [changelog](CHANGELOG.md)) · 9 git tags |
+| Released versions                | **28** (v1.0.0 → v1.19.0; [changelog](CHANGELOG.md)) · 10 git tags |
 | Total commits                    | **48** ([activity](https://github.com/cbikkula/pm5-dashboard/commits/main)) |
 | Server I run                     | **none** — serverless by design (Firebase Spark, **$0/mo**) |
 
@@ -290,7 +290,7 @@ pm5-dashboard/
 ├── pm5dashboard/                 ← Original Python desktop prototype
 ├── firestore.rules               ← The access-control layer (the "backend")
 ├── SECURITY.md                   ← Security policy, data-storage behavior, accepted risks
-├── tests/                        ← run.js + harness.js — 212-assertion suite
+├── tests/                        ← run.js + harness.js — 235-assertion suite
 ├── scripts/syntax-check.js       ← Standalone main-script linter (used by CI)
 ├── .github/workflows/ci.yml      ← Syntax check · unit tests · bundle-size guard
 ├── package.json                  ← npm test / lint / check

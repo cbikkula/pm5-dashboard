@@ -59,7 +59,7 @@ had not been re-measured since.
 
 | Metric | Guard / target | Last measured (v1.21.0) |
 |---|---|---|
-| Offline app size (index + analysis + curves + sw) | < 768 KB (enforced by `npm test`) | ~767 KB |
+| Offline app size (index + analysis + curves + insights + sw) | < 832 KB (enforced; raised once from 768 KB in v1.22.0, see CHANGELOG) | ~830 KB |
 | index.html alone | < 660 KB (enforced) | ~640 KB |
 | Curve payload, typical 30-min session | ≤ 512 KiB/session (enforced) | ~112 KB binary (1,500 strokes) |
 | Curve decode (validate + index a full 512 KiB payload) | < 250 ms (enforced in suite) | ~15 ms (Node; see suite output) |
@@ -69,10 +69,13 @@ had not been re-measured since.
 Render-per-BLE-update and long-session memory figures from the old table were removed
 rather than restated — they predate the current codebase and would be misleading.
 
-## v1.21.0 note
+## v1.22.0 note
 
-The suite (see `npm run check` for the current assertion count — 400+ since v1.21.0)
-runs all three app scripts — `analysis.js` + `curves.js` + the inline main script —
-concatenated in one Node vm sandbox in load order. The v1.21 groups (curve codec,
-retention, import/compat, stroke evidence, window baselines, replay curve sync) use
-deterministic synthetic fixtures only; no personal workout data is committed.
+The suite (481 assertions at v1.22.0) runs all four app scripts — `analysis.js` +
+`curves.js` + `insights.js` + the inline main script — concatenated in one Node vm
+sandbox in load order. The v1.21 groups (curve codec, retention, import/compat, stroke
+evidence, window baselines, replay curve sync) and the v1.22 groups (insights cohorts,
+aggregation, findings, curve trends, performance + race, explorer/prefs/security) use
+deterministic synthetic fixtures only; no personal workout data is committed. Insights
+date-range fixtures are built with local-time constructors so day-boundary rules hold
+in any timezone.

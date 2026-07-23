@@ -14,7 +14,7 @@
  * everything else, so authenticated Drive calls etc. always go live.
  */
 // Bump this when you redeploy to force a fresh shell on every client.
-const CACHE_VERSION = "pm5-v48";
+const CACHE_VERSION = "pm5-v49";
 const SHELL = [
   "./manifest.json",
   "./icon-192.png",
@@ -22,6 +22,7 @@ const SHELL = [
   "./firebase-config.js",
   "./analysis.js",
   "./curves.js",
+  "./insights.js",
 ];
 
 self.addEventListener("install", (event) => {
@@ -55,7 +56,8 @@ self.addEventListener("fetch", (event) => {
   const isShellDoc = url.pathname.endsWith(".html") || url.pathname === "/" ||
                      url.pathname === "" || req.mode === "navigate" ||
                      url.pathname.endsWith("/analysis.js") ||
-                     url.pathname.endsWith("/curves.js");
+                     url.pathname.endsWith("/curves.js") ||
+                     url.pathname.endsWith("/insights.js");
   if (isShellDoc) {
     event.respondWith(
       fetch(req).then((resp) => {

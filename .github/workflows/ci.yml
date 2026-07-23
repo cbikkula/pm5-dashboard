@@ -32,3 +32,6 @@ jobs:
 
       - name: Curve-module syntax check
         run: node --check pm5web/curves.js
+
+      - name: Insights-module syntax check
+        run: node --check pm5web/insights.js

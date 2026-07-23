@@ -10,6 +10,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Multi-erg synchronization (needs a new per-erg Firestore surface + rules — deliberately not built on the club-scoped schema)
 - AI technique analysis (peak-timing trends)
 
+## [v1.22.0] — July 2026 — Insights: Cross-Session Evidence
+
+The stored evidence becomes longitudinal insight: a new top-level **Insights** page answers what measurably changed, what held steady, which sessions prove it, and what to inspect in Replay. Every calculation is deterministic, documented in [`docs/analysis-methods.md`](docs/analysis-methods.md), and traceable to stored sessions — no causation, readiness, recovery, or "perfect stroke" claims, ever.
+
+- **Evidence summary** — at most three prioritized findings, each stating the absolute change (before any percentage), the sessions and strokes behind it, both comparison periods, a documented confidence level, missing data, and an **Inspect evidence** action straight into Replay. Insufficient data is a first-class result with structured reasons.
+- **Ranges, comparisons, filters** — 7/28/90-day, all-history, and custom ranges (local calendar days); previous-equal-period or custom Period A vs B comparison; workout-type, distance, and Race Lab filters; synthetic sessions excluded by default behind a toggle. Every chart, finding, and evidence link honors the same cohort, and excluded sessions list their reasons.
+- **Technique trends** — Force Curve similarity vs ONE fixed, labeled reference (the active baseline — never silently changed between points), absolute peak force, Drive Length, Ratio, peak timing, and lazy within-session curve consistency (up to 16 decoded curves for up to 12 sessions, bounded cache, stale-run cancellation). One point per session, so long rows never dominate. Legacy sessions are skipped honestly.
+- **Performance & execution** — power per stroke (watts / strokes-per-second), pacing stability, race-plan execution (median |delta| vs plan, estimate-labeled), and period-vs-all-time power bests via the existing power engine (training rows never become "maximal tests"). Incompatible distances/plans are never merged into one pace trend.
+- **Training history** — recorded sessions, distance, duration, weekly bars, interval/continuous split, HR and curve-coverage counts — explicitly labeled as what was recorded or imported, not the athlete's entire training.
+- **Comparable-session explorer** — pick a session, see every compatible one (Baseline-Engine rule, reasons shown), with previous/best/median context and one-click Replay or A/B handoff. Incompatible sessions are never substituted.
+- **Data confidence panel** — sessions available/used, strokes and curve coverage, reference identity, and exactly what additional evidence would unlock more.
+- **Demo history** — one click generates 12 deterministic synthetic sessions across 8 weeks (progression, intervals, races, partial coverage, a legacy-style row) through the production storage paths, SYNTHETIC-badged and excluded by default; one click removes only demo data.
+- **Charts** — dependency-free canvas: keyboard point navigation (arrows/Home/End/Enter opens Replay), exact values on focus, accessible text summaries, gaps instead of invented values, reduced-motion-safe (no animation), responsive at 375 px.
+- **Size decision (documented)** — Insights adds `pm5web/insights.js` (~55 KB). After measured cleanup (~3 KB of stale comments/markup removed) a responsible implementation could not fit under the 768 KB total guard, so the **total offline-app limit moved once to 832 KB** (current total ~830 KB), enforced in CI. `index.html` keeps its 660 KB cap (~649 KB); every asset stays measured; no dependencies or generated bulk.
+- **Tests 413 → 481** — six new deterministic groups: cohorts/filters, aggregation, findings, curve trends, performance/race, explorer/prefs/security. The old Performance-tab "Insights" was renamed **Observations** to avoid confusion.
+
 ## [v1.21.0] — July 2026 — Stroke-Level Evidence
 
 Replay stops showing you a session average and starts showing you *the stroke*. Every stroke's actual Force Curve is now captured, stored, and replayable — with exact stroke identity, honest coverage reporting, and comparison tools built on the athlete's own evidence. Backward compatible: schema v3 unchanged, old sessions and v1.20 exports load exactly as before.

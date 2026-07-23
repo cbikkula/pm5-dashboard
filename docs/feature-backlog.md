@@ -122,3 +122,12 @@ If you'd rather batch a few in one session, say `do backlog #7, #8, #11` and I'l
 For an organic-feeling cadence: **one feature every 2–4 days** for the next couple of months. Some weeks you'll skip; some weeks you'll do two in a day. That's exactly how real software gets built.
 
 By the end of the backlog you'll have ~30 distinct commits over actual calendar time, with real dates, real messages, and real iteration. Reads way better than a hundred commits dumped in a weekend.
+
+## Post-v1.22 candidates (from the Insights release)
+
+- Segment-level insight drill-down: findings that point at a specific race segment or
+  interval range, opening Replay pre-scoped to it.
+- Insights export: a shareable JSON/CSV of the current cohort's series + findings
+  (respecting the synthetic filter).
+- Trend annotations: let the athlete mark equipment/damper/technique-change dates so
+  trends can be split at known breakpoints (still non-causal wording).

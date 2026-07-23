@@ -1,5 +1,21 @@
 # Known issues
 
+## Insights is evidence-limited by what you have stored (v1.22)
+
+The Insights page computes only from sessions recorded or imported into this app.
+Consequences it states rather than hides: change findings need at least 3 usable
+sessions in each compared period; pace trends require mutually comparable sessions
+(shared benchmark or distances within ×1.25); curve trends need saved session-average
+curves and a chosen baseline; within-session consistency needs stored stroke curves on
+this device (curve detail is per-device — see the v1.21 note below). Insufficient data
+is presented as a valid result with reasons, never guessed around.
+
+## Performance tab "Insights" renamed to "Observations" (v1.22)
+
+The old per-session rule-based list on the Performance page is now called
+**Observations**; the new top-level **Insights** page is the cross-session evidence
+tool. Behavior of the old tab is unchanged.
+
 ## Stroke curves are per-device unless exported or Drive-synced (v1.21)
 
 Per-stroke Force Curve detail lives in the browser's IndexedDB, not in localStorage —

@@ -1558,6 +1558,291 @@ if (app.strokePosToOrdinal) {
 }
 
 // ---------------------------------------------------------------------
+// v1.22.0 — Insights: cross-session evidence. Deterministic fixtures;
+// all dates built via local-time constructors so day-boundary rules
+// hold in any timezone.
+// ---------------------------------------------------------------------
+group("insights cohorts");
+if (app.buildInsightsCohort) {
+  const NOW = new Date(2026, 6, 22, 12, 0, 0).getTime();   // local 2026-07-22 noon
+  const iso = daysAgo => new Date(NOW - daysAgo * 86400000).toISOString();
+  const mkE = (id, daysAgo, o) => Object.assign({
+    id, date: iso(daysAgo), title: "S" + id,
+    totals: { distanceM: 5000, elapsedS: 1250, avgPaceS: 125, avgWatts: 180 },
+    strokes: Array.from({ length: 40 }, (_, j) => ({
+      t: j * 2.5, d: j * 125, p: 125, w: 180, r: 24, dl: 1.35, dt: 0.8, rt: 1.6, pt: 0.42 })),
+  }, o || {});
+  const hist = [
+    mkE("a1", 1), mkE("a2", 3), mkE("a3", 6),
+    mkE("b1", 8), mkE("b2", 10), mkE("b3", 13),
+    mkE("old", 40),
+    mkE("iv", 2, { results: [{ distanceM: 500, elapsedS: 110 }, { distanceM: 500, elapsedS: 112 }],
+      plan: { intervals: [{ kind: "distance", value: 500 }, { kind: "distance", value: 500 }] },
+      totals: { distanceM: 1000, elapsedS: 222, avgPaceS: 111 } }),
+    mkE("demo1", 2, { demo: true }),
+    mkE("race1", 4, { plan: { title: "2k", benchKey: "2k",
+      intervals: [{ kind: "distance", value: 2000 }],
+      race: { distanceM: 2000, basePaceS: 120, strategy: "even",
+        segments: [{ fromM: 0, toM: 2000, targetPaceS: 120, phase: "base" }] } },
+      totals: { distanceM: 2000, elapsedS: 480, avgPaceS: 120 } }),
+    { id: "junk", date: iso(2), title: "no totals", totals: {} },
+  ];
+  const c7 = app.buildInsightsCohort(hist, { nowMs: NOW, range: "7d", compare: "prev" });
+  ok("7d window includes days 0-6, excludes day 8+",
+    c7.a.facts.some(f => f.id === "a3") && !c7.a.facts.some(f => f.id === "b1"));
+  ok("prev equal period holds days 7-13",
+    c7.b.facts.length === 3 && c7.b.facts.every(f => ["b1", "b2", "b3"].includes(f.id)));
+  ok("day-boundary is local-inclusive (day 6 in, day 40 out)",
+    c7.a.facts.some(f => f.id === "a3") &&
+    c7.excluded.some(x => x.id === "old" && x.reason === "outside selected period"));
+  ok("synthetic excluded by default with a stable reason",
+    c7.excluded.some(x => x.id === "demo1" && /synthetic demo/.test(x.reason)));
+  ok("synthetic included when toggled",
+    app.buildInsightsCohort(hist, { nowMs: NOW, range: "7d", includeSynthetic: true })
+      .a.facts.some(f => f.id === "demo1"));
+  ok("unusable totals excluded with reason",
+    c7.excluded.some(x => x.id === "junk" && x.reason === "no usable totals"));
+  const cIv = app.buildInsightsCohort(hist, { nowMs: NOW, range: "7d", type: "interval" });
+  ok("workout-type filter keeps only intervals",
+    cIv.a.facts.length === 1 && cIv.a.facts[0].id === "iv" &&
+    cIv.excluded.some(x => x.id === "a1" && x.reason === "workout-type filter"));
+  const cD = app.buildInsightsCohort(hist, { nowMs: NOW, range: "7d", minDistM: 3000 });
+  ok("distance filter excludes short sessions",
+    !cD.a.facts.some(f => f.id === "iv") &&
+    cD.excluded.some(x => x.id === "iv" && x.reason === "distance filter"));
+  const cR = app.buildInsightsCohort(hist, { nowMs: NOW, range: "7d", racePlanOnly: true });
+  ok("Race Lab filter keeps only race-plan sessions",
+    cR.a.facts.length === 1 && cR.a.facts[0].id === "race1");
+  const cAB = app.buildInsightsCohort(hist, { nowMs: NOW, range: "custom",
+    fromMs: NOW - 6 * 86400000, toMs: NOW,
+    compare: "custom", bFromMs: NOW - 45 * 86400000, bToMs: NOW - 30 * 86400000 });
+  ok("custom Period A vs Period B resolves both windows",
+    cAB.a.facts.length >= 3 && cAB.b.facts.length === 1 && cAB.b.facts[0].id === "old");
+  const again = app.buildInsightsCohort(hist, { nowMs: NOW, range: "7d", compare: "prev" });
+  ok("cohort building is deterministic",
+    JSON.stringify(again.a.facts.map(f => f.id)) === JSON.stringify(c7.a.facts.map(f => f.id)) &&
+    JSON.stringify(again.excluded) === JSON.stringify(c7.excluded));
+  const snap = JSON.stringify(hist);
+  app.buildInsightsCohort(hist, { nowMs: NOW, range: "all" });
+  ok("cohort building never mutates history", JSON.stringify(hist) === snap);
+  const cAll = app.buildInsightsCohort(hist, { nowMs: NOW, range: "all" });
+  ok("all-history range takes every usable non-demo session",
+    cAll.a.facts.length === hist.length - 2);   // minus demo1 + junk
+  ok("coverage summary counts legacy sessions",
+    cAll.coverage.legacy === cAll.a.facts.length);   // fixtures carry no curveMeta
+}
+
+group("insights aggregation");
+if (app.sessionFacts) {
+  ok("median: odd/even/deterministic",
+    app.insMedian([3, 1, 2]) === 2 && app.insMedian([4, 1, 2, 3]) === 2.5 &&
+    app.insMedian([]) === null);
+  ok("IQR needs 4+ values", app.insIqr([1, 2, 3]) === null && app.insIqr([1, 2, 3, 100]) > 0);
+  ok("spread % refuses near-zero denominators",
+    app.insSpreadPct([0.0000001, -0.0000001, 0.0000002, -0.0000002]) === null);
+  const e = { id: "x", date: new Date(2026, 6, 20).toISOString(), title: "t",
+    totals: { distanceM: 2000, elapsedS: 480, avgWatts: 200 },
+    strokes: [
+      { t: 1, d: 10, p: 120, w: 200, r: 24, dl: 1.30, dt: 0.8, rt: 1.6, pt: 0.40, hr: 150 },
+      { t: 2, d: 20, p: 122, w: 210, r: 26, dl: 1.40, dt: 0.8, rt: 1.6, pt: 0.44 },
+      { t: 3, d: 30, p: NaN, w: { evil: 1 }, r: "26", dl: Infinity, dt: 0.8, rt: 1.6 },
+      { t: 4, d: 40, p: 121, w: 205, r: 25, dl: 1.35, dt: 0.8, rt: 1.6, pt: 0.42 },
+    ] };
+  const f = app.sessionFacts(e);
+  ok("facts: non-finite and object-valued fields rejected",
+    f.dlMed === 1.35 && f.rateMed === 25 && f.paceMed === 121);
+  ok("facts: power per stroke = W/(spm/60)",
+    Math.abs(f.ppsMed - 205 / (25 / 60)) < 1e-9);
+  ok("facts: ratio derived from dt/rt", Math.abs(f.ratioMed - 2) < 1e-9);
+  ok("facts: hr coverage fraction", Math.abs(f.hrCoverage - 0.25) < 1e-9);
+  ok("facts: legacy coverage without curveMeta", f.curveCoverage === "legacy");
+  ok("facts: never mutates the entry", !("dlMed" in e) && e.strokes.length === 4);
+  ok("facts: unusable entry → null",
+    app.sessionFacts({ id: "y", date: "2026-01-01", totals: {} }) === null &&
+    app.sessionFacts({ id: "z", date: "not a date", totals: { distanceM: 100 } }) === null);
+  // Session-level weighting: a 10× longer session is still one point.
+  const short = { id: "s", date: new Date(2026, 6, 1).toISOString(), totals: { distanceM: 2000, elapsedS: 480 },
+    strokes: Array.from({ length: 20 }, (_, j) => ({ t: j, d: j * 100, dl: 1.30, dt: 0.8, rt: 1.6 })) };
+  const long = { id: "l", date: new Date(2026, 6, 2).toISOString(), totals: { distanceM: 20000, elapsedS: 4800 },
+    strokes: Array.from({ length: 200 }, (_, j) => ({ t: j, d: j * 100, dl: 1.50, dt: 0.8, rt: 1.6 })) };
+  const pts = app.buildMetricSeries([app.sessionFacts(short), app.sessionFacts(long)], "dlMed");
+  ok("long sessions do not dominate: one point per session, unweighted",
+    pts.length === 2 && pts[0].v === 1.30 && pts[1].v === 1.50 &&
+    app.insMedian(pts.map(q => q.v)) === 1.40);
+}
+
+group("insights findings");
+if (app.generateInsightsFindings) {
+  const NOW = new Date(2026, 6, 22, 12).getTime();
+  const mkF = (id, daysAgo, dl, o) => {
+    const strokes = Array.from({ length: 60 }, (_, j) => ({
+      t: j * 2.5, d: j * 80, p: (o && o.pace) || 125, w: (o && o.w) || 180,
+      r: (o && o.r) || 24, dl: dl + ((j % 3) - 1) * 0.01, dt: 0.8, rt: 1.6, pt: 0.42 }));
+    return app.sessionFacts(Object.assign({
+      id, date: new Date(NOW - daysAgo * 86400000).toISOString(), title: "S" + id,
+      totals: { distanceM: 5000, elapsedS: 1250, avgPaceS: (o && o.pace) || 125, avgWatts: (o && o.w) || 180 },
+      strokes }, (o && o.entry) || {}));
+  };
+  const mkCohort = (aDl, bDl, o) => ({
+    a: { facts: aDl.map((v, i) => mkF("A" + i, i, v, o)), fromMs: NOW - 6 * 86400000, toMs: NOW },
+    b: { facts: bDl.map((v, i) => mkF("B" + i, 8 + i, v, o)), fromMs: NOW - 13 * 86400000, toMs: NOW - 7 * 86400000 },
+    coverage: {}, excluded: [],
+  });
+  const up = app.generateInsightsFindings(mkCohort([1.40, 1.41, 1.39, 1.40], [1.32, 1.33, 1.31, 1.32]), {});
+  const dlUp = up.findings.find(f => f.metric === "dlMed");
+  ok("sustained Drive Length change detected", !!dlUp && dlUp.kind === "change" && dlUp.absDelta > 0.05);
+  ok("finding reports absolute before relative", /\+0\.08 m/.test(dlUp.text));
+  ok("finding carries evidence session ids",
+    dlUp.evidence.sessionIds.length === 4 && dlUp.evidence.comparisonIds.length === 4 &&
+    dlUp.evidence.sessionIds.every(id => /^A/.test(id)));
+  ok("finding states both periods", dlUp.periods.a.n === 4 && dlUp.periods.b.n === 4);
+  ok("confidence has a level and documented reasons",
+    ["high", "medium", "low"].includes(dlUp.confidence.level) && dlUp.confidence.why.length > 10);
+  const flat = app.generateInsightsFindings(mkCohort([1.35, 1.35, 1.36, 1.35], [1.35, 1.36, 1.35, 1.35]), {});
+  ok("stable result reported as a finding, capped at one",
+    flat.findings.filter(f => f.kind === "stable").length === 1);
+  const thin = app.generateInsightsFindings(
+    { a: { facts: [mkF("A0", 0, 1.4)], fromMs: 0, toMs: 1 },
+      b: { facts: [mkF("B0", 8, 1.3)], fromMs: 0, toMs: 1 }, coverage: {}, excluded: [] }, {});
+  ok("insufficient data is a structured result, not a guess",
+    thin.findings.length === 0 && thin.insufficient.some(r => /at least 3/.test(r.reason)));
+  ok("no comparison period → explicit insufficiency",
+    app.generateInsightsFindings({ a: { facts: [], fromMs: 0, toMs: 1 }, b: null, coverage: {}, excluded: [] }, {})
+      .insufficient.some(r => /comparison period/.test(r.reason)));
+  ok("at most three findings", up.findings.length <= 3);
+  ok("one finding per metric family",
+    new Set(up.findings.map(f => f.family)).size === up.findings.length);
+  const banned = /perfect|optimal stroke|readiness|recovery score|injur|causes|caused by|guarantee/i;
+  ok("no causal, medical, readiness, or perfect-stroke wording",
+    up.findings.concat(flat.findings).every(f => !banned.test(f.text)));
+  // Pace requires comparable cohorts: mixed distances suppress it.
+  const mixA = [mkF("A0", 0, 1.35), mkF("A1", 1, 1.35), mkF("A2", 2, 1.35)];
+  mixA[1] = Object.assign({}, mixA[1], { distanceM: 20000, benchKey: null });
+  const mixed = app.generateInsightsFindings(
+    { a: { facts: mixA, fromMs: 0, toMs: 1 },
+      b: { facts: [mkF("B0", 8, 1.3), mkF("B1", 9, 1.3), mkF("B2", 10, 1.3)], fromMs: 0, toMs: 1 },
+      coverage: {}, excluded: [] }, {});
+  ok("incompatible pace cohorts never produce a pace finding",
+    !mixed.findings.some(f => f.family === "pace") &&
+    mixed.insufficient.some(r => /not mutually comparable/.test(r.reason)));
+  const d1 = app.generateInsightsFindings(mkCohort([1.40, 1.41, 1.39, 1.40], [1.32, 1.33, 1.31, 1.32]), {});
+  ok("findings are deterministic",
+    JSON.stringify(d1.findings.map(f => f.metric + f.kind)) ===
+    JSON.stringify(up.findings.map(f => f.metric + f.kind)));
+  // Inconsistent direction fails the 70% agreement gate.
+  const noisy = app.generateInsightsFindings(mkCohort([1.40, 1.25, 1.42, 1.26], [1.33, 1.32, 1.34, 1.33]), {});
+  ok("inconsistent direction produces no change finding for that metric",
+    !noisy.findings.some(f => f.metric === "dlMed" && f.kind === "change"));
+}
+
+group("insights curve trends");
+if (app.buildCurveSimSeries) {
+  const bell = (peak, at) => Array.from({ length: 64 }, (_, k) => {
+    const t = k / 63;
+    return peak * (t < at ? Math.sin((t / at) * Math.PI / 2) : Math.sin(((1 - t) / (1 - at)) * Math.PI / 2));
+  });
+  const mkFacts = ats => ats.map((at, i) => ({
+    id: "c" + i, dateMs: i, dateISO: "d" + i, title: "S" + i,
+    fcAvg: at == null ? null : bell(150, at), curveCoverage: at == null ? "legacy" : "complete",
+  }));
+  const ref = bell(148, 0.35);
+  const sr = app.buildCurveSimSeries(mkFacts([0.35, 0.55, null, 0.75]), ref);
+  ok("similarity series: one point per session with a curve, fixed reference",
+    sr.points.length === 3 && sr.skipped === 1);
+  ok("closer shapes score higher against the same reference",
+    sr.points[0].v > sr.points[1].v && sr.points[1].v > sr.points[2].v);
+  ok("legacy sessions are skipped, never fabricated",
+    !sr.points.some(q => q.id === "c2"));
+  ok("no reference → explicit reason, no points",
+    app.buildCurveSimSeries(mkFacts([0.4]), null).reason.length > 5);
+  ok("no curves in period → explicit reason",
+    app.buildCurveSimSeries(mkFacts([null, null]), ref).reason.length > 5);
+  const same = [bell(150, 0.42), bell(152, 0.42), bell(149, 0.42), bell(151, 0.42), bell(150, 0.42)];
+  const varied = [bell(150, 0.35), bell(150, 0.55), bell(150, 0.42), bell(150, 0.30), bell(150, 0.60)];
+  const cSame = app.curveConsistencyFromSamples(same);
+  const cVar = app.curveConsistencyFromSamples(varied);
+  ok("within-session consistency: identical shapes ≈ 100", cSame >= 99);
+  ok("varied shapes score lower", cVar < cSame);
+  ok("consistency needs ≥5 curves", app.curveConsistencyFromSamples(same.slice(0, 4)) === null);
+  ok("corrupt curve inputs are ignored safely",
+    app.curveConsistencyFromSamples([null, [1, 2], "x", ...same]) >= 99);
+}
+
+group("insights performance + race");
+if (app.sessionRaceExec) {
+  const race = { distanceM: 2000, basePaceS: 120, strategy: "even",
+    segments: [{ fromM: 0, toM: 2000, targetPaceS: 120, phase: "base" }] };
+  const mkRace = offS => ({
+    id: "r", date: new Date(2026, 6, 20).toISOString(),
+    plan: { benchKey: "2k", intervals: [{ kind: "distance", value: 2000 }], race },
+    totals: { distanceM: 2000, elapsedS: 480 },
+    strokes: Array.from({ length: 50 }, (_, j) => {
+      const d = (j + 1) * 40;
+      return { t: (d / 500) * 120 + offS, d, p: 120, w: 200, r: 26, dl: 1.35, dt: 0.8, rt: 1.6 };
+    }) });
+  ok("race execution: on-plan session ≈ 0 s deviation", app.sessionRaceExec(mkRace(0)) < 0.01);
+  ok("race execution: constant 3 s behind reads as 3 s", Math.abs(app.sessionRaceExec(mkRace(3)) - 3) < 0.01);
+  ok("race execution needs ≥10 usable strokes",
+    app.sessionRaceExec({ plan: { race }, strokes: [{ t: 1, d: 40 }] }) === null);
+  ok("non-race sessions return null", app.sessionRaceExec({ strokes: [] }) === null);
+  ok("pace comparability: same benchmark passes",
+    app.insPaceComparable([{ benchKey: "2k", distanceM: 2000 }, { benchKey: "2k", distanceM: 2010 }]));
+  ok("pace comparability: mixed distances fail",
+    !app.insPaceComparable([{ benchKey: null, distanceM: 2000 }, { benchKey: null, distanceM: 12000 }]));
+  ok("pace comparability: near distances pass without benchmarks",
+    app.insPaceComparable([{ benchKey: null, distanceM: 5000 }, { benchKey: null, distanceM: 5500 }]));
+}
+
+group("insights explorer + prefs + security");
+if (app.findInsightsComparables) {
+  const NOW = new Date(2026, 6, 22, 12).getTime();
+  const mk = (id, daysAgo, dist, pace, o) => Object.assign({
+    id, date: new Date(NOW - daysAgo * 86400000).toISOString(), title: "S" + id,
+    totals: { distanceM: dist, elapsedS: (dist / 500) * pace, avgPaceS: pace },
+    strokes: Array.from({ length: 20 }, (_, j) => ({ t: j, d: j * 100, p: pace, dl: 1.35, dt: 0.8, rt: 1.6 })),
+  }, o || {});
+  const target = mk("T", 0, 5000, 120);
+  const hist = [target, mk("p1", 5, 5100, 122), mk("p2", 12, 4900, 118),
+    mk("far", 3, 15000, 130), mk("dm", 4, 5000, 119, { demo: true }), mk("old", 60, 5000, 125)];
+  const cmp = app.findInsightsComparables(target, hist, {});
+  ok("comparables: compatible sessions found with reasons",
+    cmp.rows.length === 3 && cmp.rows.every(r => /±20%|benchmark/.test(r.why)));
+  ok("incompatible sessions are never substituted", !cmp.rows.some(r => r.facts.id === "far"));
+  ok("synthetic excluded from real comparisons", !cmp.rows.some(r => r.facts.id === "dm"));
+  ok("previous attempt is the nearest earlier compatible session", cmp.prev.facts.id === "p1");
+  ok("best comparable attempt by pace", cmp.best.facts.id === "p2");
+  ok("recent and historical medians reported",
+    cmp.recentMedPaceS != null && cmp.historicalMedPaceS != null);
+  ok("metric differences computed vs the target",
+    Math.abs(cmp.rows.find(r => r.facts.id === "p1").diffs.paceS - (-2)) < 1e-9);
+  // Prefs sanitizer: hostile input falls back to defaults.
+  const hp = app.sanitizeInsightsPrefs(JSON.parse(
+    '{"range":"<script>","compare":{"a":1},"type":"interval","includeSynthetic":"yes","minDistM":1e99,"__proto__":{"x":1}}'));
+  ok("prefs: hostile values fall back, valid ones survive",
+    hp.range === "28d" && hp.compare === "prev" && hp.type === "interval" &&
+    hp.includeSynthetic === false && hp.minDistM === null);
+  ok("prefs: prototype pollution inert", ({}).x === undefined);
+  // Hostile titles stay inert strings through the engine.
+  const hostile = mk("h", 1, 5000, 121, { title: "<img src=x onerror=alert(1)>" });
+  const facts = app.sessionFacts(hostile);
+  ok("hostile titles pass through as plain strings, unexecuted",
+    facts.title === "<img src=x onerror=alert(1)>");
+  const cohort = app.buildInsightsCohort([hostile], { nowMs: NOW, range: "7d" });
+  ok("engine outputs are data-only (no HTML fields)",
+    !JSON.stringify(cohort).includes("innerHTML"));
+  // v1.21 entries with curve metadata flow through untouched.
+  const v21 = mk("v21", 1, 5000, 121, {
+    curveMeta: { v: 1, coverage: "complete", retained: 20, total: 20 }, strokeStride: 1 });
+  const f21 = app.sessionFacts(v21);
+  ok("v1.21 sessions load unchanged with curve coverage",
+    f21.curveCoverage === "complete" && f21.curveRetained === 20);
+  ok("training overview counts coverage classes",
+    (() => { const o = app.buildTrainingOverview([f21, app.sessionFacts(mk("l", 2, 5000, 121))]);
+      return o.sessions === 2 && o.curves.complete === 1 && o.curves.legacy === 1 &&
+        o.weekly.length >= 1; })());
+}
+
+// ---------------------------------------------------------------------
 // 8. App-size guard (#25) — keep the whole offline app under budget.
 // Budget history: 600 KB (index.html only) through v1.17.0; 660 KB in
 // v1.18.0; v1.20.0 split the pure analysis layer into analysis.js and
@@ -1567,18 +1852,28 @@ if (app.strokePosToOrdinal) {
 // the old 660 KB ceiling.
 // ---------------------------------------------------------------------
 group("app size");
+// Budget history: 600 KB (index only) → 660 KB (v1.18) → total-app
+// guard 768 KB (v1.20, three files). v1.22.0 adds insights.js (~55 KB
+// of cross-session engine + page) after measured cleanup freed ~3 KB
+// of stale comments/markup; a responsible implementation could not fit
+// under 768, so the TOTAL limit moved once to 832 KB — documented in
+// CHANGELOG.md and docs/architecture.md. index.html keeps its 660 KB
+// cap, every offline asset is measured here, and no code ships in
+// unmeasured assets.
 const html = fs.readFileSync(INDEX, "utf8");
 const analysisSrc = fs.readFileSync(ANALYSIS, "utf8");
 const curvesSrc = fs.readFileSync(path.join(path.dirname(INDEX), "curves.js"), "utf8");
+const insightsSrc = fs.readFileSync(path.join(path.dirname(INDEX), "insights.js"), "utf8");
 const swSrc = fs.readFileSync(path.join(path.dirname(INDEX), "sw.js"), "utf8");
 const idxKb = Buffer.byteLength(html, "utf8") / 1024;
 const anaKb = Buffer.byteLength(analysisSrc, "utf8") / 1024;
 const curKb = Buffer.byteLength(curvesSrc, "utf8") / 1024;
+const insKb = Buffer.byteLength(insightsSrc, "utf8") / 1024;
 const swKb = Buffer.byteLength(swSrc, "utf8") / 1024;
-const totalKb = idxKb + anaKb + curKb + swKb;
-console.log(`  index.html = ${idxKb.toFixed(0)} KB · analysis.js = ${anaKb.toFixed(0)} KB · curves.js = ${curKb.toFixed(0)} KB · sw.js = ${swKb.toFixed(0)} KB · total = ${totalKb.toFixed(0)} KB`);
+const totalKb = idxKb + anaKb + curKb + insKb + swKb;
+console.log(`  index.html = ${idxKb.toFixed(0)} KB · analysis.js = ${anaKb.toFixed(0)} KB · curves.js = ${curKb.toFixed(0)} KB · insights.js = ${insKb.toFixed(0)} KB · sw.js = ${swKb.toFixed(0)} KB · total = ${totalKb.toFixed(0)} KB`);
 ok("index.html under 660 KB", idxKb < 660);
-ok("total offline app under 768 KB", totalKb < 768);
+ok("total offline app under 832 KB", totalKb < 832);
 
 // ---------------------------------------------------------------------
 console.log(`\n=== ${pass} passed, ${fail} failed ===`);

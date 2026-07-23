@@ -6,7 +6,7 @@ const path = require("path");
 
 const idxFile = path.join(__dirname, "..", "pm5web", "index.html");
 
-for (const name of ["analysis.js", "curves.js"]) {
+for (const name of ["analysis.js", "curves.js", "insights.js"]) {
   const src = fs.readFileSync(path.join(__dirname, "..", "pm5web", name), "utf8");
   try {
     new Function(src);

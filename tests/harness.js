@@ -17,6 +17,7 @@ const path = require("path");
 const INDEX = path.join(__dirname, "..", "pm5web", "index.html");
 const ANALYSIS = path.join(__dirname, "..", "pm5web", "analysis.js");
 const CURVES = path.join(__dirname, "..", "pm5web", "curves.js");
+const INSIGHTS = path.join(__dirname, "..", "pm5web", "insights.js");
 
 function stubNode() {
   const n = {
@@ -84,12 +85,14 @@ function extractMainScript(html) {
 
 function load() {
   const html = fs.readFileSync(INDEX, "utf8");
-  // v1.21.0 — the app is three classic scripts: analysis.js (pure
-  // layer), curves.js (stroke-evidence storage + UI), then the main
-  // inline script. Concatenate in load order so the sandbox sees the
-  // same global scope the browser builds.
+  // v1.22.0 — the app is four classic scripts: analysis.js (pure
+  // layer), curves.js (stroke-evidence storage + UI), insights.js
+  // (cross-session engine + page), then the main inline script.
+  // Concatenate in load order so the sandbox sees the same global
+  // scope the browser builds.
   const src = fs.readFileSync(ANALYSIS, "utf8") + "\n;\n" +
-              fs.readFileSync(CURVES, "utf8") + "\n;\n" + extractMainScript(html);
+              fs.readFileSync(CURVES, "utf8") + "\n;\n" +
+              fs.readFileSync(INSIGHTS, "utf8") + "\n;\n" + extractMainScript(html);
   const sb = makeSandbox();
   const ctx = vm.createContext(sb);
   // Re-export the top-level declarations we test onto globalThis so the
@@ -155,6 +158,12 @@ function load() {
     "findEvidenceStrokes", "buildCurveWindowBaseline",
     "strokeRangeForDistance", "strokeRangeForInterval", "strokeRangeForRaceSegment",
     "CURVE_MEM_CAP", "curveCaptureAppend", "collectCurveAnchors",
+    // v1.22 — Insights engine
+    "insMedian", "insIqr", "insSpreadPct", "sessionFacts",
+    "buildInsightsCohort", "INS_METRICS", "sessionRaceExec",
+    "insPaceComparable", "generateInsightsFindings",
+    "buildCurveSimSeries", "buildMetricSeries", "curveConsistencyFromSamples",
+    "findInsightsComparables", "buildTrainingOverview", "sanitizeInsightsPrefs",
   ];
   const shim = "\n;globalThis.__APP = {" +
     exposed.map((n) => `${n}: (typeof ${n}!=="undefined"?${n}:undefined)`).join(",") +
@@ -163,4 +172,4 @@ function load() {
   return sb.__APP;
 }
 
-module.exports = { load, extractMainScript, makeSandbox, INDEX, ANALYSIS, CURVES };
+module.exports = { load, extractMainScript, makeSandbox, INDEX, ANALYSIS, CURVES, INSIGHTS };

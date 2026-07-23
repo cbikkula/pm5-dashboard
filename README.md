@@ -21,7 +21,7 @@
 
 > Open in Chrome or Edge on a desktop or Android phone. Click **Connect**, pair the PM5 over Bluetooth, and row.
 
-**Current release: `v1.21.0`** ([changelog](CHANGELOG.md)) · ~767 KB offline app (one HTML file + two focused scripts), no framework, no build step.
+**Current release: `v1.22.0`** ([changelog](CHANGELOG.md)) · ~830 KB offline app (one HTML file + three focused scripts), no framework, no build step.
 
 ---
 
@@ -32,8 +32,8 @@ The part I'd want a reviewer to see first:
 - 🔐 **Role-based access control with no server.** A full multi-coach club system (owner / admin / coach / athlete) enforced *entirely* by **Firestore Security Rules** — on Firebase's free Spark plan there are no Cloud Functions, so [the rules **are** the backend](firestore.rules). Invite/approval flows with unguessable bearer-token join codes, an append-only audit log that **nobody — not even the owner — can edit or delete**, and a client permission engine that mirrors the rules so the UI never offers what the server will reject.
 - 🛡️ **Designed adversarially.** I wrote the rules, then tried to break them — a pass that found **5 root-cause auth holes** (invite-bypass join, self-chosen athlete link, availability null-trap, audit backdating, revoked-invite readability). Then I reviewed the client across **5 dimensions and fixed 12 more bugs** (3 data-loss-critical) before release. The whole threat model + findings table is in [`docs/security.md`](docs/security.md).
 - 📡 **Reverse-engineered the PM5 BLE protocol** from the Concept2 GATT spec — 64-sample force-curve resampling, ~20 Hz stroke parsing, `< 10 ms` render — documented in [`docs/ble-protocol.md`](docs/ble-protocol.md) (including the off-by-3 byte bug I shipped first).
-- 🧪 **Tested & CI'd.** A 413-assertion zero-dependency test suite (`npm test`) — including a dedicated security-regression group — runs in GitHub Actions on every push alongside a syntax check and a bundle-size guard.
-- ⚙️ **One file, zero dependencies, $0/mo.** ~18,400 lines of vanilla HTML/CSS/JS in an installable PWA (index.html + analysis.js + curves.js). No framework, no bundler, no server I run.
+- 🧪 **Tested & CI'd.** A 481-assertion zero-dependency test suite (`npm test`) — including a dedicated security-regression group — runs in GitHub Actions on every push alongside a syntax check and a bundle-size guard.
+- ⚙️ **One file, zero dependencies, $0/mo.** ~19,600 lines of vanilla HTML/CSS/JS in an installable PWA (index.html + analysis.js + curves.js + insights.js). No framework, no bundler, no server I run.
 
 ---
 
@@ -63,7 +63,7 @@ The part I'd want a reviewer to see first:
 
 ## Capabilities at a glance
 
-Factual summary of what this app does and deliberately does not do (v1.21.0; every analysis formula is documented in [`docs/analysis-methods.md`](docs/analysis-methods.md)):
+Factual summary of what this app does and deliberately does not do (v1.22.0; every analysis formula is documented in [`docs/analysis-methods.md`](docs/analysis-methods.md)):
 
 | Capability | Status |
 |---|---|
@@ -80,6 +80,8 @@ Factual summary of what this app does and deliberately does not do (v1.21.0; eve
 | **A/B stroke comparison (curves + metric deltas)** *(v1.21)* | ✅ absolute & normalized, honest reconstruction note |
 | **Stroke Evidence navigator (fastest/slowest/typical/closest/deviation)** *(v1.21)* | ✅ artifact-filtered, selection rules shown, no "best stroke" claims |
 | **Window / interval / race-segment curve baselines** *(v1.21)* | ✅ incl. same-segment vs a previous compatible attempt |
+| **Insights: cross-session findings + trends** *(v1.22)* | ✅ ≤3 evidence-linked findings, fixed-reference curve trends, documented thresholds |
+| **Comparable-session explorer** *(v1.22)* | ✅ compatibility reasons shown; incompatible sessions never substituted |
 | Workout-to-workout comparison with curve overlay | ✅ |
 | Rowing power profile + gated critical-power estimate | ✅ estimates labeled |
 | Custom workouts, benchmark tests, PR tracking, training report | ✅ |
@@ -211,8 +213,8 @@ Factual summary of what this app does and deliberately does not do (v1.21.0; eve
 
 |                                  |               |
 |----------------------------------|---------------|
-| Lines of code (web app)          | **~18,400** (`index.html` + `analysis.js` + `curves.js`) |
-| Shipped offline app              | **~767 KB** (640 KB HTML + 97 KB analysis.js + 27 KB curves.js + SW) — guarded < 768 KB |
+| Lines of code (web app)          | **~19,600** (`index.html` + `analysis.js` + `curves.js` + `insights.js`) |
+| Shipped offline app              | **~830 KB** (649 KB HTML + 97 KB analysis + 27 KB curves + 55 KB insights + SW) — guarded < 832 KB total, < 660 KB HTML |
 | Live metrics                     | **50**        |
 | Of those, heart-rate metrics     | **20**        |
 | Focus presets                    | **6**         |
@@ -226,8 +228,8 @@ Factual summary of what this app does and deliberately does not do (v1.21.0; eve
 | Render time (mid-tier hardware)  | < 10 ms       |
 | Offline-capable                  | yes (after first load) |
 | Crash-resistant                  | yes (auto-save recovery every 5 s) |
-| Released versions                | **30** (v1.0.0 → v1.21.0; [changelog](CHANGELOG.md)) · 12 git tags |
-| Total commits                    | **68** ([activity](https://github.com/cbikkula/pm5-dashboard/commits/main)) |
+| Released versions                | **31** (v1.0.0 → v1.22.0; [changelog](CHANGELOG.md)) · 13 git tags |
+| Total commits                    | **69** ([activity](https://github.com/cbikkula/pm5-dashboard/commits/main)) |
 | Server I run                     | **none** — serverless by design (Firebase Spark, **$0/mo**) |
 
 ---
@@ -320,12 +322,13 @@ pm5-dashboard/
 │   ├── index.html                ← The app shell + UI (one file)
 │   ├── analysis.js               ← Pure analysis layer (codecs, engines, sanitizers)
 │   ├── curves.js                 ← Stroke-level evidence (IndexedDB store + replay UI)
+│   ├── insights.js               ← Cross-session Insights engine + page (v1.22)
 │   ├── sw.js                     ← Service worker (PWA / offline)
 │   └── firebase-config.example.js ← Cloud-sync config template (real one gitignored)
 ├── pm5dashboard/                 ← Original Python desktop prototype
 ├── firestore.rules               ← The access-control layer (the "backend")
 ├── SECURITY.md                   ← Security policy, data-storage behavior, accepted risks
-├── tests/                        ← run.js + harness.js — 413-assertion suite
+├── tests/                        ← run.js + harness.js — 481-assertion suite
 ├── scripts/syntax-check.js       ← Standalone main-script linter (used by CI)
 ├── .github/workflows/ci.yml      ← Syntax check · unit tests · bundle-size guard
 ├── package.json                  ← npm test / lint / check

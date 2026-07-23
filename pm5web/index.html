@@ -2173,6 +2173,57 @@
   /* =====================================================================
      PERFORMANCE VIEW — Phase 1 page shell
      ===================================================================== */
+  /* v1.22 — Insights page */
+  #insightsView.active { display:block; padding:18px clamp(12px,3vw,40px) 60px; overflow-y:auto; }
+  #insightsView .perf-header { max-width:1100px; margin:0 auto; }
+  #insightsView > :not(.perf-header) { max-width:1100px; margin-left:auto; margin-right:auto; }
+  .ins-controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0;
+    background:var(--bg-raised); border:1px solid var(--border); border-radius:12px; padding:10px 12px; }
+  .ins-controls select, .ins-controls input[type=number], .ins-controls input[type=date] {
+    font-size:12.5px; padding:4px 8px; border-radius:8px; border:1px solid var(--border);
+    background:var(--bg-base); color:var(--text); max-width:150px; }
+  .ins-controls label { font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:4px; }
+  .ins-controls button { font-size:12px; padding:4px 10px; border-radius:8px; border:1px solid var(--border);
+    background:var(--bg-base); color:var(--text); cursor:pointer; }
+  .ins-controls :focus-visible, .ins-chart:focus-visible, .ins-evi:focus-visible {
+    outline:2px solid var(--accent); outline-offset:1px; }
+  .ins-cohort { font-size:12.5px; color:var(--text-muted); margin:6px 2px; }
+  .ins-excl { font-size:12px; color:var(--text-muted); margin:2px 2px 12px; }
+  .ins-excl summary { cursor:pointer; }
+  .ins-excl ul { margin:4px 0 0 18px; }
+  .ins-section { margin:18px 0; }
+  .ins-section h2 { font-size:12px; letter-spacing:.8px; color:var(--text-muted); margin:0 0 8px; }
+  .ins-card { background:var(--bg-raised); border:1px solid var(--border); border-left:4px solid var(--accent);
+    border-radius:10px; padding:10px 14px; margin-bottom:8px; }
+  .ins-card.ins-watch { border-left-color:#f5b942; }
+  .ins-card .ins-text { font-size:14px; }
+  .ins-card .ins-meta { font-size:11.5px; color:var(--text-muted); margin:4px 0 6px; }
+  .ins-evi { font-size:12px; padding:3px 10px; border-radius:8px; border:1px solid var(--border);
+    background:var(--bg-base); color:var(--accent); cursor:pointer; }
+  .ins-empty { font-size:13px; color:var(--text-muted); background:var(--bg-raised);
+    border:1px dashed var(--border); border-radius:10px; padding:12px 14px; }
+  .ins-insuf { font-size:12px; color:var(--text-muted); margin:8px 0 0 18px; }
+  .ins-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:10px; }
+  .ins-chart { background:var(--bg-raised); border:1px solid var(--border); border-radius:10px; padding:8px 12px; }
+  .ins-ch-t { font-size:11px; font-weight:700; letter-spacing:.4px; color:var(--text-muted); margin-bottom:4px; }
+  .ins-chart canvas { display:block; width:100%; height:90px; }
+  .ins-read { font-size:11.5px; color:var(--text); min-height:15px; margin-top:4px; }
+  .ins-sum { font-size:10.5px; color:var(--text-muted); margin-top:2px; }
+  .ins-pp-row, .ins-exp-row { font-size:12.5px; padding:4px 0; }
+  .ins-exp-row { display:flex; gap:8px; align-items:center; border-top:1px solid var(--border); padding:7px 0; }
+  .ins-exp-row div { flex:1; }
+  .ins-exp-row button { font-size:11.5px; padding:3px 9px; border-radius:8px; border:1px solid var(--border);
+    background:var(--bg-base); color:var(--text); cursor:pointer; white-space:nowrap; }
+  .ins-note { font-size:11px; color:var(--text-muted); margin-top:6px; }
+  .ins-weeks { display:flex; gap:4px; align-items:flex-end; margin:10px 0 2px; }
+  .ins-week { display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .ins-week-bar { width:18px; background:var(--accent); opacity:.75; border-radius:3px 3px 0 0; }
+  .ins-week-lab { font-size:8.5px; color:var(--text-muted); }
+  #insPower { margin-top:8px; }
+  #insExpSel { font-size:12.5px; padding:4px 8px; border-radius:8px; border:1px solid var(--border);
+    background:var(--bg-base); color:var(--text); max-width:100%; margin-bottom:6px; }
+  @media (max-width:480px) { .ins-controls select, .ins-controls input { max-width:110px; } }
+
   #performanceView.active {
     display: flex;
     flex-direction: column;
@@ -2995,13 +3046,13 @@
       <button class="menu-card" data-menu="performance">
         <div class="card-icon">📈</div>
         <div class="card-name">Performance</div>
-        <div class="card-sub">Trends, fatigue, insights</div>
+        <div class="card-sub">Trends, fatigue, observations</div>
       </button>
-      <!-- Demo Mode moved into Settings → DEMO MODE section. The
-           home-menu card felt out of place next to the "real" tools
-           (Workouts, History, Focus). Settings is where you go to
-           explore behaviour — that's where it belongs. -->
-      <!-- Benchmarks moved into Settings → BENCHMARKS section. -->
+      <button class="menu-card" data-menu="insights">
+        <div class="card-icon">💡</div>
+        <div class="card-name">Insights</div>
+        <div class="card-sub" id="cardInsightsSub">Cross-session evidence &amp; trends</div>
+      </button>
       <button class="menu-card" data-menu="focus">
         <div class="card-icon">🎯</div>
         <div class="card-name">Focus</div>
@@ -3187,6 +3238,70 @@
   <!-- whole vision today, and future phases replace the spec text    -->
   <!-- with real working content one tab at a time.                   -->
   <!-- ==================== -->
+  <div id="insightsView" class="view">
+    <div class="perf-header"><div class="perf-title">
+      <h1>💡 INSIGHTS</h1>
+      <div class="perf-tagline">Cross-session evidence — what changed, what held steady, and which sessions prove it.</div>
+    </div></div>
+    <div class="ins-controls">
+      <select id="insRange" aria-label="Analysis period">
+        <option value="7d">Last 7 days</option><option value="28d">Last 28 days</option>
+        <option value="90d">Last 90 days</option><option value="all">All history</option>
+        <option value="custom">Custom range…</option>
+      </select>
+      <span id="insCustomA" style="display:none;"><input type="date" id="insFrom" aria-label="From"> → <input type="date" id="insTo" aria-label="To"></span>
+      <select id="insCompare" aria-label="Comparison">
+        <option value="prev">vs previous equal period</option>
+        <option value="custom">vs custom period B…</option>
+        <option value="none">no comparison</option>
+      </select>
+      <span id="insCustomB" style="display:none;"><input type="date" id="insBFrom" aria-label="B from"> → <input type="date" id="insBTo" aria-label="B to"></span>
+      <select id="insType" aria-label="Workout type">
+        <option value="all">All workout types</option><option value="continuous">Continuous only</option>
+        <option value="interval">Intervals only</option>
+      </select>
+      <input type="number" id="insMinDist" placeholder="min m" min="0" step="500" aria-label="Minimum distance">
+      <input type="number" id="insMaxDist" placeholder="max m" min="0" step="500" aria-label="Maximum distance">
+      <label><input type="checkbox" id="insRace"> Race Lab plans only</label>
+      <label title="Synthetic demo sessions are excluded from insights unless enabled"><input type="checkbox" id="insSynth"> include synthetic</label>
+      <select id="insCurveView" aria-label="Curve view">
+        <option value="normalized">Normalized curves</option><option value="absolute">Absolute curves</option>
+      </select>
+      <span class="ins-demo-btns"><button id="insDemoGen" title="Generate deterministic synthetic history (SYNTHETIC-badged, removable)">＋ demo history</button><button id="insDemoClear" title="Remove only synthetic demo sessions">✕ remove demo</button></span>
+    </div>
+    <div class="ins-cohort" id="insCohort"></div>
+    <details class="ins-excl"><summary>Why were sessions excluded?</summary><ul id="insExcluded"></ul></details>
+    <div class="ins-section"><h2>EVIDENCE SUMMARY</h2>
+      <div id="insFindings"></div>
+      <div class="ins-empty" id="insNoFindings" style="display:none;">No findings met the documented evidence thresholds for this period — that is a valid result, not an error. The confidence panel below lists what additional evidence would help.</div>
+      <ul class="ins-insuf" id="insInsufficient" style="display:none;"></ul>
+    </div>
+    <div class="ins-section"><h2>TECHNIQUE TRENDS</h2>
+      <div class="ins-grid">
+        <div class="ins-chart" id="insChSim" tabindex="0" role="group" aria-label="Normalized Force Curve similarity to baseline, one point per session. Arrow keys move between points, Enter opens the session in Replay."><div class="ins-ch-t">Force Curve similarity vs baseline (normalized)</div><canvas></canvas><div class="ins-read" aria-live="polite"></div><div class="ins-sum"></div></div>
+        <div class="ins-chart" id="insChPeak" tabindex="0" role="group" aria-label="Absolute session peak force"><div class="ins-ch-t">Peak force (absolute)</div><canvas></canvas><div class="ins-read" aria-live="polite"></div><div class="ins-sum"></div></div>
+        <div class="ins-chart" id="insChDl" tabindex="0" role="group" aria-label="Drive Length session medians"><div class="ins-ch-t">Drive Length (session median)</div><canvas></canvas><div class="ins-read" aria-live="polite"></div><div class="ins-sum"></div></div>
+        <div class="ins-chart" id="insChRatio" tabindex="0" role="group" aria-label="Ratio session medians"><div class="ins-ch-t">Ratio (session median)</div><canvas></canvas><div class="ins-read" aria-live="polite"></div><div class="ins-sum"></div></div>
+        <div class="ins-chart" id="insChPt" tabindex="0" role="group" aria-label="Peak timing session medians"><div class="ins-ch-t">Peak-force timing</div><canvas></canvas><div class="ins-read" aria-live="polite"></div><div class="ins-sum"></div></div>
+        <div class="ins-chart" id="insChConsist" tabindex="0" role="group" aria-label="Within-session curve consistency"><div class="ins-ch-t">Within-session curve consistency</div><canvas></canvas><div class="ins-read" aria-live="polite"></div><div class="ins-sum"></div></div>
+      </div>
+    </div>
+    <div class="ins-section"><h2>PERFORMANCE &amp; EXECUTION</h2>
+      <div class="ins-grid">
+        <div class="ins-chart" id="insChPps" tabindex="0" role="group" aria-label="Power per stroke session medians"><div class="ins-ch-t">Power per stroke</div><canvas></canvas><div class="ins-read" aria-live="polite"></div><div class="ins-sum"></div></div>
+        <div class="ins-chart" id="insChPaceSt" tabindex="0" role="group" aria-label="Pacing spread per session, lower is steadier"><div class="ins-ch-t">Pacing spread (lower = steadier)</div><canvas></canvas><div class="ins-read" aria-live="polite"></div><div class="ins-sum"></div></div>
+        <div class="ins-chart" id="insChRace" tabindex="0" role="group" aria-label="Race plan execution, median deviation from plan"><div class="ins-ch-t">Race-plan execution (median |Δ| vs plan)</div><canvas></canvas><div class="ins-read" aria-live="polite"></div><div class="ins-sum"></div></div>
+      </div>
+      <div id="insPower" class="ins-power"></div>
+    </div>
+    <div class="ins-section"><h2>TRAINING HISTORY (AS RECORDED)</h2><div id="insOverview"></div></div>
+    <div class="ins-section"><h2>COMPARABLE SESSIONS</h2>
+      <select id="insExpSel" aria-label="Session to compare"></select>
+      <div id="insExpOut"></div>
+    </div>
+    <div class="ins-section"><h2>DATA CONFIDENCE</h2><div id="insConf"></div></div>
+  </div>
+
   <div id="performanceView" class="view">
     <div class="perf-header">
       <div class="perf-title">
@@ -3195,7 +3310,7 @@
       </div>
       <div class="perf-tabs">
         <button class="perf-tab" data-perf-tab="overview">Overview</button>
-        <button class="perf-tab" data-perf-tab="insights">Insights</button>
+        <button class="perf-tab" data-perf-tab="insights">Observations</button>
         <button class="perf-tab" data-perf-tab="technique">Technique</button>
         <button class="perf-tab" data-perf-tab="fitness">Fitness</button>
         <button class="perf-tab" data-perf-tab="goals">Goals</button>
@@ -4786,6 +4901,7 @@ document.dispatchEvent(new Event("fb-api-ready"));
 <script src="firebase-config.js"></script>
 <script src="analysis.js"></script>
 <script src="curves.js"></script>
+<script src="insights.js"></script>
 
 <script>
 // ====================
@@ -4829,20 +4945,15 @@ const FIREBASE_ENABLED =
 // ====================
 // Account / Drive sync configuration
 // ====================
-// Paste your Google OAuth 2.0 Client ID here to enable Google Sign-In
-// and Drive sync. Setup: console.cloud.google.com → create project →
-// enable "Google Drive API" → Credentials → Create OAuth client ID
-// (Web application) → add this site's URLs as Authorised JavaScript
-// origins. See the README at the bottom of this file for the full
-// step-by-step. Until this is set, the dashboard runs in local-only
-// mode (workouts saved per-browser, no cross-device sync).
+// Google OAuth 2.0 Client ID for Sign-In + Drive sync (setup guide:
+// docs/architecture.md). Unset → local-only mode.
 const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.googleusercontent.com";
 
 // Current app version. Bumped when a noteworthy change ships, so the
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.21.0";
+const APP_VERSION = "1.22.0";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 // v3 (1.18.0) adds optional entry.strokes (compact per-stroke samples)
@@ -4851,6 +4962,17 @@ const APP_VERSION = "1.21.0";
 const SESSION_SCHEMA_VERSION = 3;
 
 const RELEASE_NOTES = {
+  "1.22.0": {
+    date: "July 2026",
+    headline: "Insights: Cross-Session Evidence",
+    items: [
+      "New top-level Insights page: what changed, what held steady, and exactly which sessions prove it — every finding links straight into Replay",
+      "Pick a period (7/28/90 days, all, custom), compare it with the previous equal period or any custom period B, and filter by type, distance, or Race Lab plans",
+      "Technique trends: Force Curve similarity vs your fixed baseline, Drive Length, Ratio, peak timing, and within-session curve consistency — one point per session so long rows never dominate",
+      "Performance trends: power per stroke, pacing stability, race-plan execution, and recent-vs-all-time power bests",
+      "Deterministic synthetic demo history (SYNTHETIC-badged, one-click removable) so the whole page can be explored without a PM5",
+    ],
+  },
   "1.21.0": {
     date: "July 2026",
     headline: "Stroke-Level Evidence",
@@ -4860,16 +4982,6 @@ const RELEASE_NOTES = {
       "Stroke Evidence navigator: jump to the fastest, slowest, most typical, closest-to-baseline, and largest-deviation strokes — with the selection rule always shown",
       "Window baselines: average the curves of any stroke range, interval, or race segment, and compare start vs base, first vs last interval, or this attempt vs a previous one",
       "Curve detail lives in IndexedDB with a 512 KiB per-session budget and deterministic retention — workout summaries are never at risk, and coverage is always disclosed",
-    ],
-  },
-  "1.20.0": {
-    date: "July 2026",
-    headline: "Personal Race & Technique Intelligence",
-    items: [
-      "Personal baseline: row against your own evidence — previous session, rolling average, steadiest section, or a ⭑ locked reference",
-      "Live cues: one conservative, plain-English cue at a time (what changed, how much, vs which baseline) with quiet mode and sensitivity control",
-      "Race Lab: paced race plans with live ahead/behind + projected finish, then a segment debrief with ≤3 prioritized findings",
-      "Rowing power profile: best watts over 1:00–20:00 with pace equivalents; critical power only when two real Tests support it",
     ],
   },
   // Entries older than 1.20.0 were trimmed (v1.19.0/v1.21.0) — the full
@@ -12087,6 +12199,7 @@ function showView(name) {
   const monitor = document.getElementById("monitorView");
   const clubs = document.getElementById("clubsView");
   const perf  = document.getElementById("performanceView");
+  const ins   = document.getElementById("insightsView");
   const back = document.getElementById("backBtn");
   const connect = document.getElementById("connectBtn");
   const conn = document.getElementById("connStatus");
@@ -12095,7 +12208,8 @@ function showView(name) {
   if (monitor) monitor.classList.toggle("active", name === "monitor");
   if (clubs)   clubs.classList.toggle("active",   name === "clubs");
   if (perf)    perf.classList.toggle("active",    name === "performance");
-  const showBack = name === "monitor" || name === "clubs" || name === "performance";
+  if (ins)     ins.classList.toggle("active",     name === "insights");
+  const showBack = name === "monitor" || name === "clubs" || name === "performance" || name === "insights";
   if (back)       back.style.display       = showBack ? "" : "none";
   if (connect)    connect.style.display    = name === "monitor" ? "" : "none";
   if (conn)       conn.style.display       = name === "monitor" ? "" : "none";
@@ -12103,6 +12217,7 @@ function showView(name) {
   if (name === "home")              renderHomeView();
   else if (name === "clubs")        renderClubsView();
   else if (name === "performance")  renderPerformanceView();
+  else if (name === "insights")     renderInsightsView();
   else                              render();
 }
 
@@ -12558,15 +12673,10 @@ function evaluatePrsForSession(entry) {
   return out;
 }
 
-// Persist the PR result onto state.userPrefs and tell Drive to sync.
-// applyPrUpdates is always called immediately before saveHistory()
-// (in both logCurrentWorkout and checkRecoverySnapshot). saveHistory
-// already fires a syncHistoryToDrive(), so we explicitly tell
-// persistUserPrefs NOT to fire its own concurrent PATCH — otherwise
-// two near-simultaneous unserialised PATCHes race on the same Drive
-// file. The first body (built synchronously) lacks the just-unshifted
-// history entry, so if it lands last the new entry vanishes from
-// Drive even though it's safely in localStorage.
+// Persist the PR result onto userPrefs; persistUserPrefs must NOT
+// fire its own Drive PATCH here — saveHistory() already syncs, and two
+// unserialised PATCHes race on the same Drive file (the loser can drop
+// the just-unshifted entry from Drive).
 function applyPrUpdates(entry, prResult) {
   if (!prResult || !prResult.keys || !prResult.keys.length) return;
   if (!state.userPrefs.benchmarks)    state.userPrefs.benchmarks    = {};
@@ -12586,13 +12696,10 @@ function applyPrUpdates(entry, prResult) {
   catch (e) {}
 }
 
-// Best-of-both merge applied after a Drive pull replaces the
-// userPrefs sub-objects wholesale. For each benchmark key we pick
-// the better of the local + remote values (lower for time-target
-// benchmarks, higher for distance-target). benchmarkMeta is kept in
-// lockstep with whichever value won. Inputs are pre-pull snapshots
-// of state.userPrefs.{benchmarks,benchmarkMeta}; state.userPrefs has
-// already been overwritten with the Drive copy by the caller.
+// Best-of-both per-key benchmark merge after a Drive pull (lower wins
+// for time targets, higher for distance); benchmarkMeta follows the
+// winner. Inputs are pre-pull snapshots; userPrefs already holds the
+// Drive copy.
 function mergeBenchmarksInPlace(localBenchmarks, localBenchmarkMeta) {
   if (!state.userPrefs.benchmarks)    state.userPrefs.benchmarks    = {};
   if (!state.userPrefs.benchmarkMeta) state.userPrefs.benchmarkMeta = {};
@@ -12686,13 +12793,9 @@ function activeBenchmarkKind() {
 // just gets confusing, so we hide it for these.
 const PR_DELTA_HIDDEN_BENCHMARKS = new Set(["halfMarathon", "fullMarathon"]);
 
-// Cache the most recent finite prDelta so a momentary state.paceS
-// drop-to-null (PM5 between strokes near stoppage, recovery phase,
-// end-of-piece coast) doesn't toggle the metric slot's display:none
-// every render tick. Without this the card vanishes and neighbours
-// reflow upward — visible jitter. We hold the last value for
-// PR_DELTA_STICKY_MS after the source goes away. The cache key is
-// (plan.benchKey) so swapping benchmarks instantly resets.
+// Hold the last finite prDelta for PR_DELTA_STICKY_MS so momentary
+// paceS null-drops between strokes don't jitter the card in and out;
+// keyed by plan.benchKey so swapping benchmarks resets instantly.
 const PR_DELTA_STICKY_MS = 2000;
 let _prDeltaCache = { key: null, value: null, at: 0 };
 
@@ -13161,14 +13264,8 @@ function racePrediction() {
 function avgArr(a) { return a.reduce((x, y) => x + y, 0) / a.length; }
 
 // ----- Clubs (coming-soon) modal --------------------------------
-// openClubs / closeClubs used to drive a "coming soon" modal — Phase 1
-// replaces that with the real clubs view. The signature stays so the
-// home-menu dispatcher keeps working.
-//
-// First-time gate: if the user has no club yet (no name AND nothing
-// in any of the entity arrays), interpose the Create/Join chooser
-// so the experience feels like a real platform onboarding instead
-// of dumping them into an empty editor.
+// First-time gate: with no club yet, interpose the Create/Join
+// chooser instead of an empty editor.
 function openClubs() {
   if (clubIsEmpty()) {
     openClubChooser();
@@ -15334,6 +15431,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("replayEvPrev").addEventListener("click", () => replayJumpEvent(-1));
   document.getElementById("replayEvNext").addEventListener("click", () => replayJumpEvent(1));
   initStrokeEvidenceUi();   // v1.21 — pins, windows, evidence controls
+  initInsightsUi();         // v1.22 — Insights page controls
   document.getElementById("replaySlider").addEventListener("input", (ev) => {
     if (_replay) { _replay.pos = parseInt(ev.target.value, 10) || 0; renderReplayPos(); }
   });
@@ -15406,6 +15504,7 @@ document.addEventListener("DOMContentLoaded", () => {
       else if (m === "workouts")     openWorkouts();
       else if (m === "history")      openHistory();
       else if (m === "performance")  openPerformance();
+      else if (m === "insights")     showView("insights");
       else if (m === "focus")        openFocus();
       else if (m === "clubs")        openClubs();
       else if (m === "settings")     openSettings();

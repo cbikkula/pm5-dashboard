@@ -203,3 +203,71 @@ mean ± sd over the range, and a transparent confidence: `high` needs ≥ 20 cur
   and is filtered to 30–240 bpm; force samples are 0.1 lbf resolution.
 - Watts in the stroke log are derived from pace ((2.8/(pace/500)³)), the PM5's own
   convention, not an independent strain measurement.
+
+## Insights: cross-session evidence (v1.22)
+
+Everything on the Insights page is computed by pure functions in `pm5web/insights.js`
+from stored session summaries. No causation, readiness, recovery, injury-risk, or
+"perfect stroke" claims are ever generated — templates only allow measured,
+evidence-linked statements.
+
+**Session facts.** Each stored session reduces to one summary row (the aggregation
+unit everywhere, so a marathon counts exactly as much as a 2k): medians and
+IQR-based spreads of Drive Length, Ratio (recovery/drive time), pace (60–360 s
+plausibility filter), rate, peak timing, and power per stroke
+(`watts ÷ (spm/60)`, both fields must be plausible on the same stroke). Non-finite
+and object-valued fields are rejected; entries without usable totals are excluded
+with a stated reason.
+
+**Cohorts and ranges.** Ranges use LOCAL calendar days ("last 7 days" = today plus
+the 6 prior days, inclusive). "Previous equal period" is the window of identical
+length immediately before period A; custom A/B windows are day-inclusive. Filters
+(workout type, distance bounds, Race Lab plans, benchmark) and the synthetic-session
+toggle (off by default) apply before period assignment; every excluded session
+carries one deterministic reason.
+
+**Robust statistics.** Medians everywhere; dispersion = interquartile range
+(needs ≥4 values). Relative spread = IQR/|median| × 100, refused when |median| <
+1e-6 (percentage-safety rule). Within-session variability (a session's own spread)
+is always reported separately from between-session change (movement of session
+medians).
+
+**Findings.** For each metric in the documented catalogue (priority order: Force
+Curve similarity, Drive Length, DL spread, Ratio, Ratio spread, peak timing, power
+per stroke, pace, pacing spread, race execution): a CHANGE finding requires ≥3
+usable sessions per period, |Δ of medians| ≥ the metric's absolute threshold
+(curve similarity 3 pts · DL 0.03 m · DL spread 1.5 pp · Ratio 0.15 · Ratio spread
+3 pp · peak timing 0.03 · power/stroke 8 J · pace 1.5 s · pacing spread 1 pp ·
+race exec 1.5 s), and ≥70% of period-A sessions on the same side of the period-B
+median. A STABLE finding needs |Δ| under half the threshold, small dispersion, ≥4
+sessions, and at most one is shown. Pace findings additionally require a mutually
+comparable cohort (one shared benchmark, or all distances within ×1.25) — mixed
+cohorts state that instead of guessing. Absolute change is always reported before
+percentage; percentages are omitted when the baseline median is below twice the
+threshold. One finding per metric family; at most three findings, ordered by
+confidence → catalogue priority → |relative change| → key (deterministic ties).
+Confidence is a documented sum: ≥5 sessions per side (+2, else ≥3 +1), ≥85%
+directional agreement (+1), ≥90% metric completeness (+1), ≥70% complete curve
+coverage for curve metrics (+1); high ≥4, medium ≥2, low otherwise. Insufficient
+data returns structured reasons and is presented as a valid result.
+
+**Force Curve trends.** One representative curve per session: the persisted
+64-sample session average (`entry.fc.avg`) — page load decodes no curve payloads.
+Similarity uses the shared cosine shape measure against ONE fixed reference (the
+active baseline, captured when the page renders and labeled on the chart; it never
+silently changes between points). Normalized (shape) and absolute (peak lbf) views
+are separate charts. Within-session curve consistency decodes ≤16 evenly-spaced
+stored curves for at most the 12 most recent covered sessions, lazily, behind a
+40-entry cache keyed by session id + retained count; results are the median
+similarity of each sampled curve to their mean shape; stale computations are
+cancelled by generation counter when filters change. Partial retention is labeled;
+legacy sessions are skipped, never fabricated.
+
+**Race execution.** Per session: median of |stroke elapsed − plan time at that
+stroke's distance| over ≥10 usable strokes — an estimate relative to the selected
+plan only. Power bests reuse the power-profile engine on the cohort subset;
+ordinary rows are never treated as confirmed maximal tests.
+
+**Comparable-session explorer.** The Baseline Engine compatibility rule (same
+benchmark key, or distance/duration within ±20%). Incompatible sessions are never
+substituted; synthetic sessions never back a real comparison.

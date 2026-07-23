@@ -165,7 +165,7 @@ On sign-in (or page load if a token survived), we pull the Drive copy and merge:
 //   Don't touch — let the browser handle them directly.
 ```
 
-Cache version is bumped on every meaningful deploy (`pm5-v1` → `pm5-v48` and counting). Old caches are deleted in the `activate` handler.
+Cache version is bumped on every meaningful deploy (`pm5-v1` → `pm5-v49` and counting). Old caches are deleted in the `activate` handler.
 
 ## Why PWA over native
 
@@ -200,7 +200,7 @@ Real-time presence, workout assignment to lineups (v1.13.0), and a read-only vie
 
 ## v1.20.0 — two-script split
 
-The pure analysis layer (sanitizers, curve/shape math, baseline engine, cue governor, Race Lab, power profile, and the v1.21 stroke-curve codec/retention/evidence engines — all DOM-free) lives in `pm5web/analysis.js`, loaded as a classic script before the main inline script. v1.21 adds a second module, `pm5web/curves.js`: the stroke-level-evidence layer (IndexedDB curve-detail store, in-memory capture append, and the replay Stroke Evidence UI), loaded between analysis.js and the main script. All three are served network-first by the service worker so a page can never mix releases, and all are cached for offline. The size guard in `tests/run.js` measures the total offline app (index.html + analysis.js + curves.js + sw.js < 768 KB) and still caps index.html at 660 KB. `tests/harness.js` concatenates the three scripts into one vm sandbox; `scripts/syntax-check.js` parses each. Formulas: `docs/analysis-methods.md`.
+The pure analysis layer (sanitizers, curve/shape math, baseline engine, cue governor, Race Lab, power profile, and the v1.21 stroke-curve codec/retention/evidence engines — all DOM-free) lives in `pm5web/analysis.js`, loaded as a classic script before the main inline script. v1.21 adds a second module, `pm5web/curves.js`: the stroke-level-evidence layer (IndexedDB curve-detail store, in-memory capture append, and the replay Stroke Evidence UI), loaded between analysis.js and the main script. v1.22 adds `pm5web/insights.js`: the deterministic cross-session Insights engine (pure cohort/aggregation/finding functions) plus the Insights page renderer and dependency-free canvas charts, loaded after curves.js. All three are served network-first by the service worker so a page can never mix releases, and all are cached for offline. The size guard in `tests/run.js` measures the total offline app (index.html + analysis.js + curves.js + insights.js + sw.js) and still caps index.html at 660 KB. The total limit moved ONCE in v1.22.0 from 768 KB to **832 KB**: Insights adds ~55 KB of engine + page, measured cleanup recovered ~3 KB of stale comments/markup first, and a responsible implementation could not fit the remainder — documented here and in CHANGELOG.md, enforced in CI, every asset measured, no unmeasured code paths. `tests/harness.js` concatenates the four scripts into one vm sandbox; `scripts/syntax-check.js` parses each. Formulas: `docs/analysis-methods.md`.
 
 ### Per-stroke curve storage (v1.21)
 

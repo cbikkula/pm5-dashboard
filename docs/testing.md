@@ -59,7 +59,7 @@ had not been re-measured since.
 
 | Metric | Guard / target | Last measured (v1.21.0) |
 |---|---|---|
-| Offline app size (index + analysis + curves + insights + sw) | < 832 KB (enforced; raised once from 768 KB in v1.22.0, see CHANGELOG) | ~830 KB |
+| Offline app size (index + analysis + curves + insights + transport + sw) | < 860 KB (enforced; 768→832 in v1.22.0, →860 in v1.23.0, see CHANGELOG) | ~857 KB |
 | index.html alone | < 660 KB (enforced) | ~640 KB |
 | Curve payload, typical 30-min session | ≤ 512 KiB/session (enforced) | ~112 KB binary (1,500 strokes) |
 | Curve decode (validate + index a full 512 KiB payload) | < 250 ms (enforced in suite) | ~15 ms (Node; see suite output) |
@@ -71,8 +71,8 @@ rather than restated — they predate the current codebase and would be misleadi
 
 ## v1.22.0 note
 
-The suite (481 assertions at v1.22.0) runs all four app scripts — `analysis.js` +
-`curves.js` + `insights.js` + the inline main script — concatenated in one Node vm
+The suite (541 assertions at v1.23.0) runs all five app scripts — `analysis.js` +
+`curves.js` + `insights.js` + `transport.js` + the inline main script — concatenated in one Node vm
 sandbox in load order. The v1.21 groups (curve codec, retention, import/compat, stroke
 evidence, window baselines, replay curve sync) and the v1.22 groups (insights cohorts,
 aggregation, findings, curve trends, performance + race, explorer/prefs/security) use

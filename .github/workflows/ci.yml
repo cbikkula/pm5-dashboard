@@ -35,3 +35,6 @@ jobs:
 
       - name: Insights-module syntax check
         run: node --check pm5web/insights.js
+
+      - name: Transport-module syntax check
+        run: node --check pm5web/transport.js

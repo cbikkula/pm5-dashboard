@@ -2219,6 +2219,11 @@
   .ins-week { display:flex; flex-direction:column; align-items:center; gap:2px; }
   .ins-week-bar { width:18px; background:var(--accent); opacity:.75; border-radius:3px 3px 0 0; }
   .ins-week-lab { font-size:8.5px; color:var(--text-muted); }
+  .diag-body { font-size:12.5px; display:grid; gap:4px; }
+  .diag-sub { color:var(--text-muted); margin-top:6px; }
+  .diag-events { font-family:monospace; font-size:11px; white-space:pre-wrap;
+    background:var(--bg-base); border:1px solid var(--border); border-radius:8px;
+    padding:8px 10px; max-height:180px; overflow-y:auto; }
   #insPower { margin-top:8px; }
   #insExpSel { font-size:12.5px; padding:4px 8px; border-radius:8px; border:1px solid var(--border);
     background:var(--bg-base); color:var(--text); max-width:100%; margin-bottom:6px; }
@@ -4474,6 +4479,18 @@
      interval scrubbing otherwise, plus session Force Curve inspection.
      Honest by design: capability badges + the limits panel say exactly
      what the saved data can and can't show. -->
+<div class="modal-overlay" id="diagModal">
+  <div class="modal">
+    <h2>Connection Diagnostics</h2>
+    <div class="h-sub">Local only — nothing is transmitted. Export contains relative timestamps, states, and counters; never device identifiers, packet bytes, or workout data.</div>
+    <div class="diag-body" id="diagBody"></div>
+    <div class="modal-buttons">
+      <button id="diagExportBtn">Export diagnostics</button>
+      <button class="accent" id="diagCloseBtn">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="replayModal">
   <div class="modal">
     <h2 id="replayTitle">Session Replay</h2>
@@ -4902,6 +4919,7 @@ document.dispatchEvent(new Event("fb-api-ready"));
 <script src="analysis.js"></script>
 <script src="curves.js"></script>
 <script src="insights.js"></script>
+<script src="transport.js"></script>
 
 <script>
 // ====================
@@ -4953,7 +4971,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.22.0";
+const APP_VERSION = "1.23.0";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 // v3 (1.18.0) adds optional entry.strokes (compact per-stroke samples)
@@ -4962,26 +4980,15 @@ const APP_VERSION = "1.22.0";
 const SESSION_SCHEMA_VERSION = 3;
 
 const RELEASE_NOTES = {
-  "1.22.0": {
+  "1.23.0": {
     date: "July 2026",
-    headline: "Insights: Cross-Session Evidence",
+    headline: "Hardware Confidence",
     items: [
-      "New top-level Insights page: what changed, what held steady, and exactly which sessions prove it — every finding links straight into Replay",
-      "Pick a period (7/28/90 days, all, custom), compare it with the previous equal period or any custom period B, and filter by type, distance, or Race Lab plans",
-      "Technique trends: Force Curve similarity vs your fixed baseline, Drive Length, Ratio, peak timing, and within-session curve consistency — one point per session so long rows never dominate",
-      "Performance trends: power per stroke, pacing stability, race-plan execution, and recent-vs-all-time power bests",
-      "Deterministic synthetic demo history (SYNTHETIC-badged, one-click removable) so the whole page can be explored without a PM5",
-    ],
-  },
-  "1.21.0": {
-    date: "July 2026",
-    headline: "Stroke-Level Evidence",
-    items: [
-      "Every stroke's actual Force Curve is now saved (compact 64-sample form) and shown in replay — select any stroke and see its own curve, not a session average",
-      "Pin any two strokes (or window averages) as A/B and compare curves, similarity, peak timing, pace, Drive Length, and Ratio side by side",
-      "Stroke Evidence navigator: jump to the fastest, slowest, most typical, closest-to-baseline, and largest-deviation strokes — with the selection rule always shown",
-      "Window baselines: average the curves of any stroke range, interval, or race segment, and compare start vs base, first vs last interval, or this attempt vs a previous one",
-      "Curve detail lives in IndexedDB with a 512 KiB per-session budget and deterministic retention — workout summaries are never at risk, and coverage is always disclosed",
+      "An authoritative Bluetooth connection state machine — \"Live\" now means valid PM5 telemetry is actually arriving, never just that a link exists",
+      "A packet-liveness watchdog: if telemetry stops mid-row you see a clear stale warning within seconds — nothing is ever interpolated or invented",
+      "Safer reconnection: the same workout resumes only when the erg's own counters prove continuity; a PM5 reset is saved as a separate session, never merged",
+      "Gaps are recorded honestly on the session (visible in Replay) and connection diagnostics are one click away on the status chip — local-only, identifier-free",
+      "Malformed, duplicate, and out-of-order packets are counted and dropped at the transport boundary before they can touch your data",
     ],
   },
   // Entries older than 1.20.0 were trimmed (v1.19.0/v1.21.0) — the full
@@ -6686,6 +6693,15 @@ function advancePlanTracker() {
 // BLE — Web Bluetooth
 // ====================
 async function connectBle() {
+  const ctl = initTransportLayer();
+  if (ctl.machine.is("unsupported")) {
+    setToast("This browser has no Web Bluetooth — use Chrome or Edge over HTTPS.", "err");
+    return;
+  }
+  if (!ctl.machine.canStart()) return;   // repeated Connect clicks are idempotent
+  const gen = ctl.machine.begin();
+  ctl.machine.to("requesting", "user-connect");
+  ctl.diag.push("state", "requesting");
   try {
     state.connecting = true;
     _manualDisconnect = false;
@@ -6706,28 +6722,45 @@ async function connectBle() {
       ],
       optionalServices: [SERVICE_ROWING, SERVICE_DEVICE_INFO],
     });
+    if (!ctl.machine.fresh(gen)) return;             // superseded attempt
     state.bleDevice = device;
     device.addEventListener("gattserverdisconnected", handleBleDrop);
+    ctl.machine.to("connecting", "device-chosen");
+    ctl.diag.push("state", "connecting");
 
     setStatus("connecting", `Connecting to ${device.name || "PM5"}…`);
     setToast(`Connecting to ${device.name || "PM5"}…`, "ok");
-    const failures = await subscribePm5(device);
+    const failures = await subscribePm5(device, gen);
+    if (!ctl.machine.fresh(gen)) return;
 
-    state.connected = true;
+    // Not "connected" yet — "live" waits for the first VALID status
+    // packet (bleValidPacket); the UI says so instead of overclaiming.
     state.connecting = false;
-    setStatus("connected-ble", `Connected to ${device.name || "PM5"}`);
+    ctl.live.reset();
+    ctl.diag.push("state", "subscribed");
+    setStatus("connecting", "Subscribed — waiting for PM5 data…");
+    bleWatchStart();
     startRecoveryAutosave();
     const note = failures.length
       ? ` (some channels unavailable: ${failures.length})` : "";
-    setToast(`Connected to ${device.name || "PM5"} over Bluetooth${note}`, "ok");
+    setToast(`Bluetooth link up${note} — waiting for telemetry…`, "ok");
   } catch (err) {
     state.connecting = false;
     console.error("connectBle error:", err);
-    setStatus("disconnected", "Not connected");
     const msg = (err && err.message) ? err.message : String(err);
     if (/User cancelled/i.test(msg) || /chooser cancelled/i.test(msg)) {
+      // Chooser cancellation is a normal, recoverable outcome.
+      if (ctl.machine.is("requesting")) ctl.machine.to("idle", "chooser-cancelled");
+      ctl.diag.push("state", "chooser-cancelled");
+      setStatus("disconnected", "Not connected");
       setToast("", "");
-    } else if (/No Services matching/i.test(msg) || /GATT operation failed/i.test(msg)) {
+      render();
+      return;
+    }
+    if (ctl.machine.fresh(gen) && !ctl.machine.is("idle", "error")) ctl.machine.to("error", "connect-failed");
+    ctl.diag.push("error", ctl.machine.is("error") ? "connect-failed" : "late-connect-failure");
+    setStatus("disconnected", "Not connected");
+    if (/No Services matching/i.test(msg) || /GATT operation failed/i.test(msg)) {
       setToast("Could not reach the PM5's rowing service. Make sure the monitor is awake (pull the handle once) and that no other app or browser tab is connected to it.", "err");
     } else if (/Bluetooth adapter not available/i.test(msg)) {
       setToast("No Bluetooth adapter found. Make sure your laptop's Bluetooth radio is on.", "err");
@@ -6742,10 +6775,26 @@ async function connectBle() {
 // server, grab the rowing service, best-effort rate write, subscribe the
 // five data characteristics. Returns the per-characteristic failure list;
 // throws if nothing could be subscribed.
-async function subscribePm5(device) {
+async function subscribePm5(device, gen) {
+  const ctl = initTransportLayer();
+  const fresh = () => gen == null || ctl.machine.fresh(gen);
   const server = await device.gatt.connect();
+  if (!fresh()) { try { device.gatt.disconnect(); } catch (e) {} throw new Error("superseded"); }
   state.bleServer = server;
-  const service = await server.getPrimaryService(SERVICE_ROWING);
+  // Discovery phase — its failures are reported distinctly from
+  // subscription failures below.
+  if (ctl.machine.is("connecting", "reconnecting")) ctl.machine.to("discovering", "gatt-open");
+  ctl.diag.push("state", "discovering");
+  let service;
+  try {
+    service = await server.getPrimaryService(SERVICE_ROWING);
+  } catch (e) {
+    ctl.diag.push("error", "discovery-failed");
+    throw new Error("No Services matching the PM5 rowing service — is the monitor awake? (" + (e && e.message ? e.message : e) + ")");
+  }
+  if (!fresh()) throw new Error("superseded");
+  if (ctl.machine.is("discovering")) ctl.machine.to("subscribing", "service-found");
+  ctl.diag.push("state", "subscribing");
 
   // Best-effort sample-rate set (250 ms). Some firmwares refuse this
   // write — that's fine, we fall through to the device's default rate.
@@ -6768,7 +6817,10 @@ async function subscribePm5(device) {
   for (const [uuid, handler] of subs) {
     try {
       const ch = await service.getCharacteristic(uuid);
+      if (ch.__pm5Attached) { okCount++; continue; }   // never attach twice
+      ch.__pm5Attached = true;
       ch.addEventListener("characteristicvaluechanged", (e) => {
+        if (gen != null && !initTransportLayer().machine.fresh(gen)) return;  // stale connection
         // The Web-Bluetooth value is a DataView. Build a Uint8Array
         // honouring the DataView's byteOffset and byteLength so the
         // parsers see exactly the notification bytes.
@@ -6781,10 +6833,12 @@ async function subscribePm5(device) {
       okCount++;
     } catch (e) {
       failures.push(`${uuid.slice(4, 8)}: ${e.message || e}`);
+      initTransportLayer().diag.push("error", "subscribe-failed:" + uuid.slice(4, 8));
       console.warn("subscribe failed", uuid, e);
     }
   }
   if (okCount === 0) {
+    initTransportLayer().diag.push("error", "no-characteristics");
     throw new Error("No PM5 data characteristics could be subscribed.\n"
       + failures.join("\n"));
   }
@@ -6798,38 +6852,69 @@ let _manualDisconnect = false;
 let _reconnecting = false;
 const RECONNECT_DELAYS_MS = [1000, 3000, 6000];
 async function handleBleDrop() {
+  const ctl = initTransportLayer();
   state.connected = false;
   state.bleServer = null;
   if (_manualDisconnect) { _manualDisconnect = false; return; }
   if (_reconnecting) return;
   _reconnecting = true;
+  // Counter snapshot: resumption must prove continuity against this.
+  ctl.preDrop = { elapsedS: state.elapsedTimeS || 0, distanceM: state.distanceM || 0,
+    strokes: state.strokeCount || 0 };
+  ctl.live.gapOpen("disconnected");
+  if (!ctl.machine.is("disconnected")) ctl.machine.to("disconnected", "gatt-drop");
+  ctl.diag.push("state", "gatt-drop");
   const device = state.bleDevice;
+  const gen = ctl.machine.begin();      // retire every older async completion
   for (const delay of RECONNECT_DELAYS_MS) {
+    ctl.machine.to("reconnecting", "auto-retry");
+    ctl.diag.push("state", "reconnecting");
     setStatus("connecting", "PM5 dropped — reconnecting…");
     render();
     await new Promise(res => setTimeout(res, delay));
-    if (_manualDisconnect || !state.bleDevice) break;   // user moved on
+    if (_manualDisconnect || !state.bleDevice || !ctl.machine.fresh(gen)) break;
     try {
-      await subscribePm5(device);
-      state.connected = true;
+      ctl.machine.to("connecting", "retry-attempt");
+      await subscribePm5(device, gen);
+      if (!ctl.machine.fresh(gen)) break;
       _reconnecting = false;
-      setStatus("connected-ble", `Connected to ${device.name || "PM5"}`);
-      setToast("PM5 reconnected.", "ok");
+      ctl.diag.reconnects++;
+      ctl.diag.push("state", "resubscribed");
+      // Reconnected only when telemetry resumes (bleValidPacket closes
+      // the gap + runs the continuity check).
+      ctl.pendingContinuity = true;
+      ctl.live.reset();
+      bleWatchStart();
+      setStatus("connecting", "Link restored — waiting for PM5 data…");
       render();
       return;
     } catch (e) {
+      if (ctl.machine.is("connecting", "discovering", "subscribing")) ctl.machine.to("disconnected", "retry-failed");
       console.warn("reconnect attempt failed:", e);
     }
   }
   _reconnecting = false;
-  // Retries exhausted — treat it as a real end-of-session disconnect.
+  bleWatchStop();
+  ctl.live.gapClose(false);
+  if (!ctl.machine.is("disconnected")) ctl.machine.to("disconnected", "retries-exhausted");
+  ctl.diag.push("state", "retries-exhausted");
+  // Retries exhausted — preserve everything recorded so far. The
+  // manual Connect button is the explicit user action from here.
   markWorkoutEndForHr();
   maybeAutoLog("disconnected");
-  setStatus("disconnected", "PM5 disconnected");
+  setStatus("disconnected", "PM5 disconnected — data saved. Press Connect to retry.");
   render();
 }
 
 async function disconnectBle() {
+  const ctl = initTransportLayer();
+  bleWatchStop();
+  ctl.live.gapClose(false);
+  if (!ctl.machine.is("idle")) {
+    if (!ctl.machine.is("disconnected")) ctl.machine.to("disconnected", "user-disconnect");
+    ctl.machine.to("idle", "user-disconnect");
+  }
+  ctl.diag.push("state", "user-disconnect");
   _manualDisconnect = true;
   try {
     if (state.bleDevice && state.bleDevice.gatt.connected) {
@@ -6847,11 +6932,41 @@ async function disconnectBle() {
 }
 
 // Notification handlers
-function onGS(d) { const r = parseGeneralStatus(d); if (r) applyGS(r); noteConnPacket("gs"); }
-function onGS1(d) { const r = parseGeneralStatus1(d); if (r) applyGS1(r); noteConnPacket("gs"); }
-function onGS2(d) { const r = parseGeneralStatus2(d); if (r) applyGS2(r); noteConnPacket("gs"); }
-function onStroke(d) { const r = parseStrokeData(d); if (r) applyStrokeData(r); advancePlanTracker(); noteConnPacket("stroke"); }
-function onForce(d) { applyForceCurvePacket(d); noteConnPacket("force"); }
+// v1.23 — liveness updates ONLY after structural validation; malformed
+// packets are counted, never applied. Duplicate/late stroke packets are
+// dropped by stroke-count + elapsed monotonicity (counter REGRESSION is
+// a possible reset — continuity check's job, not here).
+let _lastStrokePkt = { count: -1, t: -1 };
+function onGS(d) {
+  const r = d && d.length >= PKT_MIN_LEN.gs ? parseGeneralStatus(d) : null;
+  if (!r) { bleRejectPacket("gs"); return; }
+  applyGS(r); bleValidPacket("gs", r); noteConnPacket("gs");
+}
+function onGS1(d) {
+  const r = d && d.length >= PKT_MIN_LEN.gs1 ? parseGeneralStatus1(d) : null;
+  if (!r) { bleRejectPacket("gs1"); return; }
+  applyGS1(r); bleValidPacket("gs1", r); noteConnPacket("gs");
+}
+function onGS2(d) {
+  const r = d && d.length >= PKT_MIN_LEN.gs2 ? parseGeneralStatus2(d) : null;
+  if (!r) { bleRejectPacket("gs2"); return; }
+  applyGS2(r); bleValidPacket("gs2", r); noteConnPacket("gs");
+}
+function onStroke(d) {
+  const r = d && d.length >= PKT_MIN_LEN.stroke ? parseStrokeData(d) : null;
+  if (!r) { bleRejectPacket("stroke"); return; }
+  // Exact-duplicate / late replay: same stroke count at same-or-earlier
+  // elapsed time → drop (a counter DROP is a reset, left to continuity).
+  if (r.stroke_count === _lastStrokePkt.count && r.elapsed_time_s <= _lastStrokePkt.t) {
+    bleRejectPacket("stroke"); return;
+  }
+  _lastStrokePkt = { count: r.stroke_count, t: r.elapsed_time_s };
+  applyStrokeData(r); advancePlanTracker(); bleValidPacket("stroke", r); noteConnPacket("stroke");
+}
+function onForce(d) {
+  if (!d || d.length < PKT_MIN_LEN.force || d.length > 288) { bleRejectPacket("force"); return; }
+  applyForceCurvePacket(d); bleValidPacket("force", null); noteConnPacket("force");
+}
 
 // ---- Connection health tracking (backlog #11) -------------------
 function noteConnPacket(kind) {
@@ -8066,6 +8181,11 @@ function logCurrentWorkout({ silent = false } = {}) {
     entry.driftEvents = JSON.parse(JSON.stringify(state.cueEvents));
   }
   if (isDemo) entry.demo = true;
+  // v1.23 — capture-quality metadata; interruption never blocks or
+  // degrades the summary itself.
+  const cq = bleCaptureQuality();
+  if (cq.capture) entry.capture = cq.capture;
+  if (cq.gaps) entry.gaps = cq.gaps;
   // v1.21.0 — per-stroke Force Curve persistence. The summary entry
   // carries only tiny metadata; the encoded payload goes to IndexedDB
   // AFTER the summary is safely saved, and a storage failure downgrades
@@ -14290,6 +14410,10 @@ function openReplay(session) {
     else badges.push(["Force curve not saved", false]);
   }
   if (session && session.demo) badges.push(["SYNTHETIC demo data", false]);
+  if (session && session.capture && session.capture !== "clean" && session.capture !== "simulated") {
+    const gapN = Array.isArray(session.gaps) ? session.gaps.length : 0;
+    badges.push([`⚡ ${session.capture}${gapN ? ` · ${gapN} gap${gapN === 1 ? "" : "s"}` : ""}`, false]);
+  }
   if (session && session.pr && session.pr.keys && session.pr.keys.length)
     badges.push(["🏆 PR " + session.pr.keys.join(", "), true]);
   if (_replay.events.length) badges.push([`⚠ ${_replay.events.length} drift event${_replay.events.length === 1 ? "" : "s"}`, false]);
@@ -15116,6 +15240,8 @@ function importSessionsFromText(raw) {
       ? { strokeStride: e.strokeStride } : {}),
     ...((() => { const m = sanitizeCurveMeta(e.curveMeta); return m ? { curveMeta: m } : {}; })()),
     ...(e.demo === true ? { demo: true } : {}),
+    ...((() => { const c = sanitizeCaptureMeta(e.capture); return c ? { capture: c } : {}; })()),
+    ...((() => { const g = sanitizeGaps(e.gaps); return g ? { gaps: g } : {}; })()),
     imported: true,
   }));
   const beforeIds = new Set(state.history.map(e => e && e.id));
@@ -15432,6 +15558,18 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("replayEvNext").addEventListener("click", () => replayJumpEvent(1));
   initStrokeEvidenceUi();   // v1.21 — pins, windows, evidence controls
   initInsightsUi();         // v1.22 — Insights page controls
+  // v1.23 — Connection Diagnostics: click the status chip to open.
+  initTransportLayer();
+  const connEl = document.getElementById("connStatus");
+  if (connEl) {
+    connEl.style.cursor = "pointer";
+    connEl.title = "Connection diagnostics";
+    connEl.addEventListener("click", () => renderConnDiag(true));
+  }
+  const dc = document.getElementById("diagCloseBtn");
+  if (dc) dc.addEventListener("click", () => document.getElementById("diagModal").classList.remove("open"));
+  const de = document.getElementById("diagExportBtn");
+  if (de) de.addEventListener("click", exportConnDiag);
   document.getElementById("replaySlider").addEventListener("input", (ev) => {
     if (_replay) { _replay.pos = parseInt(ev.target.value, 10) || 0; renderReplayPos(); }
   });

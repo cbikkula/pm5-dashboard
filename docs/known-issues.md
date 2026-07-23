@@ -1,5 +1,15 @@
 # Known issues
 
+## v1.23.0 is a release candidate until a physical PM5 passes the gate
+
+The transport work (state machine, watchdog, reconnection continuity, diagnostics) is
+fully unit- and simulation-tested, but "Hardware Confidence" is not tagged or deployed
+until the checklist in [`docs/hardware-qualification.md`](hardware-qualification.md)
+passes on a real PM5 with the exact release-candidate commit. Direct BLE HRM pairing is
+deliberately deferred for the same reason — no physical HRM was available to verify.
+One passing PM5 will not prove every firmware/browser/OS combination; the tested
+environment will be recorded verbatim.
+
 ## Insights is evidence-limited by what you have stored (v1.22)
 
 The Insights page computes only from sessions recorded or imported into this app.

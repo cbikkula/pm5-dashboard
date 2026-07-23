@@ -18,6 +18,7 @@ const INDEX = path.join(__dirname, "..", "pm5web", "index.html");
 const ANALYSIS = path.join(__dirname, "..", "pm5web", "analysis.js");
 const CURVES = path.join(__dirname, "..", "pm5web", "curves.js");
 const INSIGHTS = path.join(__dirname, "..", "pm5web", "insights.js");
+const TRANSPORT = path.join(__dirname, "..", "pm5web", "transport.js");
 
 function stubNode() {
   const n = {
@@ -92,7 +93,8 @@ function load() {
   // scope the browser builds.
   const src = fs.readFileSync(ANALYSIS, "utf8") + "\n;\n" +
               fs.readFileSync(CURVES, "utf8") + "\n;\n" +
-              fs.readFileSync(INSIGHTS, "utf8") + "\n;\n" + extractMainScript(html);
+              fs.readFileSync(INSIGHTS, "utf8") + "\n;\n" +
+              fs.readFileSync(TRANSPORT, "utf8") + "\n;\n" + extractMainScript(html);
   const sb = makeSandbox();
   const ctx = vm.createContext(sb);
   // Re-export the top-level declarations we test onto globalThis so the
@@ -164,6 +166,16 @@ function load() {
     "insPaceComparable", "generateInsightsFindings",
     "buildCurveSimSeries", "buildMetricSeries", "curveConsistencyFromSamples",
     "findInsightsComparables", "buildTrainingOverview", "sanitizeInsightsPrefs",
+    "insFmtDay",
+    // v1.23 — transport layer
+    "BLE_STATES", "BLE_TRANSITIONS", "bleTransitionLegal", "createBleMachine",
+    "LIVENESS_STALE_MS", "LIVENESS_WARN_COOLDOWN_MS", "GAP_EVENT_CAP", "PKT_MIN_LEN",
+    "createLiveness", "pm5Continuity", "CAPTURE_STATES", "sanitizeCaptureMeta",
+    "sanitizeGaps", "createDiagnostics", "DIAG_EVENT_CAP",
+    "simPktGS", "simPktGS1", "simPktStroke", "simPktForce",
+    "parseGeneralStatus", "parseGeneralStatus1", "parseGeneralStatus2",
+    "parseStrokeData", "parseForceCurve", "onGS", "onStroke", "onForce",
+    "initTransportLayer", "bleCaptureQuality",
   ];
   const shim = "\n;globalThis.__APP = {" +
     exposed.map((n) => `${n}: (typeof ${n}!=="undefined"?${n}:undefined)`).join(",") +
@@ -172,4 +184,4 @@ function load() {
   return sb.__APP;
 }
 
-module.exports = { load, extractMainScript, makeSandbox, INDEX, ANALYSIS, CURVES, INSIGHTS };
+module.exports = { load, extractMainScript, makeSandbox, INDEX, ANALYSIS, CURVES, INSIGHTS, TRANSPORT };

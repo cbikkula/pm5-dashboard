@@ -81,6 +81,8 @@ function sessionFacts(entry) {
     ptMed: insMedian(pts), ppsMed: insMedian(pps),
     hrCoverage: samples.length ? hrN / samples.length : 0,
     curveCoverage, curveRetained: cm ? cm.retained : 0, curveTotal: cm ? cm.total : 0,
+    interrupted: typeof entry.capture === "string" && entry.capture.startsWith("interrupted") ||
+      entry.capture === "ended-on-disconnect",
     fcAvg, fcPeak: entry.fc && insFinite(entry.fc.peak) ? entry.fc.peak : null,
     completeness: keyMetrics.filter(v => v != null).length / keyMetrics.length,
   };
@@ -561,7 +563,12 @@ function insWriteControls(p) {
 }
 
 function insFmtDay(ms) {
-  return isFinite(ms) && ms > 0 && ms < 8e15 ? new Date(ms).toISOString().slice(0, 10) : "…";
+  // LOCAL calendar-day label — must agree with the local-day range
+  // boundaries (an ISO/UTC conversion can shift the visible day).
+  if (!isFinite(ms) || ms <= 0 || ms >= 8e15) return "…";
+  const d = new Date(ms);
+  const p = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
 }
 
 function insRenderCohortLine() {
@@ -894,6 +901,8 @@ function insRenderConfidence() {
     `${m.cohort.coverage.legacy} legacy/none`);
   line(`Metric completeness (median): ${m.cohort.coverage.completenessMed != null ? Math.round(m.cohort.coverage.completenessMed * 100) + "%" : "—"} · ` +
     `reference for curve trends: ${_ins.refLabel ? _ins.refLabel : "none (choose a baseline in Settings)"}`);
+  const nInt = A.filter(f => f.interrupted).length;
+  if (nInt) line(`${nInt} session${nInt === 1 ? "" : "s"} in this period had interrupted capture — included, but treat their per-stroke completeness as limited.`);
   const needs = [];
   if (A.length < 3) needs.push("at least 3 sessions in the period");
   if (!m.cohort.b) needs.push("a comparison period");

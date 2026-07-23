@@ -21,7 +21,7 @@
 
 > Open in Chrome or Edge on a desktop or Android phone. Click **Connect**, pair the PM5 over Bluetooth, and row.
 
-**Current release: `v1.22.0`** ([changelog](CHANGELOG.md)) · ~830 KB offline app (one HTML file + three focused scripts), no framework, no build step.
+**Current release: `v1.22.0`** — v1.23.0 "Hardware Confidence" is a built release candidate awaiting physical-PM5 qualification ([gate checklist](docs/hardware-qualification.md)). ~857 KB offline app (one HTML file + four focused scripts), no framework, no build step.
 
 ---
 
@@ -32,7 +32,7 @@ The part I'd want a reviewer to see first:
 - 🔐 **Role-based access control with no server.** A full multi-coach club system (owner / admin / coach / athlete) enforced *entirely* by **Firestore Security Rules** — on Firebase's free Spark plan there are no Cloud Functions, so [the rules **are** the backend](firestore.rules). Invite/approval flows with unguessable bearer-token join codes, an append-only audit log that **nobody — not even the owner — can edit or delete**, and a client permission engine that mirrors the rules so the UI never offers what the server will reject.
 - 🛡️ **Designed adversarially.** I wrote the rules, then tried to break them — a pass that found **5 root-cause auth holes** (invite-bypass join, self-chosen athlete link, availability null-trap, audit backdating, revoked-invite readability). Then I reviewed the client across **5 dimensions and fixed 12 more bugs** (3 data-loss-critical) before release. The whole threat model + findings table is in [`docs/security.md`](docs/security.md).
 - 📡 **Reverse-engineered the PM5 BLE protocol** from the Concept2 GATT spec — 64-sample force-curve resampling, ~20 Hz stroke parsing, `< 10 ms` render — documented in [`docs/ble-protocol.md`](docs/ble-protocol.md) (including the off-by-3 byte bug I shipped first).
-- 🧪 **Tested & CI'd.** A 481-assertion zero-dependency test suite (`npm test`) — including a dedicated security-regression group — runs in GitHub Actions on every push alongside a syntax check and a bundle-size guard.
+- 🧪 **Tested & CI'd.** A 541-assertion zero-dependency test suite (`npm test`) — including a dedicated security-regression group — runs in GitHub Actions on every push alongside a syntax check and a bundle-size guard.
 - ⚙️ **One file, zero dependencies, $0/mo.** ~19,600 lines of vanilla HTML/CSS/JS in an installable PWA (index.html + analysis.js + curves.js + insights.js). No framework, no bundler, no server I run.
 
 ---
@@ -323,12 +323,13 @@ pm5-dashboard/
 │   ├── analysis.js               ← Pure analysis layer (codecs, engines, sanitizers)
 │   ├── curves.js                 ← Stroke-level evidence (IndexedDB store + replay UI)
 │   ├── insights.js               ← Cross-session Insights engine + page (v1.22)
+│   ├── transport.js              ← BLE state machine + liveness + diagnostics (v1.23)
 │   ├── sw.js                     ← Service worker (PWA / offline)
 │   └── firebase-config.example.js ← Cloud-sync config template (real one gitignored)
 ├── pm5dashboard/                 ← Original Python desktop prototype
 ├── firestore.rules               ← The access-control layer (the "backend")
 ├── SECURITY.md                   ← Security policy, data-storage behavior, accepted risks
-├── tests/                        ← run.js + harness.js — 481-assertion suite
+├── tests/                        ← run.js + harness.js — 541-assertion suite
 ├── scripts/syntax-check.js       ← Standalone main-script linter (used by CI)
 ├── .github/workflows/ci.yml      ← Syntax check · unit tests · bundle-size guard
 ├── package.json                  ← npm test / lint / check

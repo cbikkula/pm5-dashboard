@@ -1843,6 +1843,231 @@ if (app.findInsightsComparables) {
 }
 
 // ---------------------------------------------------------------------
+// v1.23.0 — Hardware Confidence: transport state machine, liveness,
+// continuity, packet security, diagnostics redaction. Deterministic
+// clocks via injected now().
+// ---------------------------------------------------------------------
+group("ble state machine");
+if (app.createBleMachine) {
+  let t = 0; const now = () => t;
+  const m = app.createBleMachine({ now });
+  ok("initial state is idle, connect allowed", m.state === "idle" && m.canStart());
+  ok("happy path transitions are legal",
+    m.to("requesting") && m.to("connecting") && m.to("discovering") &&
+    m.to("subscribing") && m.to("live"));
+  ok("live only via subscribing (never straight from connecting)",
+    !app.bleTransitionLegal("connecting", "live") && !app.bleTransitionLegal("requesting", "live"));
+  ok("illegal transition rejected without state change",
+    m.to("requesting") === false && m.state === "live");
+  ok("stale ↔ live recovery is legal", m.to("stale") && m.to("live"));
+  ok("rest and completion are workout-aware transport states",
+    m.to("resting") && m.to("live") && m.to("completed") && m.to("live"));
+  ok("disconnect → reconnecting → connecting path legal",
+    m.to("disconnected") && m.to("reconnecting") && m.to("connecting"));
+  ok("connect is idempotent mid-attempt (canStart false)",
+    !m.canStart());
+  const g1 = m.begin(), g2 = m.begin();
+  ok("generations retire stale async completions",
+    !m.fresh(g1) && m.fresh(g2));
+  ok("chooser cancellation is a normal recoverable outcome",
+    app.bleTransitionLegal("requesting", "idle"));
+  const m2 = app.createBleMachine({ now });
+  m2.to("unsupported");
+  ok("unsupported is terminal", m2.to("requesting") === false && m2.state === "unsupported");
+  ok("history is bounded", (() => {
+    const m3 = app.createBleMachine({ now });
+    for (let i = 0; i < 120; i++) { m3.to("requesting"); m3.to("idle"); }
+    return m3.history.length <= 100; })());
+  ok("every declared state has a transition entry",
+    app.BLE_STATES.every(s => Array.isArray(app.BLE_TRANSITIONS[s])));
+}
+
+group("ble liveness");
+if (app.createLiveness) {
+  let t = 0; const now = () => t;
+  const L = app.createLiveness({ now });
+  const armed = ws => ({ armed: true, workoutState: ws == null ? 1 : ws });
+  ok("disarmed while transport not live", L.evaluate({ armed: false }) === "disarmed");
+  ok("no telemetry yet → not stale (machine still subscribing)",
+    L.evaluate(armed()) === "live");
+  t = 1000; L.note("gs", true);
+  t = 3000;
+  ok("valid packets refresh liveness", L.evaluate(armed()) === "live" && L.ageMs("gs") === 2000);
+  t = 1000 + app.LIVENESS_STALE_MS + 1;
+  ok("status silence past threshold → stale", L.evaluate(armed()) === "stale");
+  L.note("gs", false);
+  ok("malformed packets never refresh liveness",
+    L.evaluate(armed()) === "stale" && L.rejected.gs === 1 && L.ageMs("gs") > app.LIVENESS_STALE_MS);
+  ok("completed workout disarms staleness (state 10/11)",
+    L.evaluate(armed(10)) === "disarmed" && L.evaluate(armed(11)) === "disarmed");
+  ok("programmed rest does NOT mask status silence",
+    L.evaluate({ armed: true, workoutState: 3 }) === "stale");
+  ok("warning cooldown", L.warnAllowed() === true && L.warnAllowed() === false);
+  t += app.LIVENESS_WARN_COOLDOWN_MS + 1;
+  ok("cooldown expires on monotonic time", L.warnAllowed() === true);
+  // Gap recording
+  L.gapOpen("stale");
+  L.gapOpen("stale");                          // double-open ignored
+  t += 4000;
+  L.gapClose(true);
+  ok("gap recorded once with duration + recovery flag",
+    L.gaps.length === 1 && Math.abs(L.gaps[0].d - 4) < 0.11 && L.gaps[0].r === 1);
+  ok("gap events are bounded", (() => {
+    for (let i = 0; i < 30; i++) { L.gapOpen("stale"); t += 100; L.gapClose(false); }
+    return L.gaps.length <= app.GAP_EVENT_CAP; })());
+  const genBefore = L.gen;
+  L.reset();
+  ok("reset clears counters and bumps generation (stale-callback isolation)",
+    L.gen === genBefore + 1 && L.gaps.length === 0 && L.accepted.gs === 0 && L.lastAt.gs === 0);
+}
+
+group("ble continuity + capture meta");
+if (app.pm5Continuity) {
+  const before = { elapsedS: 120, distanceM: 500, strokes: 60 };
+  ok("monotonic progression → same workout",
+    app.pm5Continuity(before, { elapsedS: 125, distanceM: 512, strokes: 61 }) === "same");
+  ok("equal counters (paused erg) → same",
+    app.pm5Continuity(before, { elapsedS: 120, distanceM: 500, strokes: 60 }) === "same");
+  ok("elapsed rollback → reset",
+    app.pm5Continuity(before, { elapsedS: 4, distanceM: 510, strokes: 61 }) === "reset");
+  ok("distance rollback → reset",
+    app.pm5Continuity(before, { elapsedS: 130, distanceM: 20, strokes: 61 }) === "reset");
+  ok("stroke-count rollback → reset",
+    app.pm5Continuity(before, { elapsedS: 130, distanceM: 510, strokes: 3 }) === "reset");
+  ok("non-finite counters → reset",
+    app.pm5Continuity(before, { elapsedS: NaN, distanceM: 510 }) === "reset");
+  ok("no prior snapshot → same (nothing to protect)",
+    app.pm5Continuity(null, { elapsedS: 1, distanceM: 1 }) === "same");
+  ok("small in-flight tolerance honored",
+    app.pm5Continuity(before, { elapsedS: 118.5, distanceM: 496, strokes: 60 }) === "same");
+  // capture metadata sanitizers
+  ok("capture vocabulary whitelisted",
+    app.sanitizeCaptureMeta("interrupted-gap") === "interrupted-gap" &&
+    app.sanitizeCaptureMeta("clean") === "clean" &&
+    app.sanitizeCaptureMeta("<script>") === null && app.sanitizeCaptureMeta(7) === null);
+  const g = app.sanitizeGaps([{ s: 10, e: 14, d: 4, st: "stale", r: 1 },
+    { s: 5, e: 2, d: 1 }, { s: "x", e: 9, d: 1 }, { s: 1, e: 2, d: 1, st: "<img>", r: "y" }]);
+  ok("gaps: numeric whitelist, bad rows dropped, hostile st normalized",
+    g.length === 2 && g[0].r === 1 && g[1].st === "stale" && g[1].r === 0);
+  ok("gaps bounded to cap", app.sanitizeGaps(
+    Array.from({ length: 40 }, (_, i) => ({ s: i, e: i + 1, d: 1 }))).length <= app.GAP_EVENT_CAP);
+  ok("gaps: non-array → null", app.sanitizeGaps("x") === null && app.sanitizeGaps(null) === null);
+}
+
+group("ble packet security");
+if (app.parseGeneralStatus) {
+  // Structural minimums — short/truncated packets must return null.
+  ok("short GS/GS1/GS2/stroke packets rejected",
+    app.parseGeneralStatus(new Uint8Array(18)) === null &&
+    app.parseGeneralStatus1(new Uint8Array(15)) === null &&
+    app.parseGeneralStatus2(new Uint8Array(19)) === null &&
+    app.parseStrokeData(new Uint8Array(19)) === null);
+  ok("PKT_MIN_LEN matches parser minimums",
+    app.PKT_MIN_LEN.gs === 19 && app.PKT_MIN_LEN.stroke === 20 && app.PKT_MIN_LEN.force === 2);
+  // Round trip through the sim builders = real byte layouts.
+  const gs = app.parseGeneralStatus(app.simPktGS({ elapsedS: 62.5, distanceM: 250.3, workoutState: 3 }));
+  ok("sim GS round-trips through the real parser",
+    Math.abs(gs.elapsed_time_s - 62.5) < 0.011 && Math.abs(gs.distance_m - 250.3) < 0.11 &&
+    gs.workout_state === 3);
+  const st = app.parseStrokeData(app.simPktStroke({ elapsedS: 30, distanceM: 120, dl: 1.42, dt: 0.82, rt: 1.61, pf: 155.5, strokeCount: 17 }));
+  ok("sim stroke round-trips (DL/times/force/count)",
+    Math.abs(st.drive_length_m - 1.42) < 0.011 && Math.abs(st.peak_force_lbs - 155.5) < 0.11 &&
+    st.stroke_count === 17);
+  const fc = app.parseForceCurve(app.simPktForce(0, 2, [10, 55.5, 120]));
+  ok("sim force-curve round-trips (seq/samples)",
+    fc.seq === 0 && fc.totalPackets === 2 && fc.samples.length === 3 &&
+    Math.abs(fc.samples[1] - 55.5) < 0.11);
+  ok("force curve: truncated sample area reads only what exists",
+    app.parseForceCurve(new Uint8Array([0x2F, 0, 1, 0])).samples.length === 1);
+  ok("force curve: declared count never drives allocation",
+    app.parseForceCurve(new Uint8Array([0x0F, 0])).samples.length === 0);
+  // Handlers: malformed input counted, not applied; no exception.
+  const ctl = app.initTransportLayer();
+  ctl.live.reset();
+  const rej0 = ctl.live.rejected.gs;
+  app.onGS(new Uint8Array(4));
+  ok("handler rejects short packet and counts it",
+    ctl.live.rejected.gs === rej0 + 1 && ctl.live.lastAt.gs === 0);
+  // Duplicate stroke notification dropped deterministically.
+  app.state.strokeCount = 0;
+  const pkt = app.simPktStroke({ elapsedS: 10, distanceM: 40, strokeCount: 5 });
+  app.onStroke(pkt);
+  const afterFirst = app.state.strokeCount;
+  app.onStroke(pkt);
+  ok("exact duplicate stroke packet dropped",
+    app.state.strokeCount === afterFirst && ctl.live.rejected.stroke >= 1);
+  ok("oversized force packet rejected at the boundary", (() => {
+    const rejF = ctl.live.rejected.force;
+    app.onForce(new Uint8Array(300));
+    return ctl.live.rejected.force === rejF + 1; })());
+  ok("repeated malformed notifications stay bounded and non-throwing", (() => {
+    for (let i = 0; i < 500; i++) app.onGS(new Uint8Array(1));
+    return ctl.live.rejected.gs >= 500; })());
+  ok("parsers never mutate their input", (() => {
+    const p = app.simPktGS({ elapsedS: 10 });
+    const snap = Array.from(p);
+    app.parseGeneralStatus(p);
+    return JSON.stringify(Array.from(p)) === JSON.stringify(snap); })());
+}
+
+group("ble diagnostics redaction");
+if (app.createDiagnostics) {
+  let t = 0;
+  const D = app.createDiagnostics({ now: () => t });
+  D.push("state", "live");
+  t = 2500; D.push("error", "subscribe-failed:0031");
+  ok("bounded buffer", (() => {
+    for (let i = 0; i < 150; i++) D.push("state", "x");
+    return D.events.length <= app.DIAG_EVENT_CAP; })());
+  D.push("state", "PM5 Serial 430012345 <Bob's erg>");   // hostile/free-form detail
+  ok("free-form details are redacted at entry",
+    D.events.some(e => e.d === "redacted") && !JSON.stringify(D.events).includes("Serial 43001"));
+  const exp = D.exportSafe({ state: "live" });
+  const blob = JSON.stringify(exp);
+  ok("export is slug-whitelisted again at export time",
+    exp.events.every(e => /^[a-z0-9:._%|-]{0,48}$/i.test(e.d)));
+  ok("export carries no identifiers, tokens, packets, or workout text",
+    !/Serial|Bob|ya29|Bearer|deadbeef|strokes/.test(blob));
+  ok("export declares its own contents", /no device identifiers/i.test(exp.note));
+  ok("relative timestamps only (no wall-clock)", exp.events.every(e => typeof e.t === "number" && e.t < 1e6));
+}
+
+group("ble session integrity + regression");
+if (app.sanitizeCaptureMeta && app.importSessionsFromText) {
+  // Import path: capture + gaps whitelisted; hostile dropped.
+  app.state.history = [];
+  app.importSessionsFromText(JSON.stringify({ kind: "pm5-history-export", history: [
+    { id: "INT1", date: "2026-07-20T10:00:00Z", title: "interrupted row",
+      totals: { distanceM: 3000, elapsedS: 720 },
+      strokes: Array.from({ length: 20 }, (_, j) => ({ t: j * 2, d: j * 150, p: 120, dl: 1.35, dt: 0.8, rt: 1.6 })),
+      capture: "interrupted-gap", gaps: [{ s: 100, e: 112, d: 12, st: "disconnected", r: 0 }] },
+    { id: "INT2", date: "2026-07-19T10:00:00Z", title: "hostile capture",
+      totals: { distanceM: 100, elapsedS: 30 }, strokes: [{ t: 0, d: 0 }, { t: 2, d: 10 }],
+      capture: "<script>alert(1)</script>", gaps: { evil: 1 } },
+  ] }));
+  const i1 = app.state.history.find(e => e.id === "INT1");
+  const i2 = app.state.history.find(e => e.id === "INT2");
+  ok("valid capture meta + gaps survive import",
+    i1.capture === "interrupted-gap" && i1.gaps.length === 1 && i1.gaps[0].d === 12);
+  ok("hostile capture meta + gaps dropped",
+    i2 && !("capture" in i2) && !("gaps" in i2));
+  // Insights treats interruption as a completeness limitation, not exclusion.
+  const f1 = app.sessionFacts(i1);
+  ok("interrupted sessions stay in cohorts, flagged",
+    f1.interrupted === true &&
+    app.buildInsightsCohort([i1], { nowMs: Date.parse(i1.date) + 3600e3, range: "7d" }).a.facts.length === 1);
+  app.state.history = [];
+  // Local cohort-date labels (the v1.22 fix): local constructor round-trips.
+  ok("cohort date labels use LOCAL days (winter + summer + today)",
+    app.insFmtDay(new Date(2026, 0, 15, 0, 5).getTime()) === "2026-01-15" &&
+    app.insFmtDay(new Date(2026, 6, 15, 23, 55).getTime()) === "2026-07-15" &&
+    app.insFmtDay(new Date(2026, 2, 8, 12).getTime()) === "2026-03-08");   // US DST boundary day
+  ok("capture-quality summary for a clean session", (() => {
+    const q = app.bleCaptureQuality();
+    return q.capture === "clean" || q.capture === null || q.capture === "simulated"; })());
+}
+
+// ---------------------------------------------------------------------
 // 8. App-size guard (#25) — keep the whole offline app under budget.
 // Budget history: 600 KB (index.html only) through v1.17.0; 660 KB in
 // v1.18.0; v1.20.0 split the pure analysis layer into analysis.js and
@@ -1864,16 +2089,24 @@ const html = fs.readFileSync(INDEX, "utf8");
 const analysisSrc = fs.readFileSync(ANALYSIS, "utf8");
 const curvesSrc = fs.readFileSync(path.join(path.dirname(INDEX), "curves.js"), "utf8");
 const insightsSrc = fs.readFileSync(path.join(path.dirname(INDEX), "insights.js"), "utf8");
+const transportSrc = fs.readFileSync(path.join(path.dirname(INDEX), "transport.js"), "utf8");
 const swSrc = fs.readFileSync(path.join(path.dirname(INDEX), "sw.js"), "utf8");
 const idxKb = Buffer.byteLength(html, "utf8") / 1024;
 const anaKb = Buffer.byteLength(analysisSrc, "utf8") / 1024;
 const curKb = Buffer.byteLength(curvesSrc, "utf8") / 1024;
 const insKb = Buffer.byteLength(insightsSrc, "utf8") / 1024;
+const traKb = Buffer.byteLength(transportSrc, "utf8") / 1024;
 const swKb = Buffer.byteLength(swSrc, "utf8") / 1024;
-const totalKb = idxKb + anaKb + curKb + insKb + swKb;
-console.log(`  index.html = ${idxKb.toFixed(0)} KB · analysis.js = ${anaKb.toFixed(0)} KB · curves.js = ${curKb.toFixed(0)} KB · insights.js = ${insKb.toFixed(0)} KB · sw.js = ${swKb.toFixed(0)} KB · total = ${totalKb.toFixed(0)} KB`);
+const totalKb = idxKb + anaKb + curKb + insKb + traKb + swKb;
+console.log(`  index.html = ${idxKb.toFixed(0)} KB · analysis.js = ${anaKb.toFixed(0)} KB · curves.js = ${curKb.toFixed(0)} KB · insights.js = ${insKb.toFixed(0)} KB · transport.js = ${traKb.toFixed(0)} KB · sw.js = ${swKb.toFixed(0)} KB · total = ${totalKb.toFixed(0)} KB`);
 ok("index.html under 660 KB", idxKb < 660);
-ok("total offline app under 832 KB", totalKb < 832);
+// v1.23.0: transport.js (~20 KB BLE state machine + watchdog +
+// diagnostics + simulator) could not fit under 832 KB after measured
+// cleanup (~2.8 KB of dead branches/comments/stale release notes
+// removed first); the limit moved to the smallest sufficient enforced
+// value — 860 KB, actual ~857 KB — documented in CHANGELOG.md and
+// docs/architecture.md. Ceiling permitted by the release plan: 864 KB.
+ok("total offline app under 860 KB", totalKb < 860);
 
 // ---------------------------------------------------------------------
 console.log(`\n=== ${pass} passed, ${fail} failed ===`);

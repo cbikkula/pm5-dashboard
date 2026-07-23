@@ -10,6 +10,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Multi-erg synchronization (needs a new per-erg Firestore surface + rules — deliberately not built on the club-scoped schema)
 - AI technique analysis (peak-timing trends)
 
+## [v1.23.0] — July 2026 — Hardware Confidence (release candidate — pending physical PM5 qualification)
+
+BLE reliability becomes explicit and testable. NOT deployed until the physical-PM5 gate in [`docs/hardware-qualification.md`](docs/hardware-qualification.md) passes on the exact release-candidate commit.
+
+- **Authoritative connection state machine** (`pm5web/transport.js`) — 13 states with an explicit legal-transition table; "Live" only after the first structurally valid status packet (never merely because a GATT object exists); generation tokens retire superseded async completions; repeated Connect clicks are idempotent; chooser cancellation is a normal recoverable outcome; discovery and subscription failures are reported distinctly; notification handlers attach exactly once.
+- **Packet-liveness watchdog** — driven by the status family only (the PM5 emits status continuously while awake, including during programmed rest, so status silence = transport stall while stroke/curve silence at rest is normal). Only validated packets refresh liveness; monotonic time; stale after 5 s of status silence with a 10 s warning cooldown; a completed workout (PM5 state 10/11) disarms staleness; nothing is ever interpolated; timers are generation-guarded and cleared on teardown.
+- **Safe reconnection** — the existing 1/3/6 s auto-retry now snapshots the erg's counters before resubscribing and resumes the SAME workout only when returning telemetry proves continuity (elapsed/distance/stroke count not regressed); a PM5 reset or different workout finalizes the interrupted session separately and starts clean — never silently merged. Retries never reopen the chooser; exhausted retries preserve all data and hand control to the manual Connect button.
+- **Transport-boundary hardening** — minimum-length table before parsing, oversized force packets rejected, exact-duplicate/late stroke notifications dropped deterministically (counter regression = possible reset, left to continuity), malformed packets counted and bounded, no raw packet logging.
+- **Session capture quality** — `entry.capture` (clean / interrupted-recovered / interrupted-gap / ended-on-disconnect / simulated) + bounded `entry.gaps` (max 20, whitelisted on import); Replay badges interruption; Insights includes interrupted sessions and flags them as a completeness limitation.
+- **Connection Diagnostics** — click the status chip: support, state, last-valid-packet age, per-family accepted/rejected counters, reconnects, gaps, curve capture, HR source, capture quality, plus a bounded (100) event buffer with slug-only details. Export re-sanitizes with a whitelist — no device identifiers, packet bytes, credentials, or workout data, and it says so.
+- **Deterministic transport simulator** — byte-accurate PM5 notifications fed through the production parse/apply handlers (normal, malformed, duplicate, stall/recovery scenarios) for tests and browser verification. Simulation never claims to prove physical BLE behavior.
+- **Direct BLE HRM pairing: deliberately deferred** — no physical HRM was available to verify against, so nothing unverified ships; PM5 strap relay remains the HR source.
+- **Insights date labels fixed** — cohort labels now use local calendar days (matching the range boundaries) instead of UTC ISO conversion.
+- **Size** — transport.js ~20 KB; after ~2.8 KB measured cleanup the total guard moved once 832 → **860 KB** (actual ~857; permitted ceiling 864), enforced in CI; index.html cap 660 KB unchanged (~656). Service worker `pm5-v50`. Tests 481 → **541**.
+
 ## [v1.22.0] — July 2026 — Insights: Cross-Session Evidence
 
 The stored evidence becomes longitudinal insight: a new top-level **Insights** page answers what measurably changed, what held steady, which sessions prove it, and what to inspect in Replay. Every calculation is deterministic, documented in [`docs/analysis-methods.md`](docs/analysis-methods.md), and traceable to stored sessions — no causation, readiness, recovery, or "perfect stroke" claims, ever.

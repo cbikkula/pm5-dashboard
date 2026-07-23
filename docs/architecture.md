@@ -165,7 +165,7 @@ On sign-in (or page load if a token survived), we pull the Drive copy and merge:
 //   Don't touch — let the browser handle them directly.
 ```
 
-Cache version is bumped on every meaningful deploy (`pm5-v1` → `pm5-v47` and counting). Old caches are deleted in the `activate` handler.
+Cache version is bumped on every meaningful deploy (`pm5-v1` → `pm5-v48` and counting). Old caches are deleted in the `activate` handler.
 
 ## Why PWA over native
 
@@ -200,4 +200,17 @@ Real-time presence, workout assignment to lineups (v1.13.0), and a read-only vie
 
 ## v1.20.0 — two-script split
 
-The pure analysis layer (sanitizers, curve/shape math, baseline engine, cue governor, Race Lab, power profile — all DOM-free) lives in `pm5web/analysis.js`, loaded as a classic script before the main inline script. Both are served network-first by the service worker so a page can never mix releases, and both are cached for offline. The size guard in `tests/run.js` measures the total offline app (index.html + analysis.js + sw.js < 768 KB) and still caps index.html at 660 KB. `tests/harness.js` concatenates the two scripts into one vm sandbox; `scripts/syntax-check.js` parses each. Formulas: `docs/analysis-methods.md`.
+The pure analysis layer (sanitizers, curve/shape math, baseline engine, cue governor, Race Lab, power profile, and the v1.21 stroke-curve codec/retention/evidence engines — all DOM-free) lives in `pm5web/analysis.js`, loaded as a classic script before the main inline script. v1.21 adds a second module, `pm5web/curves.js`: the stroke-level-evidence layer (IndexedDB curve-detail store, in-memory capture append, and the replay Stroke Evidence UI), loaded between analysis.js and the main script. All three are served network-first by the service worker so a page can never mix releases, and all are cached for offline. The size guard in `tests/run.js` measures the total offline app (index.html + analysis.js + curves.js + sw.js < 768 KB) and still caps index.html at 660 KB. `tests/harness.js` concatenates the three scripts into one vm sandbox; `scripts/syntax-check.js` parses each. Formulas: `docs/analysis-methods.md`.
+
+### Per-stroke curve storage (v1.21)
+
+Per-stroke Force Curves are encoded with a versioned binary codec (see
+`docs/analysis-methods.md` for the byte layout, fidelity bounds, and validation rules)
+and stored as one payload per session in an IndexedDB database (`pm5-curve-detail`,
+store `sessions`, keyed by session id) — deliberately outside localStorage so curve bulk
+can never endanger workout-summary persistence. The session entry carries only
+`curveMeta` (codec version, coverage state, retained/total counts) and `strokeStride`.
+Hard budget: 512 KiB per session with deterministic anchor-preserving retention.
+JSON exports and Drive sync carry payloads as base64 maps validated byte-first on the
+way back in; an existing local payload always wins. Quota or IndexedDB failure
+downgrades coverage to "unavailable" and never touches the summary.

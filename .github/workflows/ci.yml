@@ -29,3 +29,6 @@ jobs:
 
       - name: Analysis-layer syntax check
         run: node --check pm5web/analysis.js
+
+      - name: Curve-module syntax check
+        run: node --check pm5web/curves.js

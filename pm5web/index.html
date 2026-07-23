@@ -2731,6 +2731,38 @@
     margin-bottom:6px; display:flex; justify-content:space-between; gap:8px; }
   .rpl-fc-title span { font-weight:600; letter-spacing:.2px; text-transform:none; }
   .rpl-fc canvas { display:block; width:100%; height:130px; }
+  /* v1.21 — stroke evidence: coverage, A/B pins, navigator, windows */
+  .rpl-cov { font-size:11.5px; color:var(--text-muted); margin:4px 0 6px; }
+  .rpl-abbar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:6px; }
+  .rpl-abbar button, .rpl-win-row button, .rpl-win-out button, #rplNearWrap button {
+    font-size:12px; padding:3px 10px; border-radius:8px; border:1px solid var(--border);
+    background:var(--bg-raised); color:var(--text); cursor:pointer; }
+  .rpl-abbar button:focus-visible, .rpl-ev-btn:focus-visible, .rpl-win-row button:focus-visible,
+  .rpl-win-row select:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+  .rpl-abbar label { font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:4px; }
+  .rpl-ab { display:grid; gap:2px; font-size:12.5px; margin:4px 0 8px; }
+  .rpl-ab .abr { display:grid; grid-template-columns: 1.2fr 1fr 1fr 0.9fr; gap:6px;
+    padding:2px 6px; border-radius:6px; }
+  .rpl-ab .abr:nth-child(even) { background:rgba(155,167,189,0.06); }
+  .rpl-ab .abh { font-weight:700; color:var(--text-muted); font-size:11.5px; }
+  .rpl-ab .abn { font-size:11px; color:var(--text-muted); }
+  .rpl-ab .wide { grid-column: span 3; }
+  .rpl-det { margin:4px 0; font-size:12.5px; }
+  .rpl-det summary { cursor:pointer; color:var(--accent); font-weight:600; padding:3px 0; }
+  .rpl-ev-btns { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+  .rpl-ev-btn { text-align:left; font-size:12px; padding:5px 10px; border-radius:8px;
+    border:1px solid var(--border); background:var(--bg-raised); color:var(--text); cursor:pointer;
+    display:flex; flex-direction:column; gap:1px; min-width:140px; }
+  .rpl-ev-btn:disabled { opacity:.55; cursor:default; }
+  .rpl-ev-btn i { font-style:normal; color:var(--text-muted); font-size:10.5px; }
+  .rpl-ev-x, .rpl-ev-def { font-size:11px; color:var(--text-muted); margin-top:4px; }
+  .rpl-win-row { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:6px 0; }
+  .rpl-win-row select { font-size:12px; padding:3px 6px; border-radius:8px;
+    border:1px solid var(--border); background:var(--bg-raised); color:var(--text); max-width:100%; }
+  .rpl-win-row label { font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:4px; }
+  .rpl-win-out { font-size:12px; color:var(--text-muted); margin-top:2px; }
+  .hist-syn { font-size:9.5px; font-weight:800; letter-spacing:.5px; color:#f5b942;
+    border:1px solid rgba(245,185,66,0.5); border-radius:5px; padding:1px 5px; margin-left:6px; }
   .rpl-scrub { background:var(--bg-base); border:1px solid var(--border); border-radius:10px;
     padding:12px 14px; margin-bottom:10px; }
   .rpl-pos { display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:6px; }
@@ -2934,9 +2966,9 @@
     <button class="db-exit" id="demoExitBtn" type="button">EXIT DEMO</button>
   </div>
 
-  <!-- ============================================================= -->
+  <!-- ==================== -->
   <!-- HOME VIEW — launcher with cards for each major area.          -->
-  <!-- ============================================================= -->
+  <!-- ==================== -->
   <div id="homeView" class="view active">
     <div id="activePlanBanner" class="active-plan-banner" style="display:none;">
       <span style="color:var(--text-muted); font-size:12px; letter-spacing:1px; font-weight:700;">ACTIVE PLAN</span>
@@ -2992,9 +3024,9 @@
     </div>
   </div>
 
-  <!-- ============================================================= -->
+  <!-- ==================== -->
   <!-- MONITOR VIEW — live erg dashboard (only shown after Just Row) -->
-  <!-- ============================================================= -->
+  <!-- ==================== -->
   <div id="monitorView" class="view">
 
   <!-- Workout progress bar — spans full width, hidden when no target. -->
@@ -3147,14 +3179,14 @@
     <div class="race-proj" id="raceProj"></div>
   </div>
 
-  <!-- ============================================================= -->
+  <!-- ==================== -->
   <!-- PERFORMANCE VIEW — Phase 1: page shell, tab nav, empty states. -->
   <!--                                                                -->
   <!-- Each tab's spec is documented inline in the body so the page   -->
   <!-- isn't just empty boxes — visitors and reviewers can see the    -->
   <!-- whole vision today, and future phases replace the spec text    -->
   <!-- with real working content one tab at a time.                   -->
-  <!-- ============================================================= -->
+  <!-- ==================== -->
   <div id="performanceView" class="view">
     <div class="perf-header">
       <div class="perf-title">
@@ -3271,13 +3303,13 @@
     </div>
   </div>
 
-  <!-- ============================================================= -->
+  <!-- ==================== -->
   <!-- CLUBS VIEW — single-coach club organizer (Phase 1).           -->
   <!--                                                               -->
   <!-- Tabs across the top, content panel below. The Lineups tab is  -->
   <!-- where the real work happens; the others (Roster, Shells,      -->
   <!-- Teams) are simple list managers that feed the builder.        -->
-  <!-- ============================================================= -->
+  <!-- ==================== -->
   <div id="clubsView" class="view">
     <div class="club-header">
       <div class="row" style="justify-content: space-between; align-items: flex-start; gap: 16px;">
@@ -3626,9 +3658,11 @@
         <div class="section-title">DEMO MODE</div>
         <div class="hint-block" style="margin-bottom: 10px;">
           No PM5 nearby? Run the dashboard against simulated stroke
-          data — force curve, pace, watts, HR all move realistically.
-          Drive sync pauses so demo workouts don't leak into your
-          history.
+          data — force curve, pace, watts, HR all move realistically
+          (deterministic since v1.21, with built-in technique wobbles
+          to exercise cues and stroke evidence). Auto-logging and Drive
+          sync stay paused; pressing <b>Log</b> saves a clearly-marked
+          SYNTHETIC session you can replay and compare.
         </div>
         <button id="settingsDemoBtn" class="accent" type="button">
           🎮 Start Demo Mode
@@ -3636,6 +3670,7 @@
       </div>
       <div class="settings-section">
         <div class="section-title">PRIVACY &amp; ACCESSIBILITY</div>
+        <div class="hint-block" id="curveStorageInfo" style="margin-bottom:8px;">Stroke curve storage: …</div>
         <label class="tz-toggle"><input type="checkbox" id="prefPrivacyLocal">
           <span>Keep all data on this device (no Drive sync, no global counter)</span></label>
         <label class="tz-toggle"><input type="checkbox" id="prefReducedMotion">
@@ -4334,6 +4369,36 @@
       <div class="rpl-fc" id="replayFc" style="display:none;">
         <div class="rpl-fc-title">FORCE CURVE <span id="replayFcLegend"></span></div>
         <canvas id="replayFcCanvas"></canvas>
+        <div class="rpl-cov" id="rplCov"></div>
+        <div class="rpl-abbar">
+          <button id="rplPinA" title="Pin the selected stroke as A (key: a)">Pin A</button>
+          <button id="rplPinB" title="Pin the selected stroke as B (key: b)">Pin B</button>
+          <label><input type="checkbox" id="rplNorm"> normalized</label>
+          <button id="rplPinClear" style="display:none;">Clear pins</button>
+          <span id="rplNearWrap"></span>
+        </div>
+        <div class="rpl-ab" id="rplAbTable" style="display:none;"></div>
+        <details class="rpl-det" id="rplEvid" style="display:none;">
+          <summary>Stroke evidence</summary>
+          <div class="rpl-ev-btns" id="rplEvBtns"></div>
+          <div class="rpl-ev-def">Fastest / slowest = lowest / highest valid split; isolated
+            one-stroke spikes are excluded as connection artifacts and ties go to the earliest
+            stroke. Most typical = curve most similar to this session's mean shape. Closest /
+            largest deviation = highest / lowest shape similarity vs the active baseline.
+            Similarity compares curve <em>shape</em> only — none of these labels judge
+            technique quality, and the fastest stroke is not "the best stroke".</div>
+        </details>
+        <details class="rpl-det" id="rplWin" style="display:none;">
+          <summary>Window comparison</summary>
+          <div class="rpl-win-row">
+            <select id="rwSource" aria-label="Window source"></select>
+            <button id="rwFrom" title="Mark range start at the selected stroke">⇤ start</button>
+            <button id="rwTo" title="Mark range end at the selected stroke">end ⇥</button>
+            <label id="rwPrevWrap" style="display:none;"><input type="checkbox" id="rwPrev"> previous compatible attempt</label>
+            <button id="rwBuild" class="accent">Build</button>
+          </div>
+          <div class="rpl-win-out" id="rwOut" aria-live="polite"></div>
+        </details>
       </div>
       <div class="rpl-scrub" id="replayScrub" style="display:none;">
         <div class="rpl-pos"><span id="replayPos">Interval 1 of 1</span><span id="replayMeta"></span></div>
@@ -4720,37 +4785,17 @@ document.dispatchEvent(new Event("fb-api-ready"));
      split just keeps it out of source control / silences secret scanners. -->
 <script src="firebase-config.js"></script>
 <script src="analysis.js"></script>
+<script src="curves.js"></script>
 
 <script>
-// =====================================================================
+// ====================
 // Firebase config — provided by firebase-config.js (see note above).
-// =====================================================================
+// ====================
 //
-// SETUP (10 min, free, no billing — Spark plan):
-//
-// 1. Go to  https://console.firebase.google.com  → "Add project"
-//    Pick any name. You can disable Google Analytics.
-//
-// 2. Build → Authentication → Get started → Sign-in method →
-//    Google → enable. Save.
-//
-// 3. Build → Firestore Database → Create database → Production mode
-//    → pick a region close to your users. Hit Enable.
-//
-// 4. Project settings (gear icon, top-left) → scroll to "Your apps"
-//    → click the </> (web) icon → register the app with any nickname
-//    (no hosting needed) → copy the firebaseConfig object that appears
-//    and paste it OVER the placeholder below.
-//
-// 5. Authentication → Settings → Authorized domains → Add domain
-//    for EACH of:  pm5row.surge.sh, rowerg-dashboard.surge.sh,
-//    ergdash.surge.sh, and  localhost  (for dev).
-//
-// 6. Firestore Database → Rules → paste the contents of
-//    /firestore.rules from the repo root → Publish.
-//
-// Until you do steps 1–6, FIREBASE_ENABLED stays false and the app
-// keeps working in single-user / Drive-sync mode as before.
+// Setup guide (project, Google sign-in, Firestore, authorized
+// domains, rules publish): see docs/architecture.md and
+// firebase-config.example.js. Until configured, FIREBASE_ENABLED
+// stays false and the app runs in single-user / Drive-sync mode.
 //
 const FIREBASE_CONFIG =
   (typeof window !== "undefined" && window.__FIREBASE_CONFIG__) ||
@@ -4765,9 +4810,9 @@ const FIREBASE_ENABLED =
    → Rules → paste /firestore.rules → Publish. Security is enforced
    entirely by those rules (Spark plan = no Cloud Functions). */
 
-// =====================================================================
+// ====================
 // Force HTTPS — must run before anything else.
-// =====================================================================
+// ====================
 // Google OAuth refuses any origin served over plain http (you get
 // "Error 400: origin_mismatch"). Web Bluetooth also won't expose
 // navigator.bluetooth over http. Upgrade transparently so users who
@@ -4781,9 +4826,9 @@ const FIREBASE_ENABLED =
   }
 })();
 
-// =====================================================================
+// ====================
 // Account / Drive sync configuration
-// =====================================================================
+// ====================
 // Paste your Google OAuth 2.0 Client ID here to enable Google Sign-In
 // and Drive sync. Setup: console.cloud.google.com → create project →
 // enable "Google Drive API" → Credentials → Create OAuth client ID
@@ -4797,7 +4842,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.20.0";
+const APP_VERSION = "1.21.0";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 // v3 (1.18.0) adds optional entry.strokes (compact per-stroke samples)
@@ -4806,45 +4851,35 @@ const APP_VERSION = "1.20.0";
 const SESSION_SCHEMA_VERSION = 3;
 
 const RELEASE_NOTES = {
+  "1.21.0": {
+    date: "July 2026",
+    headline: "Stroke-Level Evidence",
+    items: [
+      "Every stroke's actual Force Curve is now saved (compact 64-sample form) and shown in replay — select any stroke and see its own curve, not a session average",
+      "Pin any two strokes (or window averages) as A/B and compare curves, similarity, peak timing, pace, Drive Length, and Ratio side by side",
+      "Stroke Evidence navigator: jump to the fastest, slowest, most typical, closest-to-baseline, and largest-deviation strokes — with the selection rule always shown",
+      "Window baselines: average the curves of any stroke range, interval, or race segment, and compare start vs base, first vs last interval, or this attempt vs a previous one",
+      "Curve detail lives in IndexedDB with a 512 KiB per-session budget and deterministic retention — workout summaries are never at risk, and coverage is always disclosed",
+    ],
+  },
   "1.20.0": {
     date: "July 2026",
     headline: "Personal Race & Technique Intelligence",
     items: [
       "Personal baseline: row against your own evidence — previous session, rolling average, steadiest section, or a ⭑ locked reference",
       "Live cues: one conservative, plain-English cue at a time (what changed, how much, vs which baseline) with quiet mode and sensitivity control",
-      "Race Lab: build a paced race plan (even/negative/positive), see live ahead/behind + projected finish, then a segment-by-segment debrief with ≤3 prioritized findings",
-      "Replay: drift-event markers and navigation, baseline curve overlay, race-segment context, exact vs-baseline deltas at any stroke",
-      "Rowing power profile: best watts over 1:00 / 4:00 / 8:00 / 20:00 with pace equivalents — and a critical-power estimate only when two real Tests support it",
+      "Race Lab: paced race plans with live ahead/behind + projected finish, then a segment debrief with ≤3 prioritized findings",
+      "Rowing power profile: best watts over 1:00–20:00 with pace equivalents; critical power only when two real Tests support it",
     ],
   },
-  "1.19.0": {
-    date: "July 2026",
-    headline: "Force Curve Intelligence",
-    items: [
-      "Previous-session ghost: your last saved average curve overlays the live Force Curve, with a live shape-similarity % against it",
-      "Compare tab: normalized shape view, peak timing, front-load, smoothness, and a curve-similarity score",
-      "Replay: synchronized metric timeline with click-to-seek, play/pause, and keyboard navigation (← → · Space · Home/End)",
-      "Tech Drift now needs sustained change (~15 strokes) before warning — no more one-stroke flicker",
-      "Efficiency score lists exactly which components couldn't be scored and why",
-    ],
-  },
-  "1.18.1": {
-    date: "July 2026",
-    headline: "Import hardening",
-    items: [
-      "Imported files are now fully validated: every field is whitelisted, bounded, and type-checked",
-      "Oversized or malformed imports are trimmed safely instead of bloating storage",
-      "No visible changes for normal use — existing exports import exactly as before",
-    ],
-  },
-  // Entries older than 1.18.1 were trimmed (v1.19.0) — the full
+  // Entries older than 1.20.0 were trimmed (v1.19.0/v1.21.0) — the full
   // history lives in CHANGELOG.md; upgraders from ancient versions
   // gracefully see only the newest entry.
 };
 
-// =====================================================================
+// ====================
 // Constants — Concept2 PM5 BLE GATT UUIDs
-// =====================================================================
+// ====================
 const SERVICE_ROWING = "ce060030-43e5-11e4-916c-0800200c9a66";
 const SERVICE_DEVICE_INFO = "ce060010-43e5-11e4-916c-0800200c9a66";
 const CHAR_GENERAL_STATUS   = "ce060031-43e5-11e4-916c-0800200c9a66";
@@ -4872,9 +4907,9 @@ const DIST_WORKOUTS = new Set([WTYPE_FIXED_DIST_NS, WTYPE_FIXED_DIST_S, WTYPE_FI
 const TIME_WORKOUTS = new Set([WTYPE_FIXED_TIME_NS, WTYPE_FIXED_TIME_S, WTYPE_FIXED_TIME_INT]);
 const INTERVAL_WORKOUTS = new Set([WTYPE_FIXED_TIME_INT, WTYPE_FIXED_DIST_INT, WTYPE_VAR_INT, WTYPE_VAR_INT_REST, WTYPE_FIXED_CAL_INT]);
 
-// =====================================================================
+// ====================
 // State
-// =====================================================================
+// ====================
 const state = {
   // connection
   bleDevice: null,
@@ -4885,6 +4920,7 @@ const state = {
   driveLengthM: null, effectiveDriveLengthM: null,
   driveTimeS: null, recoveryTimeS: null,
   forceCurve: [], previousForceCurve: [], liveForceCurve: [],
+  curveCapture: null,   // v1.21 — per-stroke curve records {i,d,peak,s}
   // ---- Force-curve overlays --------------------------------------
   //
   // Best stroke ghost: the highest-peak completed stroke seen this
@@ -5140,15 +5176,15 @@ const state = {
   layoutAreasEditing: null,
 };
 
-// =====================================================================
+// ====================
 // Force-curve assembly (per-stroke buffer)
-// =====================================================================
+// ====================
 let _curCurve = [];
 let _lastSeq = null;
 
-// =====================================================================
+// ====================
 // Format helpers
-// =====================================================================
+// ====================
 function fmtTime(s) {
   if (s == null || s < 0) return "—";
   s = Number(s);
@@ -5217,9 +5253,9 @@ function parseDistInput(text) {
   return isNaN(v) ? null : v;
 }
 
-// =====================================================================
+// ====================
 // Themes — colour palettes the user can swap between.
-// =====================================================================
+// ====================
 // Each theme is a mapping of CSS custom properties. applyTheme() spreads
 // these onto :root so every component re-paints. HR zone colours are
 // kept fixed across themes because they're semantically meaningful
@@ -5377,9 +5413,9 @@ function applyTheme(themeId) {
   if (typeof render === "function") render();
 }
 
-// =====================================================================
+// ====================
 // Heart-rate tracking helpers (zones, drift, recovery, decoupling)
-// =====================================================================
+// ====================
 function userPrefsKey(userId) { return `pm5_prefs_${userId || state.user.id}`; }
 
 function loadUserPrefs() {
@@ -5467,9 +5503,9 @@ function markWorkoutEndForHr() { markRestStartForHr(); }
 
 function avgHr() { return state.hr.count ? state.hr.sum / state.hr.count : null; }
 
-// =====================================================================
+// ====================
 // Card metric catalogue (used by the configurable layout)
-// =====================================================================
+// ====================
 // Each entry: { label, unit, get(): string, visible?: () => boolean,
 //               style?: "distance" }
 // The Settings dialog reads this dictionary to populate dropdowns and
@@ -5773,25 +5809,18 @@ function persistLayout() {
   }
 }
 
-// =====================================================================
+// ====================
 // Byte parsers — match the Concept2 BLE spec
-// =====================================================================
+// ====================
 function u8 (d, o) { return d[o]; }
 function u16(d, o) { return d[o] | (d[o+1] << 8); }
 function u24(d, o) { return d[o] | (d[o+1] << 8) | (d[o+2] << 16); }
 
-// All BLE characteristic byte layouts below are verbatim from the
-// Concept2 PM Bluetooth Smart Communication Interface Definition,
-// revision 1.30. Earlier code in this file had two systematic bugs:
-//   1. 0x0032 and 0x0033 both START with a 3-byte Elapsed Time
-//      prefix that was missed — every field after it was read from
-//      offset-3 (so stroke rate was reading the high byte of elapsed
-//      time, watts was reading the interval-count byte, etc.).
-//   2. Stroke data's Drive Time is 1 byte (max 2.55 s), not 2 bytes —
-//      the previous u16 read shifted every later field by 1 byte.
-//   3. Force curve's sequence number lives in byte 1, not the low
-//      nibble of byte 0; the LS nibble is the sample count for that
-//      packet, MS nibble is the total packet count.
+// All BLE byte layouts below are verbatim from the Concept2 PM
+// Bluetooth Smart Communication Interface Definition rev 1.30 —
+// note the 3-byte Elapsed Time prefix on 0x0032/0x0033, the 1-byte
+// Drive Time in stroke data, and the force-curve seq in byte 1
+// (historical offset bugs; full story in docs/ble-protocol.md).
 
 function parseGeneralStatus(d) {
   // 0x0031 — 19 bytes
@@ -5910,9 +5939,9 @@ function parseForceCurve(d) {
   return { seq, totalPackets, samples };
 }
 
-// =====================================================================
+// ====================
 // State application
-// =====================================================================
+// ====================
 function applyGS(d) {
   // Detect a fresh session on the erg (distance/elapsed dropped) so the
   // auto-log tracker re-arms for the new row.
@@ -6134,8 +6163,9 @@ function commitCompletedStroke(curve) {
 
   // v1.18.0 — record the compact per-stroke sample. Passing the raw
   // curve matters: state.forceCurve still holds the previous stroke
-  // at this point in both live commit paths.
-  captureStroke(curve);
+  // at this point in both live commit paths. v1.21.0 also passes the
+  // 64-sample resample so the per-stroke curve capture reuses it.
+  captureStroke(curve, rs);
 }
 
 // Wipe the overlay buffers — fired at the start of a new session
@@ -6150,9 +6180,9 @@ function resetForceCurveOverlays() {
   state.fcYMax          = 40;
 }
 
-// =====================================================================
+// ====================
 // Stroke capture (v1.18.0)
-// =====================================================================
+// ====================
 // Implements the size-bounded capture designed in docs/known-issues.md:
 // compact scalar samples per stroke plus the session best/average
 // curves — never raw BLE dumps, never unbounded growth. Every consumer
@@ -6268,6 +6298,7 @@ function sessionCurveSnapshot() {
 
 function resetStrokeCapture() {
   state.strokeCapture = { log: [], stride: 1, seen: 0 };
+  state.curveCapture = { list: [], stride: 1, seen: 0 };   // v1.21
   state.techDrift = null;
   state.cueGov = null;
   state.cueEvents = [];
@@ -6324,7 +6355,7 @@ function lockCurrentBaseline() {
 //   t elapsed s · d distance m · p pace s/500 · w watts · r spm ·
 //   hr bpm · dl drive length m · dt drive s · rt recovery s ·
 //   pf peak force lbf · pt peak timing 0-1
-function captureStroke(curve) {
+function captureStroke(curve, rs64) {
   if (!state.strokeCapture) resetStrokeCapture();
   const r1 = v => (v || v === 0) ? Math.round(v * 10) / 10 : null;
   const r2 = v => (v || v === 0) ? Math.round(v * 100) / 100 : null;
@@ -6337,6 +6368,22 @@ function captureStroke(curve) {
     pf: r1(state.peakForceLbs), pt: r2(strokePeakTiming(curve)),
   };
   strokeCaptureAppend(state.strokeCapture, sample, STROKE_LOG_CAP);
+  // v1.21.0 — per-stroke Force Curve capture. The record's ordinal is
+  // the TRUE stroke number (strokeCapture.seen just counted this
+  // stroke), so curves stay exactly associated with their strokes even
+  // after the sample log stride-decimates. The curve list has its own
+  // stride-doubling cap so a marathon can't grow memory unbounded.
+  if (rs64 && rs64.length === FC_SAMPLES && state.curveCapture) {
+    let peak = 0;
+    for (let i = 0; i < rs64.length; i++) if (rs64[i] > peak) peak = rs64[i];
+    if (peak > 0 && isFinite(peak)) {
+      curveCaptureAppend(state.curveCapture, {
+        i: state.strokeCapture.seen,
+        d: Math.round(state.distanceM || 0),
+        peak, s: Array.from(rs64),
+      }, CURVE_MEM_CAP);
+    }
+  }
   // Every 5th stroke (never per-render): evaluate live cues against the
   // active baseline, run them through the governor (persistence +
   // hysteresis + cooldown + one-at-a-time), refresh baseline similarity,
@@ -6394,9 +6441,9 @@ function applyForceCurvePacket(d) {
   }
 }
 
-// =====================================================================
+// ====================
 // Plan / interval tracker
-// =====================================================================
+// ====================
 function ratio() {
   if (state.driveTimeS && state.driveTimeS > 0 && state.recoveryTimeS) {
     return state.recoveryTimeS / state.driveTimeS;
@@ -6523,9 +6570,9 @@ function advancePlanTracker() {
   }
 }
 
-// =====================================================================
+// ====================
 // BLE — Web Bluetooth
-// =====================================================================
+// ====================
 async function connectBle() {
   try {
     state.connecting = true;
@@ -6712,9 +6759,9 @@ function resetConnHealth() {
   state.conn = { lastPacketAt: 0, packetTimes: [], charSeen: { gs:0, stroke:0, force:0, hr:0 } };
 }
 
-// =====================================================================
+// ====================
 // Rendering
-// =====================================================================
+// ====================
 let _renderScheduled = false;
 function render() {
   if (_renderScheduled) return;
@@ -7325,9 +7372,9 @@ function renderForceCurve() {
   else hint.textContent = "waiting for first stroke…";
 }
 
-// =====================================================================
+// ====================
 // Header / connection UI
-// =====================================================================
+// ====================
 function setStatus(kind, text) {
   const dot = document.getElementById("connDot");
   const txt = document.getElementById("statusText");
@@ -7350,9 +7397,9 @@ function setToast(text, kind="ok") {
   }
 }
 
-// =====================================================================
+// ====================
 // Builder modal
-// =====================================================================
+// ====================
 function openBuilder() {
   // Date label
   const today = new Date();
@@ -7629,9 +7676,9 @@ function clearPlanFromForm() {
   render();
 }
 
-// =====================================================================
+// ====================
 // User identity + workout history (local + Drive-synced)
-// =====================================================================
+// ====================
 function uid() {
   // Lightweight UUID-ish — fine for local IDs.
   return "id-" + Date.now().toString(36) + "-" +
@@ -7683,14 +7730,10 @@ function saveHistory() {
   }
 }
 
-// ---- Cross-user "total workouts" counter -----------------------
-// Uses counterapi.dev — a free public counter service, no auth, no
-// backend of our own. Increment on every successful workout log
-// (manual or auto), read for display. If the service ever goes away
-// the UI just shows "—" — nothing else breaks.
-// counterapi.dev v1: GET /v1/{namespace}/{counter}/ returns {count: N};
-// GET /v1/{namespace}/{counter}/up increments and returns the same.
-// Namespace and counter were auto-created on first /up call.
+// ---- Cross-user "total workouts" counter — counterapi.dev (free
+// public service, no auth): GET .../ returns {count}, .../up
+// increments. Bumped on each successful log; if the service dies the
+// UI just shows "—".
 const COUNTER_BASE = "https://api.counterapi.dev/v1/pm5dashboard/total_workouts";
 
 function _setCounterValue(v) {
@@ -7738,7 +7781,7 @@ function resetAutoLogTracker() {
   state.autoLoggedSession = null;
 }
 
-// =====================================================================
+// ====================
 // AUTO-SAVE RECOVERY
 //
 // Browsers crash. Laptops sleep mid-row. To avoid losing an
@@ -7746,7 +7789,7 @@ function resetAutoLogTracker() {
 // to localStorage. On the next page load, if a snapshot exists with
 // non-trivial progress AND wasn't cleared cleanly, we offer to
 // recover it as a history entry. Demo Mode does NOT auto-save.
-// =====================================================================
+// ====================
 const RECOVERY_SAVE_MS = 5000;
 const RECOVERY_MIN_DIST = 200;     // only offer recovery if ≥200 m logged
 const RECOVERY_TTL_MS  = 24 * 3600 * 1000;
@@ -7853,12 +7896,14 @@ function checkRecoverySnapshot() {
 }
 
 function logCurrentWorkout({ silent = false } = {}) {
-  // Demo Mode never writes to history — fake workouts must not leak
-  // into the user's real session log.
-  if (demoActive()) {
-    if (!silent) setToast("Demo Mode active — workouts aren't saved.", "warn");
-    return null;
-  }
+  // Demo Mode (v1.21): the AUTO-log paths still never save — synthetic
+  // data must not silently leak into the real session log. An explicit
+  // Log press now saves a clearly-flagged synthetic session (demo:true,
+  // "Demo —" title, SYNTHETIC badge, excluded from PRs, baselines, and
+  // the power profile) so replay/A-B/window tools can be exercised
+  // without a PM5.
+  if (demoActive() && silent) return null;
+  const isDemo = demoActive();
   // Capture a workout into history. If the user has a programmed plan
   // with intervals, save its plan + per-interval results. Otherwise
   // capture the totals from a "just rowing" session.
@@ -7883,8 +7928,9 @@ function logCurrentWorkout({ silent = false } = {}) {
     appVersion: APP_VERSION,
     id: uid(),
     date: new Date().toISOString(),
-    title: (state.localPlan && state.localPlan.title) ||
-           (state.localPlan ? planSummaryLine(state.localPlan) : "Just rowing"),
+    title: (isDemo ? "Demo — " : "") +
+           ((state.localPlan && state.localPlan.title) ||
+            (state.localPlan ? planSummaryLine(state.localPlan) : (isDemo ? "synthetic session" : "Just rowing"))),
     description: state.localPlan ? state.localPlan.description : "",
     plan: state.localPlan ? JSON.parse(JSON.stringify(state.localPlan)) : null,
     results: JSON.parse(JSON.stringify(state.planResults || [])),
@@ -7907,12 +7953,33 @@ function logCurrentWorkout({ silent = false } = {}) {
   if (state.cueEvents && state.cueEvents.length) {
     entry.driftEvents = JSON.parse(JSON.stringify(state.cueEvents));
   }
+  if (isDemo) entry.demo = true;
+  // v1.21.0 — per-stroke Force Curve persistence. The summary entry
+  // carries only tiny metadata; the encoded payload goes to IndexedDB
+  // AFTER the summary is safely saved, and a storage failure downgrades
+  // coverage to "unavailable" without touching anything else.
+  let curvePayload = null;
+  if (state.curveCapture && state.curveCapture.list.length >= 2 &&
+      state.strokeCapture && state.strokeCapture.log.length >= 2) {
+    entry.strokeStride = state.strokeCapture.stride;
+    const ret = retainCurveRecords(state.curveCapture.list,
+      { anchorDistances: collectCurveAnchors(entry) });
+    curvePayload = encodeCurveDetail(ret.kept, state.curveCapture.seen,
+      { synthetic: isDemo });
+    const full = ret.complete && state.curveCapture.stride === 1;
+    entry.curveMeta = curvePayload
+      ? { v: CURVE_CODEC_VERSION, coverage: full ? "complete" : "partial",
+          retained: ret.retained, total: state.curveCapture.seen }
+      : { v: CURVE_CODEC_VERSION, coverage: "unavailable",
+          retained: 0, total: state.curveCapture.seen };
+  }
   // PR detection — runs BEFORE the unshift so the evaluator only sees
   // the prior history when comparing. Only credits when the plan has
   // a benchKey (i.e. came from a real benchmark test). If a PR was
   // set, attach the result to the entry and persist the new PR onto
-  // userPrefs (which syncs to Drive). Toast unless silent.
-  const prResult = evaluatePrsForSession(entry);
+  // userPrefs (which syncs to Drive). Synthetic demo sessions never
+  // earn PRs. Toast unless silent.
+  const prResult = isDemo ? null : evaluatePrsForSession(entry);
   if (prResult && prResult.keys && prResult.keys.length) {
     entry.pr = prResult;
     applyPrUpdates(entry, prResult);
@@ -7922,6 +7989,18 @@ function logCurrentWorkout({ silent = false } = {}) {
   }
   state.history.unshift(entry);
   saveHistory();
+  // Curve detail goes to IndexedDB only after the summary is safe.
+  // Failure (quota, private mode, no IDB) downgrades coverage honestly
+  // and re-saves the tiny metadata — the workout itself is never lost.
+  if (curvePayload) {
+    curveDetailPut(entry.id, curvePayload).then(okPut => {
+      if (!okPut && entry.curveMeta) {
+        entry.curveMeta.coverage = "unavailable";
+        entry.curveMeta.retained = 0;
+        saveHistory();
+      }
+    });
+  }
   // Once we save, mark the current session as logged so the workout-
   // end and disconnect auto-logs don't write a near-duplicate entry.
   state.autoLoggedSession = {
@@ -7935,13 +8014,18 @@ function logCurrentWorkout({ silent = false } = {}) {
   clearRecoverySnapshot();
   // Bump the public cross-user counter (best-effort, non-blocking).
   bumpGlobalCounter();
-  if (!silent) setToast(`Saved "${entry.title}" to history`, "ok");
+  if (!silent) setToast(isDemo
+    ? `Saved synthetic demo session — excluded from PRs, baselines, and power profile`
+    : `Saved "${entry.title}" to history`, "ok");
   return entry;
 }
 
 function deleteHistoryEntry(id) {
   state.history = state.history.filter(e => e.id !== id);
   saveHistory();
+  // v1.21 — deleting a session is the explicit cleanup that also
+  // removes its stored curve detail. Best-effort; orphans are harmless.
+  curveDetailDelete(id);
 }
 
 // ---- Saved plan library (separate from completed-workout history) ----
@@ -7981,23 +8065,13 @@ function deleteSavedPlan(id) {
   persistSavedPlans();
 }
 
-// =====================================================================
+// ====================
 // CLUB SYSTEM — Phase 1 (single-user)
-// =====================================================================
+// ====================
 //
-// Catalogue of every boat class the lineup builder supports. For each
-// one we know:
-//
-//   seats     — number of rowing seats (excluding the cox if present)
-//   cox       — does this class have a coxswain seat?
-//   sweep     — sweep (one oar each) vs sculling (two oars each)
-//   sides     — default side per seat, in stroke→bow order. For sweep
-//               boats this is a standard alternation that coaches can
-//               override per-seat in the builder. For sculling boats
-//               every seat is "any" since both hands are pulling.
-//
-// The default-side arrays start from STROKE (seat = seats) and end at
-// BOW (seat = 1). So `sides[0]` is the stroke seat's default side.
+// Boat-class catalogue: seats (excl. cox), cox?, sweep vs scull,
+// and default side per seat in stroke→bow order (sides[0] = stroke;
+// coaches can override per-seat; sculling seats are "any").
 //
 const BOAT_CLASSES = {
   "1x": { label: "1x — Single",       seats: 1, cox: false, sweep: false,
@@ -8020,12 +8094,12 @@ const BOAT_CLASSES = {
 };
 const BOAT_CLASS_KEYS = ["1x","2x","2-","2+","4x","4-","4+","8+"];
 
-// =====================================================================
+// ====================
 // Rowing notation + lineup-readiness engine (v1.12.0)
 // Compact side notation is used everywhere in the lineup UI:
 //   Port = P · Starboard = S · Both sides = P/S · Scull · Cox · Any.
 // Full words are kept only for title/aria labels (accessibility).
-// =====================================================================
+// ====================
 const SIDE_TOKENS = { port: "P", starboard: "S", both: "P/S", scull: "Scull", cox: "Cox", any: "Any" };
 const SIDE_FULL   = { port: "Port", starboard: "Starboard", both: "Bisweptual (rows P & S)",
                       scull: "Sculler", cox: "Coxswain", any: "Any side" };
@@ -8174,11 +8248,11 @@ function evaluateLineupReadiness(lineup, ctx) {
   };
 }
 
-// =====================================================================
+// ====================
 // Workout assignments (v1.13.0) — what a lineup / team / squad / club /
 // athlete is asked to do at a practice. Pure, DOM-free logic lives here;
 // the athlete-facing formatter NEVER exposes the private coachNote.
-// =====================================================================
+// ====================
 const WORKOUT_TYPES = {
   steady:    "Steady state",
   intervals: "Intervals",
@@ -8353,7 +8427,7 @@ function findSquad(id)   { return state.club.squads.find(s => s.id === id) || nu
 function findOarSet(id)  { return state.club.oarSets.find(o => o.id === id) || null; }
 function findLineup(id)  { return state.club.lineups.find(l => l.id === id) || null; }
 
-// =====================================================================
+// ====================
 // FIREBASE — Phase 2 Foundation (Steps 1–3)
 //
 // When FIREBASE_ENABLED is true and the user signs in, club state is
@@ -8361,7 +8435,7 @@ function findLineup(id)  { return state.club.lineups.find(l => l.id === id) || n
 // updates, and every local mutation also writes to Firestore. When
 // signed OUT (or when FIREBASE_ENABLED is false), the app behaves
 // exactly as before — localStorage + Drive sync.
-// =====================================================================
+// ====================
 
 function fbActive() { return FIREBASE_ENABLED && !!state.fb.user && !!state.fb.clubId; }
 
@@ -8664,12 +8738,12 @@ async function fbDeleteAssignmentRemote(assignmentId) {
   catch (e) { console.warn("Firestore assignment delete failed:", e); }
 }
 
-// =====================================================================
+// ====================
 // MULTI-COACH CLUB CLIENT (v1.11.0)
 // Role engine, membership lifecycle, invites, join/approval, audit,
 // athlete self-service. Security is enforced by firestore.rules — this
 // layer only mirrors the rules so the UI matches what the server allows.
-// =====================================================================
+// ====================
 
 // ---- Permission engine ----------------------------------------------
 // In LOCAL single-user mode (no Firebase club attached) the user is
@@ -9657,9 +9731,9 @@ function athleteUnavailable(a) {
   return a.availability && a.availability !== "available";
 }
 
-// =====================================================================
+// ====================
 // CLUBS VIEW — render, section switching, top-level wiring
-// =====================================================================
+// ====================
 
 function openClubsView() {
   showView("clubs");
@@ -9963,9 +10037,9 @@ function renderTeamList() {
   }
 }
 
-// =====================================================================
+// ====================
 // Athlete editor
-// =====================================================================
+// ====================
 let _editingAthleteId = null;
 function openAthleteEditor(id) {
   if (fbActive() && !fbCan("editRoster")) { setToast("You don't have permission to edit the roster.", "warn"); return; }
@@ -10088,9 +10162,9 @@ function deleteAthlete() {
   renderClubsView();
 }
 
-// =====================================================================
+// ====================
 // Shell editor
-// =====================================================================
+// ====================
 let _editingShellId = null;
 function openShellEditor(id) {
   if (fbActive() && !fbCan("editClub")) { setToast("Only owners and admins can edit equipment.", "warn"); return; }
@@ -10146,9 +10220,9 @@ function deleteShell() {
   renderClubsView();
 }
 
-// =====================================================================
+// ====================
 // Team editor
-// =====================================================================
+// ====================
 let _editingTeamId = null;
 function openTeamEditor(id) {
   if (fbActive() && !fbCan("editClub")) { setToast("Only owners and admins can edit teams.", "warn"); return; }
@@ -10213,9 +10287,9 @@ function deleteTeam() {
   renderClubsView();
 }
 
-// =====================================================================
+// ====================
 // Oar set editor
-// =====================================================================
+// ====================
 let _editingOarSetId = null;
 function openOarSetEditor(id) {
   if (fbActive() && !fbCan("editClub")) { setToast("Only owners and admins can edit equipment.", "warn"); return; }
@@ -10271,9 +10345,9 @@ function deleteOarSet() {
   renderClubsView();
 }
 
-// =====================================================================
+// ====================
 // Squad editor
-// =====================================================================
+// ====================
 let _editingSquadId = null;
 function openSquadEditor(id, parentTeamId) {
   if (fbActive() && !fbCan("editClub")) { setToast("Only owners and admins can edit teams.", "warn"); return; }
@@ -10347,9 +10421,9 @@ function deleteSquad() {
   renderClubsView();
 }
 
-// =====================================================================
+// ====================
 // Lineup builder
-// =====================================================================
+// ====================
 
 // Build a fresh seats array sized for the given boat class. Seat
 // indices count from STROKE (= seats) down to BOW (= 1) so the UI
@@ -10794,10 +10868,10 @@ async function copyLineupToClipboard(id) {
   }
 }
 
-// =====================================================================
+// ====================
 // Workout assignment UI (v1.13.0) — coach assigns a practice workout to a
 // lineup / team / squad / club / athlete. Athletes view, never edit.
-// =====================================================================
+// ====================
 function assignmentCtx(viewerAthleteId) {
   return {
     athletes: state.club.athletes || [],
@@ -10994,11 +11068,11 @@ function startJustRow() {
   render();
 }
 
-// =====================================================================
+// ====================
 // Batch v1.5.0 — Stroke bookmarks (#14), race mode (#20),
 // connection-health panel (#11). Target-zone settings live with the
 // other settings functions further down.
-// =====================================================================
+// ====================
 
 // ---- Stroke bookmarks (#14) -------------------------------------
 function addBookmark() {
@@ -11159,9 +11233,9 @@ function renderConnHealth() {
   `;
 }
 
-// =====================================================================
+// ====================
 // DEMO MODE — simulated PM5 data
-// =====================================================================
+// ====================
 //
 // Lets anyone explore the dashboard without an erg paired. Fakes the
 // same shape of data the live BLE parsers would produce, so EVERY
@@ -11177,8 +11251,21 @@ const DEMO_HR_MIN = 142, DEMO_HR_MAX = 168;
 
 function demoActive() { return state.demoMode && state.demoMode.active; }
 
+// v1.21 — Demo Mode is DETERMINISTIC: a fixed-seed mulberry32 PRNG
+// replaces Math.random so every run produces the same strokes, curves,
+// wobbles, and evidence picks. Synthetic, repeatable, testable.
+function _demoRngFactory(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 function enterDemoMode() {
   if (demoActive()) { showView("monitor"); return; }
+  const rng = _demoRngFactory(0x5EED2126);
   state.demoMode = {
     active: true,
     startTimeMs: Date.now(),
@@ -11186,11 +11273,10 @@ function enterDemoMode() {
     elapsed: 0,
     strokeCount: 0,
     intervalId: null,
-    // Per-session "athlete fingerprint" so each demo run feels a
-    // little different — random target pace + drift profile.
-    targetPaceS:    105 + Math.random() * 12,   // 1:45 – 1:57 / 500m
-    peakForceBase:  140 + Math.random() * 40,   // ~140–180 lbf
-    driftPerStroke: 0.02 + Math.random() * 0.03, // tiny HR drift
+    rng,
+    targetPaceS:    105 + rng() * 12,   // 1:45 – 1:57 / 500m
+    peakForceBase:  140 + rng() * 40,   // ~140–180 lbf
+    driftPerStroke: 0.02 + rng() * 0.03, // tiny HR drift
   };
   // Borrow Just-Row's session reset so overlays / autolog re-arm.
   state.localPlan = null;
@@ -11246,18 +11332,17 @@ function showDemoBanner(on) {
 }
 
 // Generate one stroke's worth of force-curve samples. Asymmetric
-// bell — peak just past the middle, slight stroke-to-stroke
-// variation so the overlay buffers update believably.
-function demoForceCurve(peakLbf, len) {
+// bell — peak just past the middle, slight stroke-to-stroke variation
+// (from the demo's seeded PRNG) so the overlays update believably.
+function demoForceCurve(peakLbf, len, peakAt, rng) {
   const out = new Array(len);
-  const peakAt = 0.45 + (Math.random() - 0.5) * 0.08;  // ~0.41–0.49
   for (let i = 0; i < len; i++) {
     const t = i / (len - 1);
     let f;
     if (t < peakAt) f = Math.sin((t / peakAt) * Math.PI / 2);
     else            f = Math.sin(((1 - t) / (1 - peakAt)) * Math.PI / 2);
     // Tiny noise on every sample to avoid pixel-perfect curves.
-    out[i] = Math.max(0, peakLbf * f + (Math.random() - 0.5) * 4);
+    out[i] = Math.max(0, peakLbf * f + (rng() - 0.5) * 4);
   }
   return out;
 }
@@ -11265,17 +11350,25 @@ function demoForceCurve(peakLbf, len) {
 function demoTick() {
   const d = state.demoMode;
   if (!d) return;
+  const rng = d.rng;
   // Advance the simulated stroke.
   d.strokeCount++;
   d.elapsed += DEMO_TICK_MS / 1000;
+  // Controlled, clearly synthetic technique wobble: strokes 90–110 and
+  // 290–310 shorten the drive and push the peak late — enough for live
+  // cues, drift events, and the evidence navigator to have real
+  // (synthetic) findings to surface.
+  const sc = d.strokeCount;
+  const wobble = (sc >= 90 && sc <= 110) || (sc >= 290 && sc <= 310);
   // Pace varies slightly around the target.
-  const paceS = d.targetPaceS + (Math.random() - 0.5) * 4 +
-                Math.sin(d.elapsed / 90) * 1.2;   // gentle pacing wave
+  const paceS = d.targetPaceS + (rng() - 0.5) * 4 +
+                Math.sin(d.elapsed / 90) * 1.2 + (wobble ? 2.5 : 0);
   const metersThisStroke = (DEMO_TICK_MS / 1000) * (500 / paceS);
   d.distance += metersThisStroke;
   // Force-curve packet (simulated multi-sample completion).
-  const peak = d.peakForceBase + (Math.random() - 0.5) * 12;
-  const curve = demoForceCurve(peak, 28 + Math.floor(Math.random() * 8));
+  const peak = d.peakForceBase + (rng() - 0.5) * 12 - (wobble ? 14 : 0);
+  const peakAt = 0.45 + (rng() - 0.5) * 0.08 + (wobble ? 0.12 : 0);
+  const curve = demoForceCurve(peak, 28 + Math.floor(rng() * 8), peakAt, rng);
   state.previousForceCurve = state.forceCurve;
   state.forceCurve = curve.slice();
   state.liveForceCurve = curve.slice();
@@ -11286,18 +11379,18 @@ function demoTick() {
   state.strokeCount  = d.strokeCount;
   state.paceS        = paceS;
   state.strokeRate   = DEMO_BASELINE_RATE + Math.round(Math.sin(d.elapsed / 35) * 3);
-  state.driveLengthM = 1.32 + (Math.random() - 0.5) * 0.08;
-  state.driveTimeS   = 0.78 + (Math.random() - 0.5) * 0.08;
-  state.recoveryTimeS = 1.45 + (Math.random() - 0.5) * 0.10;
+  state.driveLengthM = (wobble ? 1.24 : 1.32) + (rng() - 0.5) * 0.08;
+  state.driveTimeS   = 0.78 + (rng() - 0.5) * 0.08;
+  state.recoveryTimeS = 1.45 + (rng() - 0.5) * 0.10;
   state.peakForceLbs = peak;
   state.avgForceLbs  = peak * 0.62;
-  state.workPerStrokeJ = 380 + (Math.random() - 0.5) * 40;
+  state.workPerStrokeJ = 380 + (rng() - 0.5) * 40;
   state.dragFactor = 132;
   // HR drifts upward slowly so the HR-zone metrics light up.
   const baseHr = DEMO_HR_MIN +
                  Math.min(DEMO_HR_MAX - DEMO_HR_MIN,
                           d.strokeCount * d.driftPerStroke);
-  state.heartRate = Math.round(baseHr + (Math.random() - 0.5) * 4);
+  state.heartRate = Math.round(baseHr + (rng() - 0.5) * 4);
   if (state.heartRate >= 30 && state.heartRate <= 240) {
     updateHrTracking(state.heartRate);
   }
@@ -11364,9 +11457,9 @@ function loadAllUserState() {
   setTimeout(checkRecoverySnapshot, 200);
 }
 
-// =====================================================================
+// ====================
 // Summary modal
-// =====================================================================
+// ====================
 const SUMMARY_COLUMNS = [
   { key: "label",   label: "Interval",   get: r => r.label,         fmt: v => v ?? "—" },
   { key: "time",    label: "Time",       get: r => r.elapsedS,      fmt: v => fmtTime(v) },
@@ -11535,9 +11628,9 @@ function computeTotals() {
   return t;
 }
 
-// =====================================================================
+// ====================
 // Google Sign-In + Drive sync (only active when GOOGLE_CLIENT_ID is set)
-// =====================================================================
+// ====================
 const DRIVE_FILE_NAME = "pm5dashboard-history.json";
 let _gisLoaded = false;
 let _driveTokenClient = null;
@@ -11818,6 +11911,28 @@ async function syncHistoryFromDrive() {
     state.history = mergeHistory(state.history, data.history);
     try { localStorage.setItem(historyKey(), JSON.stringify(state.history)); }
     catch (e) {}
+    // v1.21 — curve payloads from the Drive document. Validated with
+    // the same hard binary checks as file imports; a payload is stored
+    // only when this device has none for that session (local detail is
+    // never silently replaced, Drive absence never deletes local data).
+    const drivePayloads = sanitizeImportedCurveMap(data.curveDetail,
+      state.history.map(e => e && e.id));
+    for (const p of drivePayloads) {
+      const target = state.history.find(h => h && h.id === p.id);
+      if (!target) continue;
+      curveDetailGet(p.id).then(existing => {
+        if (existing && existing.bytes) return;
+        curveDetailPut(p.id, p.bytes).then(okPut => {
+          if (okPut && (!target.curveMeta || target.curveMeta.coverage === "unavailable")) {
+            target.curveMeta = { v: CURVE_CODEC_VERSION,
+              coverage: p.count >= p.totalStrokes ? "complete" : "partial",
+              retained: p.count, total: p.totalStrokes };
+            try { localStorage.setItem(historyKey(), JSON.stringify(state.history)); }
+            catch (e) {}
+          }
+        });
+      });
+    }
   }
   if (Array.isArray(data.savedPlans)) {
     state.savedPlans = mergePlans(state.savedPlans, data.savedPlans);
@@ -11905,8 +12020,26 @@ async function syncHistoryToDrive() {
 }
 let _lastDriveSyncToast = 0;
 
+// Ceiling for curve payloads inside the Drive document (base64 chars).
+// Newest sessions win; older sessions simply sync without curve detail
+// — their summaries, samples, and fc curves still sync as always.
+const DRIVE_CURVE_B64_BUDGET = 3 * 1024 * 1024;
+
 async function _syncHistoryToDriveInner() {
   if (!state.googleAccessToken) return;
+  // v1.21 — bounded curve-detail map rides the same appdata document.
+  const curveDetail = {};
+  let curveChars = 0;
+  for (const e of state.history) {
+    if (!e || !e.id || !e.curveMeta) continue;
+    if (e.curveMeta.coverage !== "complete" && e.curveMeta.coverage !== "partial") continue;
+    const rec = await curveDetailGet(e.id);
+    if (!rec || !rec.bytes) continue;
+    const b64 = curveB64Encode(rec.bytes);
+    if (curveChars + b64.length > DRIVE_CURVE_B64_BUDGET) break;
+    curveChars += b64.length;
+    curveDetail[e.id] = { v: CURVE_CODEC_VERSION, b64 };
+  }
   const body = JSON.stringify({
     version: 1,
     user: { id: state.user.id, email: state.user.email },
@@ -11915,6 +12048,8 @@ async function _syncHistoryToDriveInner() {
     layoutAreas: state.layoutAreas,
     userPrefs: state.userPrefs,
     club: state.club,
+    ...(Object.keys(curveDetail).length
+      ? { curveFormat: CURVE_CODEC_VERSION, curveDetail } : {}),
   });
   const file = await findDriveFile();
   if (file) {
@@ -11943,9 +12078,9 @@ async function _syncHistoryToDriveInner() {
   }
 }
 
-// =====================================================================
+// ====================
 // Top-level view switching (Home ↔ Monitor)
-// =====================================================================
+// ====================
 function showView(name) {
   state.view = name;
   const home = document.getElementById("homeView");
@@ -12274,39 +12409,19 @@ function readBenchmarksFromForm() {
   });
 }
 
-// =====================================================================
+// ====================
 // PR TRACKING + LIVE PR PACE — backlog items #7 + #8
-// =====================================================================
+// ====================
 //
-// PR detection runs inside logCurrentWorkout and checkRecoverySnapshot
-// — both right before the new entry is unshifted onto state.history.
-// It's conservative on purpose:
-//
-//   • only credits PRs when entry.plan.benchKey is set (i.e. the
-//     session came from a benchmark Test workflow). A normal "Just
-//     rowing" session that happens to be 2 km long does NOT silently
-//     overwrite the user's 2k PR — they have to mean it.
-//   • for distance-target benchmarks (1 min / 30 min / 60 min) the
-//     achievement is metres at the target time. We require
-//     totals.elapsedS >= target time so partial sessions don't claim
-//     a PR.
-//   • for time-target benchmarks (500m / 1k / 2k / 5k / 6k / 10k /
-//     halfMarathon / fullMarathon) the achievement is seconds at the
-//     target distance. We require totals.distanceM >= target.
-//   • when the rowed total overshoots the benchmark target (the
-//     halfMarathon test deliberately covers ~22 km vs the 21.097 km
-//     benchmark) we prefer the exact stitched-from-intervals time at
-//     the target. If interval data isn't available we pro-rate
-//     linearly: pessimistic on positive splits (fair under-claim) and
-//     optimistic on negative splits (a sprint finish can over-claim a
-//     PR). The interval path fires for every benchmark Test workout
-//     since the intervals are designed to total the target.
-//
-// The result, a {keys, achievement, delta} object, is attached to the
-// history entry as entry.pr AND applied to state.userPrefs.benchmarks
-// + state.userPrefs.benchmarkMeta (provenance: which session set it,
-// when, at what distance/time). All of this rides Drive sync for free
-// because state.userPrefs is dumped whole-object.
+// PR detection runs in logCurrentWorkout / checkRecoverySnapshot just
+// before the entry is unshifted. Conservative by design: only sessions
+// with entry.plan.benchKey qualify (a casual 2 km row never overwrites
+// the 2k PR); distance benchmarks need totals.elapsedS >= target,
+// time benchmarks need totals.distanceM >= target; overshoots prefer
+// the exact stitched-from-intervals value, else linear pro-rating.
+// The {keys, achievement, delta} result lands on entry.pr and on
+// userPrefs.benchmarks/benchmarkMeta (with provenance), which ride
+// Drive sync whole-object.
 
 // Per-benchmark target distances (for time-target PRs) and target
 // times (for distance-target PRs). For marathon / half-marathon we
@@ -12384,21 +12499,11 @@ function exactAchievementFromIntervals(entry, bench) {
   }
 }
 
-// Compute the achievement value (seconds for time-target benchmarks,
-// metres for distance-target benchmarks) of a session entry against
-// a specific benchmark. Returns null if the session is too short
-// to claim that benchmark.
-//
-// Precedence:
-//   1. If per-interval results exist and cleanly sum past the
-//      benchmark target, use the exact stitched value (linear interp
-//      WITHIN one interval — accurate at any pacing strategy).
-//   2. Otherwise pro-rate the totals linearly to the target. This
-//      assumes uniform pace across the rowed distance: slightly
-//      pessimistic on positive splits, slightly optimistic on
-//      negative splits. The path matters only when (1) doesn't fire,
-//      and (1) fires for every benchmark Test workout because the
-//      intervals are designed to total the target.
+// Achievement value (seconds for time-target benchmarks, metres for
+// distance-target) of an entry vs one benchmark; null when too short.
+// Precedence: exact stitched-from-intervals value (linear interp
+// within one interval) when results cover the target, else linear
+// pro-rating of totals (pessimistic on positive splits).
 function benchmarkAchievement(entry, benchKey) {
   const bench = BENCHMARKS.find(b => b.key === benchKey);
   if (!bench) return null;
@@ -12675,14 +12780,14 @@ function currentPrProjectedFinish() {
   }
 }
 
-// =====================================================================
+// ====================
 // SESSION ANALYSIS — backlog #13 (data quality), #15 (fatigue),
 // #16 (technique insights). Pure functions over a history entry, so
 // they're reusable by the Summary modal today and the Performance
 // page (L13) later. All tolerate the coarse per-interval results we
 // persist (one row per interval), and degrade gracefully for plain
 // "Just rowing" sessions with no interval breakdown.
-// =====================================================================
+// ====================
 
 // Average the numeric fields of the first-quarter and last-quarter
 // interval rows. Returns null when there aren't enough intervals to
@@ -13548,33 +13653,12 @@ function switchClub() {
 
 // ----- Focus presets modal --------------------------------------
 //
-// A focus preset is a curated layout PLUS a visual identity. Each
-// one declares three tiers of importance:
-//
-//   primary[]   — Tier 1. Largest cards, biggest font, foregrounded.
-//                 Shown in the LEFT column.
-//   secondary[] — Tier 2. Medium-prominence cards. Shown in the
-//                 RIGHT column.
-//   passive[]   — Tier 3. Compact context cards (timers, drag,
-//                 strokes). Shown in the BOTTOM strip.
-//
-//   locked[]    — Metric IDs that cannot be removed from the layout
-//                 while this preset is active. They are the
-//                 "defining" metrics of the mode — Technical
-//                 always shows Drive Length + Slip, Heart Rate
-//                 always shows current HR + Zone, etc. If users
-//                 could swap them out the preset would lose its
-//                 identity.
-//
-//   themeClass  — Body class applied while this preset is active.
-//                 Drives the visual identity (font weights, accent
-//                 colour, card sizing tweaks) via .preset-X CSS.
-//   accent      — CSS colour used in the preset's chip and badge.
-//
-// The renderer (renderCards) maps primary/secondary/passive →
-// left/right/bottom areas and applies tier-* classes per card so
-// CSS can scale typography and spacing differently per tier.
-//
+// A focus preset = curated layout + visual identity: primary[] (tier
+// 1, left column), secondary[] (tier 2, right), passive[] (tier 3,
+// bottom strip), locked[] (defining metric IDs that can't be removed
+// while active), themeClass (body class driving .preset-X CSS), and
+// accent (chip/badge colour). renderCards maps the tiers to areas and
+// applies tier-* classes so CSS scales typography per tier.
 const FOCUS_PRESETS = [
   {
     id: "balanced", icon: "⚖", name: "Balanced",
@@ -13779,9 +13863,9 @@ function applyFocusPreset(id) {
   setToast(`Focus: ${p.name}`, "ok");
 }
 
-// =====================================================================
+// ====================
 // Account UI (header chip + dropdown menu)
-// =====================================================================
+// ====================
 function renderAccountChip() {
   const chip = document.getElementById("accountChip");
   if (!chip) return;
@@ -13949,9 +14033,9 @@ function triggerGoogleSignIn() {
   });
 }
 
-// =====================================================================
+// ====================
 // History dialog
-// =====================================================================
+// ====================
 function openHistory() {
   renderHistoryList();
   document.getElementById("historyModal").classList.add("open");
@@ -14024,7 +14108,7 @@ function drawCurveSet(canvas, sets, _retry) {
     ctx.beginPath();
     ctx.strokeStyle = s.color;
     ctx.lineWidth = s.width || 2;
-    ctx.setLineDash(s.dashed ? [6, 5] : []);
+    ctx.setLineDash(s.dash || (s.dashed ? [6, 5] : []));
     for (let i = 0; i < n; i++) {
       const x = padL + (i / (n - 1)) * W;
       const y = padT + H - (Math.max(0, s.samples[i]) / yMax) * H;
@@ -14100,9 +14184,15 @@ function openReplay(session) {
   else badges.push(["No replay data", false]);
   if (cap !== "none") {
     if (marks.length) badges.push(["Bookmarks available", false]);
-    if (session && session.fc) badges.push(["Session force curves", true]);
+    const cm = session && session.curveMeta;
+    if (cm && (cm.coverage === "complete" || cm.coverage === "partial")) {
+      badges.push([`Stroke curves ${cm.retained}/${cm.total}`, true]);
+    } else if (session && !session.id && state.curveCapture && state.curveCapture.list.length >= 2) {
+      badges.push(["Stroke curves (this session)", true]);
+    } else if (session && session.fc) badges.push(["Session force curves", true]);
     else badges.push(["Force curve not saved", false]);
   }
+  if (session && session.demo) badges.push(["SYNTHETIC demo data", false]);
   if (session && session.pr && session.pr.keys && session.pr.keys.length)
     badges.push(["🏆 PR " + session.pr.keys.join(", "), true]);
   if (_replay.events.length) badges.push([`⚠ ${_replay.events.length} drift event${_replay.events.length === 1 ? "" : "s"}`, false]);
@@ -14110,32 +14200,11 @@ function openReplay(session) {
   document.getElementById("replayBadges").innerHTML =
     badges.map(([t, on]) => `<span class="rpl-badge${on ? " on" : ""}">${fbEsc(t)}</span>`).join("");
 
-  // Force Curve inspection (v1.18.0) — the session's saved best/avg
-  // curves, drawn with the same colors as the live monitor's ghosts.
-  const fcBox = document.getElementById("replayFc");
-  const fc = session && session.fc;
-  if (fc && (fc.best || fc.avg)) {
-    fcBox.style.display = "";
-    const sets = [];
-    // v1.20.0 — the athlete's ACTIVE baseline curve underlays the
-    // session's own curves so replay is always vs the chosen reference.
-    if (state.baseline && state.baseline.curve) {
-      sets.push({ samples: state.baseline.curve, color: "rgba(155,167,189,0.5)", dashed: true, width: 1.5 });
-    }
-    if (fc.avg)  sets.push({ samples: fc.avg,  color: "rgba(255,143,60,0.8)", dashed: true, width: 2 });
-    if (fc.best) sets.push({ samples: fc.best, color: "rgba(86,249,179,0.9)", width: 2.5 });
-    const leg = [];
-    if (fc.best) leg.push(`— best${fc.peak ? " " + Math.round(fc.peak) + " lbf" : ""}`);
-    if (fc.avg)  leg.push(`- - avg${fc.n ? " of " + fc.n + " strokes" : ""}`);
-    if (state.baseline && state.baseline.curve) leg.push(`· · baseline (${state.baseline.label})`);
-    document.getElementById("replayFcLegend").textContent = leg.join("   ");
-    // The canvas has no layout until the modal is visible — draw just
-    // after .open lands (setTimeout, not rAF — see drawCurveSet).
-    setTimeout(() =>
-      drawCurveSet(document.getElementById("replayFcCanvas"), sets), 0);
-  } else {
-    fcBox.style.display = "none";
-  }
+  // Force Curve inspection — v1.21 hands the whole panel (selected-
+  // stroke curve, pins, coverage, evidence, windows) to curves.js.
+  // Draw after .open lands (setTimeout, not rAF — see drawCurveSet).
+  populateReplayWindowUi();
+  setTimeout(() => loadReplayCurves(session), 0);
 
   // Scrubber — stroke-level when captured, else interval-level.
   const scrub = document.getElementById("replayScrub");
@@ -14407,6 +14476,7 @@ function renderReplayPos() {
   const a = document.querySelector("#replayList .rpl-row.on");
   if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest" });
   renderReplayTimeline();   // keep the timeline cursor in sync
+  renderReplayFc();         // v1.21 — selected stroke's own curve tracks the scrub
 }
 
 function replayStep(d) {
@@ -14463,6 +14533,9 @@ function renderHistoryList() {
     const recoveredTag = e.recovered
       ? `<span class="recovered-tag" title="Recovered after an interrupted session">RECOVERED</span>`
       : "";
+    const synTag = e.demo
+      ? `<span class="hist-syn" title="Demo Mode session — synthetic data, excluded from PRs, baselines, and the power profile">SYNTHETIC</span>`
+      : "";
     // PR badge — mint-green pill listing the benchmark keys this
     // session set. Tooltip is the full "key: time (delta)" line.
     const prTag = (e.pr && e.pr.keys && e.pr.keys.length)
@@ -14470,7 +14543,7 @@ function renderHistoryList() {
       : "";
     row.innerHTML = `
       <div>
-        <div class="ttl">${fbEsc(e.title)} ${prTag}${recoveredTag}</div>
+        <div class="ttl">${fbEsc(e.title)} ${prTag}${recoveredTag}${synTag}</div>
         <div class="date">${dateStr}</div>
       </div>
       <div><div class="stat-label">Time</div><div class="stat-value">${time}</div></div>
@@ -14533,9 +14606,9 @@ function renderHistoryList() {
   }
 }
 
-// =====================================================================
+// ====================
 // Settings dialog (configurable layout)
-// =====================================================================
+// ====================
 const SETTINGS_AREA_CONTAINER = {
   left:   "settingsLeftList",
   right:  "settingsRightList",
@@ -14583,6 +14656,16 @@ function openSettings() {
   document.getElementById("prefPrivacyLocal").checked   = !!state.userPrefs.privacyLocal;
   document.getElementById("prefReducedMotion").checked  = !!state.userPrefs.reducedMotion;
   document.getElementById("prefLargeText").checked      = !!state.userPrefs.largeText;
+  // v1.21 — stroke-curve storage usage (IndexedDB, this device only).
+  const csi = document.getElementById("curveStorageInfo");
+  if (csi) {
+    csi.textContent = "Stroke curve storage: checking…";
+    curveDetailUsage().then(u => {
+      csi.textContent = u
+        ? `Stroke curve storage: ${u.sessions} session${u.sessions === 1 ? "" : "s"} · ${(u.bytes / 1024).toFixed(0)} KB in this browser's IndexedDB (max 512 KiB per session). Deleting a session from History also deletes its stored curves.`
+        : "Stroke curve storage: unavailable in this browser — sessions still save without per-stroke curves.";
+    });
+  }
   document.getElementById("settingsModal").classList.add("open");
 }
 
@@ -14838,19 +14921,36 @@ function resetLayoutToDefault() {
   renderSettingsArea("bottom");
 }
 
-function exportHistoryJson() {
-  const blob = new Blob(
-    [JSON.stringify({ kind: "pm5-history-export", schemaVersion: SESSION_SCHEMA_VERSION,
-                      appVersion: APP_VERSION, exportedAt: new Date().toISOString(),
-                      user: { id: state.user.id }, history: state.history }, null, 2)],
-    { type: "application/json" }
-  );
+// v1.21 — exports carry stored curve payloads as a top-level base64
+// map keyed by session id ({ curves: { [id]: { v, b64 } } }), leaving
+// the session entries byte-compatible with v1.20 consumers. Old
+// importers simply ignore the extra key.
+async function collectCurveExports(entries) {
+  const out = {};
+  let n = 0;
+  for (const e of (entries || [])) {
+    if (!e || !e.id || !e.curveMeta) continue;
+    if (e.curveMeta.coverage !== "complete" && e.curveMeta.coverage !== "partial") continue;
+    if (++n > 100) break;    // bounded work; newest sessions win (history is newest-first)
+    const rec = await curveDetailGet(e.id);
+    if (rec && rec.bytes) out[e.id] = { v: CURVE_CODEC_VERSION, b64: curveB64Encode(rec.bytes) };
+  }
+  return out;
+}
+
+async function exportHistoryJson() {
+  const curves = await collectCurveExports(state.history);
+  const payload = { kind: "pm5-history-export", schemaVersion: SESSION_SCHEMA_VERSION,
+                    appVersion: APP_VERSION, exportedAt: new Date().toISOString(),
+                    user: { id: state.user.id }, history: state.history };
+  if (Object.keys(curves).length) { payload.curveFormat = CURVE_CODEC_VERSION; payload.curves = curves; }
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   triggerDownload(blob, `pm5-history-${new Date().toISOString().slice(0,10)}.json`);
 }
 
 // Export a single session as raw JSON (#30) — full metadata, results,
 // bookmarks, PR record. Used from the Summary modal.
-function exportSessionJson(entry) {
+async function exportSessionJson(entry) {
   const e = entry || {
     schemaVersion: SESSION_SCHEMA_VERSION, appVersion: APP_VERSION,
     id: "live", date: new Date().toISOString(),
@@ -14859,10 +14959,13 @@ function exportSessionJson(entry) {
               avgWatts: state.watts, avgPaceS: workoutAvgPace() },
     bookmarks: state.bookmarks || [],
   };
-  const blob = new Blob([JSON.stringify({
+  const payload = {
     kind: "pm5-session-export", schemaVersion: SESSION_SCHEMA_VERSION,
     appVersion: APP_VERSION, exportedAt: new Date().toISOString(), session: e,
-  }, null, 2)], { type: "application/json" });
+  };
+  const curves = entry ? await collectCurveExports([e]) : {};
+  if (Object.keys(curves).length) { payload.curveFormat = CURVE_CODEC_VERSION; payload.curves = curves; }
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const safe = (e.title || "session").replace(/[^a-z0-9_-]/gi, "_").slice(0, 60);
   triggerDownload(blob, `pm5-${safe}-${new Date().toISOString().slice(0,10)}.json`);
 }
@@ -14910,11 +15013,54 @@ function importSessionsFromText(raw) {
     ...((() => { const s = sanitizeStrokeLog(e.strokes); return s ? { strokes: s } : {}; })()),
     ...((() => { const f = sanitizeSessionCurves(e.fc); return f ? { fc: f } : {}; })()),
     ...((() => { const ev = sanitizeDriftEvents(e.driftEvents); return ev ? { driftEvents: ev } : {}; })()),
+    // v1.21 — stroke-curve fields: stride for curve↔stroke alignment,
+    // coverage metadata, and the synthetic-demo flag. All whitelisted.
+    ...((Number.isInteger(e.strokeStride) && e.strokeStride >= 1 && e.strokeStride <= 4096)
+      ? { strokeStride: e.strokeStride } : {}),
+    ...((() => { const m = sanitizeCurveMeta(e.curveMeta); return m ? { curveMeta: m } : {}; })()),
+    ...(e.demo === true ? { demo: true } : {}),
     imported: true,
   }));
+  const beforeIds = new Set(state.history.map(e => e && e.id));
   const before = state.history.length;
   state.history = mergeHistory(state.history, norm);
   const added = state.history.length - before;
+  // v1.21 — curve payloads ride the export as a top-level map. Validate
+  // hard (binary structure, checksum, ordinal order, size caps) BEFORE
+  // anything is stored; only sessions actually added by THIS import are
+  // considered, and an existing local payload is never overwritten.
+  const payloads = sanitizeImportedCurveMap(parsed && parsed.curves, norm.map(e => e.id));
+  const payloadIds = new Set(payloads.map(p => p.id));
+  for (const e of state.history) {
+    // Honest coverage: a newly imported session that CLAIMS curves but
+    // arrived without a valid payload can't show them on this device.
+    if (e && e.curveMeta && !beforeIds.has(e.id) && !payloadIds.has(e.id) &&
+        (e.curveMeta.coverage === "complete" || e.curveMeta.coverage === "partial")) {
+      e.curveMeta.coverage = "unavailable";
+      e.curveMeta.retained = 0;
+    }
+  }
+  for (const p of payloads) {
+    const target = state.history.find(h => h && h.id === p.id);
+    if (!target) continue;
+    curveDetailGet(p.id).then(existing => {
+      if (existing && existing.bytes) return;   // local detail wins — never silently replaced
+      curveDetailPut(p.id, p.bytes).then(okPut => {
+        if (okPut) {
+          // Coverage derived from the VALIDATED payload, not the claim.
+          target.curveMeta = { v: CURVE_CODEC_VERSION,
+            coverage: p.count >= p.totalStrokes ? "complete" : "partial",
+            retained: p.count, total: p.totalStrokes };
+          saveHistory();
+        } else if (target.curveMeta &&
+            (target.curveMeta.coverage === "complete" || target.curveMeta.coverage === "partial")) {
+          target.curveMeta.coverage = "unavailable";
+          target.curveMeta.retained = 0;
+          saveHistory();
+        }
+      });
+    });
+  }
   saveHistory();
   renderHistoryList();
   setToast(`Imported ${added} new session${added === 1 ? "" : "s"} (${norm.length - added} already present).`, "ok");
@@ -14925,17 +15071,10 @@ function promptImportSessions() {
   if (raw && raw.trim()) importSessionsFromText(raw.trim());
 }
 
-// ----- CSV export -------------------------------------------------
-//
-// Two flavours:
-//   - Whole-history CSV: one row per session (totals only).
-//   - Per-session CSV:   one row per completed interval inside one
-//                        session (rich — pace, watts, rate, HR,
-//                        drive length, peak force).
-//
-// We don't currently persist per-stroke history, so a true
-// stroke-level CSV isn't possible without a schema change. Per-
-// interval is what we have; the column headers make that clear.
+// ----- CSV export: whole-history (one row per session, totals) and
+// per-session (one row per completed interval — pace, watts, rate,
+// HR, drive length, peak force). Stroke-level detail lives in the
+// JSON export (entry.strokes + the v1.21 curves map), not CSV.
 
 function csvEscape(v) {
   if (v == null) return "";
@@ -15044,9 +15183,9 @@ function exportSessionCsv(entry) {
   triggerDownload(blob, `pm5-${safe}-${new Date().toISOString().slice(0,10)}.csv`);
 }
 
-// =====================================================================
+// ====================
 // Init
-// =====================================================================
+// ====================
 function checkCompatibility() {
   const banner = document.getElementById("compatBanner");
   if (!navigator.bluetooth) {
@@ -15194,6 +15333,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("replayPlay").addEventListener("click", replayTogglePlay);
   document.getElementById("replayEvPrev").addEventListener("click", () => replayJumpEvent(-1));
   document.getElementById("replayEvNext").addEventListener("click", () => replayJumpEvent(1));
+  initStrokeEvidenceUi();   // v1.21 — pins, windows, evidence controls
   document.getElementById("replaySlider").addEventListener("input", (ev) => {
     if (_replay) { _replay.pos = parseInt(ev.target.value, 10) || 0; renderReplayPos(); }
   });
@@ -15221,6 +15361,12 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (ev.key === "End") { _replay.pos = _replay.tl.length - 1; renderReplayPos(); ev.preventDefault(); }
     else if (ev.key === "[") { replayJumpEvent(-1); ev.preventDefault(); }
     else if (ev.key === "]") { replayJumpEvent(1); ev.preventDefault(); }
+    // v1.21 — stroke evidence: pins and evidence jumps.
+    else if (ev.key === "a") { pinReplayStroke("pinA"); ev.preventDefault(); }
+    else if (ev.key === "b") { pinReplayStroke("pinB"); ev.preventDefault(); }
+    else if ("fstcd".includes(ev.key)) { replayJumpEvidence(ev.key); ev.preventDefault(); }
+    // Previous/next STORED curve (skips strokes whose curve wasn't kept).
+    else if (ev.key === "," || ev.key === ".") { replayStepStoredCurve(ev.key === "." ? 1 : -1); ev.preventDefault(); }
   });
   document.getElementById("summaryReplayBtn").addEventListener("click", () => {
     // Replay the saved entry when viewing one from history; otherwise the
@@ -15304,9 +15450,9 @@ document.addEventListener("DOMContentLoaded", () => {
       `pm5-training-report-${new Date().toISOString().slice(0, 10)}.md`);
   });
 
-  // -----------------------------------------------------------------
+  // --------------------
   // Clubs view — header edits, tabs, all CRUD buttons
-  // -----------------------------------------------------------------
+  // --------------------
   document.getElementById("clubName").addEventListener("input", (e) => {
     state.club.name = e.target.value;
     persistClub();

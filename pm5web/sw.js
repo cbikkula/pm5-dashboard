@@ -14,13 +14,14 @@
  * everything else, so authenticated Drive calls etc. always go live.
  */
 // Bump this when you redeploy to force a fresh shell on every client.
-const CACHE_VERSION = "pm5-v47";
+const CACHE_VERSION = "pm5-v48";
 const SHELL = [
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
   "./firebase-config.js",
   "./analysis.js",
+  "./curves.js",
 ];
 
 self.addEventListener("install", (event) => {
@@ -48,12 +49,13 @@ self.addEventListener("fetch", (event) => {
 
   // The HTML document and our JS are network-first, falling back to
   // cache only when offline. This guarantees the latest deploy is
-  // picked up on every visit — critical because index.html and
-  // analysis.js (v1.20.0 split) must never be served from different
-  // releases in the same page load.
+  // picked up on every visit — critical because index.html,
+  // analysis.js (v1.20.0 split), and curves.js (v1.21.0) must never be
+  // served from different releases in the same page load.
   const isShellDoc = url.pathname.endsWith(".html") || url.pathname === "/" ||
                      url.pathname === "" || req.mode === "navigate" ||
-                     url.pathname.endsWith("/analysis.js");
+                     url.pathname.endsWith("/analysis.js") ||
+                     url.pathname.endsWith("/curves.js");
   if (isShellDoc) {
     event.respondWith(
       fetch(req).then((resp) => {

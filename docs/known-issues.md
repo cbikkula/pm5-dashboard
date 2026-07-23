@@ -1,5 +1,26 @@
 # Known issues
 
+## Stroke curves are per-device unless exported or Drive-synced (v1.21)
+
+Per-stroke Force Curve detail lives in the browser's IndexedDB, not in localStorage —
+by design, so curve bulk can never endanger workout summaries. It travels in JSON
+exports (a base64 `curves` map) and rides Drive sync up to a ~3 MB budget
+(newest sessions first). Consequences worth knowing:
+
+- Clearing site data / IndexedDB deletes curve detail but not your workouts; replay
+  then reports coverage honestly ("couldn't be stored" / "missing").
+- On a second device, curves appear only after a Drive sync or import that carried
+  them; older sessions beyond the Drive budget sync summaries only.
+- A local payload is never overwritten by Drive or import data (local wins), and
+  deleting a session from History is the one thing that deletes its curves.
+
+## Demo Mode can now save — one clearly-marked synthetic session (v1.21)
+
+Auto-logging and Drive sync stay paused in Demo Mode, but pressing **Log** saves a
+SYNTHETIC-badged session (title "Demo — …", `demo: true`) so stroke-level replay,
+A/B comparison, and window baselines can be tried without a PM5. Synthetic sessions
+never earn PRs and are excluded from baselines and the power profile.
+
 ## Race meta is dropped if you restructure a race plan's intervals
 
 A Race Lab plan stays a race plan through renames and target tweaks, but editing it in
@@ -68,7 +89,7 @@ The v1.15.1 capture design is now **implemented** (v1.18.0), to its own constrai
 - **Session force curves:** ✅ **shipped** — `entry.fc` stores the session's best + average curves (64 samples, 0.1 lbf) — tiny, and enough for replay inspection and the Compare tab's overlay.
 - **Old sessions:** ✅ still compatible — schema v3 fields are optional; v1/v2 sessions replay at interval or summary fidelity exactly as before, and `getSessionReplayCapability()` never over-reports.
 - **Storage budget:** ✅ enforced — before every save, `enforceHistoryBudget()` strips stroke bulk from the *oldest* sessions if serialized history would exceed ~4 MB; summaries, intervals, and fc curves are always kept.
-- **Per-stroke force curves:** ❌ **still not stored** — one curve per stroke remains too large for the Drive `appdata` + localStorage budget; the replay modal and limitation panel say so honestly. This is the next storage-budget negotiation if it ever pencils out.
+- **Per-stroke force curves:** ✅ **shipped in v1.21.0** — every stroke's 64-sample curve is stored as one compact binary payload per session in IndexedDB (versioned codec, ≤ 512 KiB/session, deterministic retention for very long rows), with coverage always disclosed in replay. See `docs/analysis-methods.md` for the codec and retention rules.
 
 ## Heart-rate flickers between values when the strap is weak
 

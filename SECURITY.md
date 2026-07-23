@@ -34,12 +34,17 @@ and adversarial-review findings are in [`docs/security.md`](docs/security.md).
 - **localStorage** (per browser): workout history (including v1.18 per-stroke samples and
   session force curves), saved plans, layout/preferences, PRs, your Google display
   name/email/avatar URL after sign-in. No passwords, no OAuth tokens.
-- **Google Drive `appdata`** (your account, only if signed in): the same personal state,
-  as one JSON file, for cross-device sync.
+- **IndexedDB** (per browser, since v1.21.0): one compact binary payload per session of
+  per-stroke Force Curve detail (versioned codec, ≤ 512 KiB per session, checksummed).
+  Deliberately separated from localStorage so curve bulk can never endanger workout
+  summaries; deleted when you delete the session.
+- **Google Drive `appdata`** (your account, only if signed in): the same personal state
+  as one JSON file for cross-device sync, including a bounded (~3 MB) base64 map of
+  curve payloads for your newest sessions.
 - **Cloud Firestore** (only if you use Clubs): club roster, lineups, assignments, audit
   log — governed by [`firestore.rules`](firestore.rules).
-- **Never stored**: OAuth access tokens are memory-only and revoked on sign-out; nothing
-  is written to IndexedDB; the service worker caches only the app shell.
+- **Never stored**: OAuth access tokens are memory-only and revoked on sign-out; the
+  service worker caches only the app shell.
 
 ## Keys that look like secrets but aren't
 
@@ -83,6 +88,25 @@ silence secret scanners; an old copy of the key exists in git history, which is 
 - Export filenames are sanitized and length-capped.
 - OAuth: `drive.appdata` remains the only scope; sign-out revokes the token.
 - 18 security regression tests keep these locked in (`npm test`, "security" group).
+
+## Hardening shipped in v1.21.0
+
+- Per-stroke curve payloads are a **versioned binary format that fails closed**: unknown
+  codec versions, size mismatches, bad checksums, and misordered stroke ordinals are all
+  rejected before storage. Byte and structure limits are enforced **before** any
+  decoding or allocation — the declared record count is checked against the actual byte
+  length, a base64 string longer than the 512 KiB-equivalent cap is refused unread, and
+  the checksum is corruption detection only, never a security guarantee.
+- Imported/Drive curve maps are validated with the same path
+  (`sanitizeImportedCurveMap`): own string keys only, `__proto__`/`constructor`/
+  `prototype` ignored, unknown session ids dropped, results returned as a plain array so
+  prototype pollution cannot ride the container. A payload is only stored for a session
+  that exists, and an existing local payload is never overwritten.
+- New session fields (`curveMeta`, `strokeStride`, `demo`) are whitelisted and bounded
+  on import; coverage claims without a valid payload are downgraded to "unavailable"
+  rather than trusted.
+- `curves.js` joins index.html and analysis.js in the service worker's network-first
+  set, so a page load can never mix module versions across releases.
 
 ## Hardening shipped in v1.20.0
 

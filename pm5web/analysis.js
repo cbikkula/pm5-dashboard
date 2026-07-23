@@ -1,6 +1,6 @@
-// =====================================================================
+// ====================
 // PM5 Dashboard — analysis.js (v1.20.0 modular split)
-// =====================================================================
+// ====================
 // The PURE analysis layer: import sanitizers, curve shape analysis,
 // drift detection, performance analytics, replay readiness, and the
 // v1.20 baseline / cue / race / power engines. No DOM access at top
@@ -10,7 +10,7 @@
 // may reference main-script globals (fmtTime, BENCHMARKS, uid, state,
 // ...) — resolution happens at call time, after both scripts load.
 // Counted by the total offline-app size guard in tests/run.js.
-// =====================================================================
+// ====================
 
 // v1.18.1 — bounds for the remaining imported per-entry collections.
 // Sized to comfortably cover legitimate erg data: a marathon logged at
@@ -150,9 +150,9 @@ function sanitizeImportedTotals(t) {
   };
 }
 
-// =====================================================================
+// ====================
 // Curve shape analysis (v1.19.0) — pure helpers over force curves.
-// =====================================================================
+// ====================
 // Shape metrics for one curve (any sample count >= 8):
 //   peak       highest force (same unit as the input — lbf here)
 //   peakPos    where the peak lands, 0-1 of the drive
@@ -210,9 +210,9 @@ function curveSimilarity(a, b) {
   return Math.round((dot / Math.sqrt(na * nb)) * 100);
 }
 
-// =====================================================================
+// ====================
 // Live technique-drift detection (v1.18.0)
-// =====================================================================
+// ====================
 // Compares the last 15 strokes against an early-session baseline
 // (strokes 11-25 — the first 10 are warm-up noise). Pure: takes the
 // capture log, returns display-ready items. null-tolerant on every
@@ -303,11 +303,11 @@ function applyDriftHysteresis(prev, current) {
   };
 }
 
-// =====================================================================
+// ====================
 // Performance analytics (v1.14.0) — pure, DOM-free rollups over saved
 // history. Time-windowed functions take an explicit `nowMs` so tests are
 // deterministic. NONE of these invent data: empty history → empty result.
-// =====================================================================
+// ====================
 const PR_KEYS = ["500m", "1k", "2k", "5k", "6k", "10k", "30min", "60min"];
 
 // Session-average stroke rate — prefer interval data, else strokes/time.
@@ -335,16 +335,12 @@ function perfSessionMetrics(entry) {
   };
 }
 
-// =====================================================================
-// Session Replay readiness (v1.14.1, extended v1.18.0) — PURE capability
-// detection over a saved session. These helpers report, honestly, what
-// the persisted data can support and never invent data.
-//
-// What history persists (see logCurrentWorkout): totals, plan, per-
-// INTERVAL results, optional bookmarks + pr, and — since v1.18.0 —
-// optional per-stroke samples (entry.strokes) + session force curves
-// (entry.fc). Pre-v1.18 sessions cap out at interval fidelity.
-// =====================================================================
+// ====================
+// Session Replay readiness (v1.14.1+) — PURE capability detection over
+// a saved session; reports what the persisted data supports (totals /
+// intervals / v1.18+ stroke samples + fc curves) and never invents
+// data. Pre-v1.18 sessions cap out at interval fidelity.
+// ====================
 // Highest replay fidelity the saved data supports:
 //   "none" · "summary-only" (totals only) · "interval" (per-interval) ·
 //   "stroke" (v1.18+ capture — per-stroke scrubbing).
@@ -663,20 +659,14 @@ function sparklineSvg(values, opts) {
     `<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.2" fill="currentColor"/></svg>`;
 }
 
-// =====================================================================
+// ====================
 // Technical-efficiency score (v1.18.0) — pure, explained, 0-100.
-// =====================================================================
-// Four PM5-derivable components, each 0-100, weighted:
-//   curve  35% — smoothness of the session-AVERAGE force curve (one
-//                clean accelerating push scores high; double peaks and
-//                bumps score low). Averaging denoises single strokes.
-//   peak   25% — where peak force lands in the drive; the front third
-//                (30-45%) is the efficient band.
-//   ratio  20% — recovery:drive rhythm inside the 1.8-2.8:1 band, with
-//                a penalty for stroke-to-stroke ratio scatter.
-//   length 20% — drive-length consistency (CV of per-stroke length).
-// Needs v1.18 capture (entry.strokes and/or entry.fc); older sessions
-// return {has:false} rather than a made-up number.
+// ====================
+// Components (weights): curve smoothness 35% (session-average curve),
+// peak-timing band 30-45% of drive 25%, ratio band 1.8-2.8:1 with a
+// scatter penalty 20%, drive-length consistency 20%. Needs v1.18
+// capture; older sessions return {has:false}, never a made-up number.
+// Full formulas: docs/analysis-methods.md.
 function computeEfficiencyScore(entry) {
   if (!entry) return { has: false };
   const strokes = Array.isArray(entry.strokes) ? entry.strokes : [];
@@ -792,10 +782,10 @@ function computeEfficiencyTrend(history, max) {
   };
 }
 
-// =====================================================================
+// ====================
 // Workout-to-workout comparison (v1.18.0) — pure diff over two saved
 // sessions: delta-labelled metric rows + overlayable force-curve sets.
-// =====================================================================
+// ====================
 function buildSessionComparison(a, b) {
   if (!a || !b) return { has: false };
   const A = perfSessionMetrics(a), B = perfSessionMetrics(b);
@@ -855,9 +845,9 @@ function buildSessionComparison(a, b) {
   };
 }
 
-// =====================================================================
+// ====================
 // Smarter workout creation (v1.18.0) — PR-informed target paces. Pure.
-// =====================================================================
+// ====================
 // Split for a saved benchmark: distance benchmarks store seconds,
 // time benchmarks store metres (see BENCHMARKS/applyPrUpdates).
 function benchmarkPaceOf(key, prefs) {
@@ -902,9 +892,9 @@ function suggestTargetsForPlan(plan, prefs) {
   return { has: true, refKey, refPaceS: refPace, pace2kS: pace2k, targets };
 }
 
-// =====================================================================
+// ====================
 // Training report (v1.18.0) — pure markdown builder over saved history.
-// =====================================================================
+// ====================
 function buildTrainingReport(history, prefs, nowMs) {
   history = history || [];
   const L = [];
@@ -947,9 +937,9 @@ function buildTrainingReport(history, prefs, nowMs) {
   return L.join("\n");
 }
 
-// =====================================================================
+// ====================
 // Personal Baseline Engine (v1.20.0)
-// =====================================================================
+// ====================
 // A baseline is EVIDENCE from the athlete's own rowing — never a
 // universal biomechanical ideal. Shape:
 //   { source, label, curve|null (64 samples), stats|null, n,
@@ -1025,6 +1015,7 @@ function buildRollingBaseline(history, ref, maxSessions) {
   const pool = [];
   for (const h of (history || [])) {
     if (!h || (!h.fc && !h.strokes)) continue;
+    if (h.demo) continue;   // v1.21 — synthetic demo sessions never pool
     const anchor = ref || pool[0] || h;
     if (pool.length && !sessionsCompatible(anchor, h)) continue;
     if (ref && !sessionsCompatible(ref, h)) continue;
@@ -1121,9 +1112,10 @@ function resolveBaseline(sourcePref, ctx) {
   }
   if (sourcePref === "rolling") return buildRollingBaseline(history, ctx.currentEntryLike || null, 5);
   if (sourcePref === "section") return bestConsistentSection(ctx.currentSamples || [], 20);
-  // "auto": newest compatible session with capture data.
+  // "auto": newest compatible session with capture data. Synthetic
+  // demo sessions are never used as a baseline for real rowing (v1.21).
   for (const h of history) {
-    if (!h || (!h.fc && !h.strokes)) continue;
+    if (!h || (!h.fc && !h.strokes) || h.demo) continue;
     if (ctx.currentEntryLike && !sessionsCompatible(ctx.currentEntryLike, h)) continue;
     const b = buildBaselineFromEntry(h);
     if (b) { b.source = "auto"; return b; }
@@ -1131,9 +1123,9 @@ function resolveBaseline(sourcePref, ctx) {
   return null;
 }
 
-// =====================================================================
+// ====================
 // Live Technique Intelligence (v1.20.0) — cue engine + governor
-// =====================================================================
+// ====================
 // computeLiveCues evaluates candidate cues against the session log and
 // the active baseline. Every cue reports: what changed, by how much,
 // versus which baseline, and its confidence. The governor decides what
@@ -1289,9 +1281,9 @@ function sanitizeDriftEvents(events) {
   return out.length ? out : null;
 }
 
-// =====================================================================
+// ====================
 // Race Lab (v1.20.0) — plan, execute, debrief
-// =====================================================================
+// ====================
 // A race plan is segments over a distance, each with a target split
 // (and optional rate), built from a pacing strategy around the
 // athlete's chosen base split. Predicted finish is arithmetic over the
@@ -1478,9 +1470,9 @@ function sanitizeRaceMeta(race) {
     predictedFinishS: _impNum(race.predictedFinishS, 30, 86400) };
 }
 
-// =====================================================================
+// ====================
 // Rowing Power Profile (v1.20.0)
-// =====================================================================
+// ====================
 // Best recorded average power over supported durations, from captured
 // per-stroke samples (and whole-piece watts for short pieces). Honest
 // by construction: estimates are labeled, ordinary rows are never
@@ -1516,7 +1508,8 @@ function bestRollingPower(samples, durS) {
 function wattsToPace(w) { return (w > 0) ? Math.pow(2.8 / w, 1 / 3) * 500 : null; }
 
 function computePowerProfile(history, nowMs) {
-  history = history || [];
+  // v1.21 — synthetic demo sessions never contribute to power bests.
+  history = (history || []).filter(h => h && !h.demo);
   const rows = [];
   const RECENT_MS = 90 * 86400000;
   for (const d of POWER_DURATIONS) {
@@ -1576,4 +1569,487 @@ function computePowerProfile(history, nowMs) {
     "Two benchmark Tests of clearly different lengths (e.g. a 2k and a 10k or 30:00) are needed for a critical-power estimate.";
   return { has: rows.some(r => r.sufficient), rows, cp, cpNeed,
     method: "Best rolling average watts inside captured sessions (≥90% window span, ≥80% stroke coverage). Pace equivalents via pace = (2.8/W)^(1/3) × 500. All values are estimates from saved data — not lab measurements." };
+}
+
+// ====================
+// Stroke-Level Evidence (v1.21.0) — per-stroke Force Curve codec,
+// deterministic retention, evidence-stroke selection, and window
+// baselines. Everything here is pure: no DOM, no storage, no clocks.
+// ====================
+//
+// Codec v1 — one fixed-size binary payload per session: 16-byte header
+// (magic "PMCV" · version · samples=64 · count u16 · totalStrokes u32 ·
+// FNV-1a checksum of the records, corruption detection only) followed
+// by fixed 76-byte records (ordinal u32, strictly increasing · distance
+// u32 m · peak u16 at 0.1 lbf · flags bit0=synthetic · reserved · 64
+// peak-scaled u8 samples). Fixed records → O(1) random access. LOSSY:
+// worst per-sample error = peak/510 (≈0.196% of peak); peak itself is
+// exact to 0.1 lbf; reconstructed curves are never bit-exact. Full
+// byte layout table: docs/analysis-methods.md.
+
+const CURVE_CODEC_VERSION = 1;
+const CURVE_SAMPLES = 64;                 // same grid as FC_SAMPLES
+const CURVE_HEADER_BYTES = 16;
+const CURVE_RECORD_BYTES = 12 + CURVE_SAMPLES;
+// Hard per-session ceiling for serialized curve detail (512 KiB) —
+// enough for every stroke of a ~3.5 h row before retention kicks in.
+const CURVE_SESSION_BUDGET_BYTES = 512 * 1024;
+const CURVE_MAX_RECORDS =
+  Math.floor((CURVE_SESSION_BUDGET_BYTES - CURVE_HEADER_BYTES) / CURVE_RECORD_BYTES);
+// Longest base64 string we will even LOOK at (decoded ≤ budget). The
+// length check runs before any allocation or decoding.
+const CURVE_B64_MAX_CHARS = Math.ceil(CURVE_SESSION_BUDGET_BYTES / 3) * 4 + 8;
+// Sanity ceiling for the header's total-stroke claim (~10 h at 40 spm).
+const CURVE_MAX_TOTAL_STROKES = 200000;
+
+// ---- base64 (realm-safe: no atob/Buffer so tests and browser agree) --
+const _B64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+function curveB64Encode(bytes) {
+  if (!(bytes instanceof Uint8Array)) return null;
+  let out = "";
+  for (let i = 0; i < bytes.length; i += 3) {
+    const b0 = bytes[i], b1 = i + 1 < bytes.length ? bytes[i + 1] : 0,
+          b2 = i + 2 < bytes.length ? bytes[i + 2] : 0;
+    out += _B64_CHARS[b0 >> 2] + _B64_CHARS[((b0 & 3) << 4) | (b1 >> 4)] +
+           (i + 1 < bytes.length ? _B64_CHARS[((b1 & 15) << 2) | (b2 >> 6)] : "=") +
+           (i + 2 < bytes.length ? _B64_CHARS[b2 & 63] : "=");
+  }
+  return out;
+}
+// Strict decoder: whole-string charset check, length % 4 === 0, padding
+// only at the end. Returns null instead of guessing on malformed input.
+function curveB64Decode(str) {
+  if (typeof str !== "string" || !str.length || str.length % 4 !== 0) return null;
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(str)) return null;
+  const pad = str.endsWith("==") ? 2 : (str.endsWith("=") ? 1 : 0);
+  const outLen = (str.length / 4) * 3 - pad;
+  const lut = curveB64Decode._lut || (curveB64Decode._lut = (() => {
+    const t = new Int16Array(128).fill(-1);
+    for (let i = 0; i < 64; i++) t[_B64_CHARS.charCodeAt(i)] = i;
+    return t;
+  })());
+  const out = new Uint8Array(outLen);
+  let o = 0;
+  for (let i = 0; i < str.length; i += 4) {
+    const c0 = lut[str.charCodeAt(i)], c1 = lut[str.charCodeAt(i + 1)];
+    const ch2 = str[i + 2], ch3 = str[i + 3];
+    const c2 = ch2 === "=" ? 0 : lut[str.charCodeAt(i + 2)];
+    const c3 = ch3 === "=" ? 0 : lut[str.charCodeAt(i + 3)];
+    if (c0 < 0 || c1 < 0 || c2 < 0 || c3 < 0) return null;
+    if ((ch2 === "=" || ch3 === "=") && i + 4 !== str.length) return null;
+    const n = (c0 << 18) | (c1 << 12) | (c2 << 6) | c3;
+    if (o < outLen) out[o++] = (n >> 16) & 255;
+    if (o < outLen) out[o++] = (n >> 8) & 255;
+    if (o < outLen) out[o++] = n & 255;
+  }
+  return out;
+}
+
+// FNV-1a over a byte range — corruption detection, NOT tamper-proofing.
+function curveChecksum(bytes, from, to) {
+  let h = 0x811c9dc5;
+  for (let i = from; i < to; i++) {
+    h ^= bytes[i];
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h >>> 0;
+}
+
+// Encode capture records → binary payload. records: [{i, d, peak, s}]
+// where i = 1-based stroke ordinal, d = metres, peak = lbf, s = array
+// of CURVE_SAMPLES absolute forces. Invalid records are skipped; the
+// input is never mutated. null when nothing valid remains or the
+// result would exceed the per-session budget (callers must retain
+// first — see retainCurveRecords).
+function encodeCurveDetail(records, totalStrokes, opts) {
+  if (!Array.isArray(records)) return null;
+  const synthetic = !!(opts && opts.synthetic);
+  const valid = records.filter(r =>
+    r && Number.isInteger(r.i) && r.i >= 1 && r.i <= CURVE_MAX_TOTAL_STROKES &&
+    typeof r.peak === "number" && isFinite(r.peak) && r.peak >= 0 && r.peak <= 3000 &&
+    Array.isArray(r.s) && r.s.length === CURVE_SAMPLES &&
+    r.s.every(v => typeof v === "number" && isFinite(v))
+  ).slice().sort((a, b) => a.i - b.i)
+   .filter((r, idx, arr) => idx === 0 || r.i > arr[idx - 1].i);
+  if (!valid.length || valid.length > CURVE_MAX_RECORDS) return null;
+  const total = Math.max(
+    Number.isInteger(totalStrokes) && totalStrokes >= valid.length ? totalStrokes : 0,
+    valid[valid.length - 1].i);
+  if (total > CURVE_MAX_TOTAL_STROKES) return null;
+  const bytes = new Uint8Array(CURVE_HEADER_BYTES + valid.length * CURVE_RECORD_BYTES);
+  const dv = new DataView(bytes.buffer);
+  bytes[0] = 0x50; bytes[1] = 0x4D; bytes[2] = 0x43; bytes[3] = 0x56;
+  bytes[4] = CURVE_CODEC_VERSION; bytes[5] = CURVE_SAMPLES;
+  dv.setUint16(6, valid.length, true);
+  dv.setUint32(8, total, true);
+  let off = CURVE_HEADER_BYTES;
+  for (const r of valid) {
+    dv.setUint32(off, r.i, true);
+    dv.setUint32(off + 4, Math.max(0, Math.min(1e6, Math.round(r.d || 0))), true);
+    const peak = Math.max(0, Math.min(3000, r.peak));
+    dv.setUint16(off + 8, Math.round(peak * 10), true);
+    bytes[off + 10] = synthetic ? 1 : 0;
+    bytes[off + 11] = 0;
+    const denom = peak > 0 ? peak : 1;
+    for (let k = 0; k < CURVE_SAMPLES; k++) {
+      const v = Math.max(0, Math.min(denom, r.s[k]));
+      bytes[off + 12 + k] = Math.round((v / denom) * 255);
+    }
+    off += CURVE_RECORD_BYTES;
+  }
+  dv.setUint32(12, curveChecksum(bytes, CURVE_HEADER_BYTES, bytes.length), true);
+  return bytes;
+}
+
+// Header decode + structural validation. FAILS CLOSED: unknown codec
+// versions, size mismatches, over-budget payloads, absurd stroke
+// claims, and checksum failures all return null. Never allocates based
+// on the declared count — the count is checked against the actual
+// byte length instead.
+function decodeCurveHeader(bytes) {
+  if (!(bytes instanceof Uint8Array)) return null;
+  if (bytes.length < CURVE_HEADER_BYTES || bytes.length > CURVE_SESSION_BUDGET_BYTES) return null;
+  if (bytes[0] !== 0x50 || bytes[1] !== 0x4D || bytes[2] !== 0x43 || bytes[3] !== 0x56) return null;
+  if (bytes[4] !== CURVE_CODEC_VERSION) return null;   // unknown version → closed
+  if (bytes[5] !== CURVE_SAMPLES) return null;
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const count = dv.getUint16(6, true);
+  if (!count || count > CURVE_MAX_RECORDS) return null;
+  if (bytes.length !== CURVE_HEADER_BYTES + count * CURVE_RECORD_BYTES) return null;
+  const totalStrokes = dv.getUint32(8, true);
+  if (totalStrokes < count || totalStrokes > CURVE_MAX_TOTAL_STROKES) return null;
+  if (dv.getUint32(12, true) !== curveChecksum(bytes, CURVE_HEADER_BYTES, bytes.length)) return null;
+  return { v: bytes[4], samples: bytes[5], count, totalStrokes };
+}
+
+// Random-access decode of one record (0-based index). Reconstructs
+// absolute forces: sample/255 × peak. Bounds-checked; null on any
+// invalid input. O(1) — no other record is touched.
+function decodeCurveRecord(bytes, idx) {
+  const h = decodeCurveHeader(bytes);
+  if (!h || !Number.isInteger(idx) || idx < 0 || idx >= h.count) return null;
+  return decodeCurveRecordUnchecked(bytes, idx);
+}
+// Fast path once the payload has been validated ONCE (replay uses
+// this behind its own cached header).
+function decodeCurveRecordUnchecked(bytes, idx) {
+  const off = CURVE_HEADER_BYTES + idx * CURVE_RECORD_BYTES;
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const peak = dv.getUint16(off + 8, true) / 10;
+  const samples = new Array(CURVE_SAMPLES);
+  for (let k = 0; k < CURVE_SAMPLES; k++) samples[k] = (bytes[off + 12 + k] / 255) * peak;
+  return { i: dv.getUint32(off, true), d: dv.getUint32(off + 4, true),
+           peak, synthetic: !!(bytes[off + 10] & 1), samples };
+}
+
+// Ordinal → record-index map. Scans only the 4 ordinal bytes of each
+// record — no sample expansion, so history rendering stays cheap.
+function curveOrdinalIndex(bytes) {
+  const h = decodeCurveHeader(bytes);
+  if (!h) return null;
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const map = new Map();
+  let prev = 0;
+  for (let idx = 0; idx < h.count; idx++) {
+    const ord = dv.getUint32(CURVE_HEADER_BYTES + idx * CURVE_RECORD_BYTES, true);
+    if (ord <= prev || ord > h.totalStrokes) return null;  // misordered → corrupt
+    map.set(ord, idx);
+    prev = ord;
+  }
+  return map;
+}
+
+// Full validation for UNTRUSTED input (file import, Drive merge). The
+// cheap checks run first: string length before decoding, actual byte
+// length before header parse, checksum before the ordinal scan. Returns
+// { bytes, count, totalStrokes } or null — nothing hostile survives.
+function sanitizeCurveDetailB64(str) {
+  if (typeof str !== "string" || str.length < 24 || str.length > CURVE_B64_MAX_CHARS) return null;
+  const bytes = curveB64Decode(str);
+  if (!bytes) return null;
+  const h = decodeCurveHeader(bytes);
+  if (!h) return null;
+  if (!curveOrdinalIndex(bytes)) return null;
+  return { bytes, count: h.count, totalStrokes: h.totalStrokes };
+}
+
+// Session-entry coverage metadata (tiny, rides history/Drive/exports).
+const CURVE_COVERAGE_STATES = ["complete", "partial", "unavailable", "legacy", "removed"];
+function sanitizeCurveMeta(m) {
+  if (!m || typeof m !== "object") return null;
+  const v = Number.isInteger(m.v) && m.v >= 1 && m.v <= 99 ? m.v : null;
+  const cov = CURVE_COVERAGE_STATES.indexOf(m.coverage) >= 0 ? m.coverage : null;
+  if (!v || !cov) return null;
+  const n = (x, hi) => (typeof x === "number" && isFinite(x) && x >= 0 && x <= hi)
+    ? Math.round(x) : 0;
+  return { v, coverage: cov,
+           retained: n(m.retained, CURVE_MAX_TOTAL_STROKES),
+           total: n(m.total, CURVE_MAX_TOTAL_STROKES) };
+}
+
+// ---- Deterministic retention -----------------------------------------
+// When a session's curves exceed the budget, keep (in priority order):
+// the first and final valid strokes, strokes nearest each anchor
+// distance (bookmarks, drift-event boundaries, interval and race-
+// segment transitions), then distribute the remaining slots evenly
+// across the whole session. Same input → same output, no randomness.
+function retainCurveRecords(records, opts) {
+  const budget = (opts && opts.budgetBytes) || CURVE_SESSION_BUDGET_BYTES;
+  const anchors = (opts && Array.isArray(opts.anchorDistances)) ? opts.anchorDistances : [];
+  const rows = Array.isArray(records) ? records : [];
+  const total = rows.length;
+  const maxRec = Math.max(2, Math.floor((budget - CURVE_HEADER_BYTES) / CURVE_RECORD_BYTES));
+  if (total <= maxRec) {
+    return { kept: rows.slice(), retained: total, total, complete: true };
+  }
+  const keep = new Set([0, total - 1]);
+  // Anchor distances → nearest record (first-wins on distance ties).
+  for (const a of anchors) {
+    if (typeof a !== "number" || !isFinite(a)) continue;
+    let best = -1, bestErr = Infinity;
+    for (let j = 0; j < total; j++) {
+      const d = rows[j] && typeof rows[j].d === "number" ? rows[j].d : null;
+      if (d == null) continue;
+      const err = Math.abs(d - a);
+      if (err < bestErr) { bestErr = err; best = j; }
+    }
+    if (best >= 0 && keep.size < maxRec) keep.add(best);
+  }
+  // Fill the remaining slots evenly across the session (deterministic:
+  // ideal grid positions, walking forward past already-kept indexes).
+  const free = maxRec - keep.size;
+  if (free > 0) {
+    for (let k = 0; k < free; k++) {
+      let j = Math.round(((k + 1) * (total - 1)) / (free + 1));
+      while (j < total && keep.has(j)) j++;
+      if (j >= total) { j = Math.round(((k + 1) * (total - 1)) / (free + 1)); while (j >= 0 && keep.has(j)) j--; }
+      if (j >= 0 && j < total) keep.add(j);
+    }
+  }
+  const kept = [...keep].sort((a, b) => a - b).map(j => rows[j]);
+  return { kept, retained: kept.length, total, complete: false };
+}
+
+// ---- Stroke position ↔ ordinal ---------------------------------------
+// entry.strokes is stride-decimated (v1.18): retained sample j always
+// corresponds to raw stroke ordinal j×stride+1. v1.21 sessions persist
+// the final stride (entry.strokeStride); stride 1 → position == ordinal.
+function strokePosToOrdinal(pos, stride) {
+  const s = Number.isInteger(stride) && stride >= 1 ? stride : 1;
+  return Number.isInteger(pos) && pos >= 0 ? pos * s + 1 : null;
+}
+function ordinalToStrokePos(ord, stride, len) {
+  const s = Number.isInteger(stride) && stride >= 1 ? stride : 1;
+  if (!Number.isInteger(ord) || ord < 1) return null;
+  if ((ord - 1) % s !== 0) return null;
+  const pos = (ord - 1) / s;
+  return (Number.isInteger(len) && pos >= len) ? null : pos;
+}
+
+// ---- Evidence-stroke selection ---------------------------------------
+// Identifies notable strokes for the replay navigator. HONEST BY
+// CONSTRUCTION: "fastest" is fastest valid split — never labelled best
+// technique; baseline similarity is a shape comparison, never proof of
+// correctness. Isolated split spikes (a dropped BLE packet reads as one
+// absurd stroke between two normal ones) are excluded as artifacts;
+// SUSTAINED slow strokes (a real paddle break) are kept.
+// Ties are deterministic: the earliest stroke wins.
+function _median(vs) {
+  if (!vs.length) return null;
+  const s = vs.slice().sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+function findEvidenceStrokes(tl, opts) {
+  const rows = Array.isArray(tl) ? tl : [];
+  const curveAt = (opts && opts.curveAt) || (() => null);
+  const baseline = (opts && Array.isArray(opts.baselineCurve) && opts.baselineCurve.length >= 8)
+    ? opts.baselineCurve : null;
+  const splitOk = v => v != null && isFinite(v) && v >= 60 && v <= 360;
+  // Validity + artifact pass.
+  const valid = [];
+  let artifacts = 0;
+  for (let j = 0; j < rows.length; j++) {
+    const sp = rows[j] && rows[j].split;
+    if (!splitOk(sp)) continue;
+    const neigh = [];
+    for (let k = Math.max(0, j - 3); k <= Math.min(rows.length - 1, j + 3); k++) {
+      if (k !== j && rows[k] && splitOk(rows[k].split)) neigh.push(rows[k].split);
+    }
+    if (neigh.length >= 3) {
+      const med = _median(neigh);
+      const dev = Math.abs(sp - med);
+      if (dev > Math.max(12, 0.25 * med)) {
+        // Big deviation. Artifact only if it is ISOLATED — both adjacent
+        // valid splits sit near the median. A sustained change is rowing.
+        const adj = [];
+        if (j > 0 && rows[j - 1] && splitOk(rows[j - 1].split)) adj.push(rows[j - 1].split);
+        if (j < rows.length - 1 && rows[j + 1] && splitOk(rows[j + 1].split)) adj.push(rows[j + 1].split);
+        if (adj.length === 2 && adj.every(v => Math.abs(v - med) <= 0.12 * med)) {
+          artifacts++;
+          continue;
+        }
+      }
+    }
+    valid.push(j);
+  }
+  const out = { validCount: valid.length, artifactsExcluded: artifacts,
+                fastest: null, slowest: null, closest: null, deviation: null,
+                representative: null };
+  if (valid.length >= 5) {
+    let fa = valid[0], sl = valid[0];
+    for (const j of valid) {
+      if (rows[j].split < rows[fa].split) fa = j;
+      if (rows[j].split > rows[sl].split) sl = j;
+    }
+    out.fastest = { pos: fa, split: rows[fa].split };
+    out.slowest = { pos: sl, split: rows[sl].split };
+  }
+  // Curve-based picks need retained curves.
+  const withCurves = [];
+  for (const j of valid) {
+    const c = curveAt(j);
+    if (c && c.length >= 8) withCurves.push({ pos: j, curve: c });
+  }
+  out.curveCount = withCurves.length;
+  if (withCurves.length >= 5) {
+    // Session-mean NORMALISED shape → "most representative" = highest
+    // similarity to the mean shape.
+    const mean = new Array(CURVE_SAMPLES).fill(0);
+    for (const w of withCurves) {
+      let peak = 0;
+      for (const v of w.curve) if (v > peak) peak = v;
+      if (peak <= 0) continue;
+      for (let k = 0; k < CURVE_SAMPLES; k++) mean[k] += Math.max(0, w.curve[k]) / peak;
+    }
+    for (let k = 0; k < CURVE_SAMPLES; k++) mean[k] /= withCurves.length;
+    let rep = null, repSim = -1;
+    for (const w of withCurves) {
+      const sim = curveSimilarity(w.curve, mean);
+      if (sim != null && sim > repSim) { repSim = sim; rep = w.pos; }
+    }
+    if (rep != null) out.representative = { pos: rep, sim: repSim };
+    if (baseline) {
+      let cl = null, clSim = -1, dv = null, dvSim = 101;
+      for (const w of withCurves) {
+        const sim = curveSimilarity(w.curve, baseline);
+        if (sim == null) continue;
+        if (sim > clSim) { clSim = sim; cl = w.pos; }
+        if (sim < dvSim) { dvSim = sim; dv = w.pos; }
+      }
+      if (cl != null) out.closest = { pos: cl, sim: clSim };
+      if (dv != null) out.deviation = { pos: dv, sim: dvSim };
+    }
+  }
+  return out;
+}
+
+// ---- Window / interval / race-segment curve baselines ----------------
+// Average the RETAINED curves inside a stroke range and report exactly
+// what went in: retained vs total counts, the range, and a transparent
+// confidence. Never fabricates — a range without stored curves returns
+// an insufficient result, not an invented curve.
+function buildCurveWindowBaseline(tl, fromPos, toPos, opts) {
+  const rows = Array.isArray(tl) ? tl : [];
+  const curveAt = (opts && opts.curveAt) || (() => null);
+  const minSamples = (opts && opts.minSamples) || 8;
+  const label = (opts && opts.label) || "window";
+  if (!Number.isInteger(fromPos) || !Number.isInteger(toPos) ||
+      fromPos < 0 || toPos >= rows.length || fromPos > toPos) {
+    return { insufficient: "Invalid stroke range." };
+  }
+  const totalInRange = toPos - fromPos + 1;
+  const sum = new Array(CURVE_SAMPLES).fill(0);
+  let n = 0;
+  const dls = [], ratios = [], splits = [];
+  for (let j = fromPos; j <= toPos; j++) {
+    const c = curveAt(j);
+    if (c && c.length === CURVE_SAMPLES) {
+      for (let k = 0; k < CURVE_SAMPLES; k++) sum[k] += Math.max(0, c[k]);
+      n++;
+    }
+    const p = rows[j] || {};
+    if (p.driveLengthM != null && isFinite(p.driveLengthM)) dls.push(p.driveLengthM);
+    if (p.ratio != null && isFinite(p.ratio)) ratios.push(p.ratio);
+    if (p.split != null && isFinite(p.split)) splits.push(p.split);
+  }
+  if (n < minSamples) {
+    return { insufficient:
+      `Only ${n} of ${totalInRange} strokes in this range have stored curves (minimum ${minSamples}).`,
+      retained: n, total: totalInRange };
+  }
+  const curve = sum.map(v => v / n);
+  const stat = vs => {
+    if (vs.length < 2) return null;
+    const mean = vs.reduce((a, b) => a + b, 0) / vs.length;
+    const sd = Math.sqrt(vs.reduce((a, b) => a + (b - mean) * (b - mean), 0) / vs.length);
+    return { mean, sd, n: vs.length };
+  };
+  const coverage = n / totalInRange;
+  const confidence = (n >= 20 && coverage >= 0.8) ? "high" : (n >= 8 ? "medium" : "low");
+  return {
+    curve, retained: n, total: totalInRange, from: fromPos, to: toPos, label,
+    partial: coverage < 0.999,
+    stats: { dl: stat(dls), ratio: stat(ratios), split: stat(splits) },
+    confidence,
+    confidenceWhy: `${n}/${totalInRange} strokes in the range have stored curves` +
+      (coverage < 0.999 ? " (partial retained sample)" : " (complete coverage)"),
+  };
+}
+
+// Map an interval index or race segment onto a stroke-position range of
+// the timeline. Returns {from, to, label} or null when the range can't
+// be resolved from the persisted data.
+function strokeRangeForDistance(tl, startM, endM, label) {
+  const rows = Array.isArray(tl) ? tl : [];
+  let from = null, to = null;
+  for (let j = 0; j < rows.length; j++) {
+    const d = rows[j] && rows[j].distanceM;
+    if (d == null) continue;
+    if (d >= startM && from == null) from = j;
+    if (d <= endM) to = j;
+  }
+  if (from == null || to == null || from > to) return null;
+  return { from, to, label: label || `${Math.round(startM)}–${Math.round(endM)} m` };
+}
+function strokeRangeForInterval(session, tl, intervalIdx) {
+  const ivs = buildIntervalReplayTimeline(session);
+  if (!ivs.length || intervalIdx < 0 || intervalIdx >= ivs.length) return null;
+  const start = intervalIdx > 0 ? ivs[intervalIdx - 1].cumulativeDistanceM : 0;
+  const end = ivs[intervalIdx].cumulativeDistanceM;
+  return strokeRangeForDistance(tl, start, end, `interval ${intervalIdx + 1}`);
+}
+function strokeRangeForRaceSegment(session, tl, segIdx) {
+  const race = session && session.plan && session.plan.race;
+  if (!race || !Array.isArray(race.segments) || segIdx < 0 || segIdx >= race.segments.length) return null;
+  const seg = race.segments[segIdx];
+  if (!seg || !(seg.toM > seg.fromM)) return null;
+  return strokeRangeForDistance(tl, seg.fromM, seg.toM,
+    `${seg.phase || "segment"} (${Math.round(seg.fromM)}–${Math.round(seg.toM)} m)`);
+}
+
+// Validate an import's top-level curve map (v1.21): OWN string keys
+// only, each id must belong to a session actually being imported, and
+// each payload must pass full binary validation (sanitizeCurveDetailB64).
+// Hostile keys (__proto__/constructor/prototype), unknown ids, unknown
+// codec versions, and malformed payloads are silently dropped. Returns
+// a plain ARRAY — never a keyed object — so prototype pollution cannot
+// ride the result. Bounded to 100 payloads per import.
+function sanitizeImportedCurveMap(curves, validIds) {
+  if (!curves || typeof curves !== "object" || Array.isArray(curves)) return [];
+  const idSet = new Set(Array.isArray(validIds) ? validIds : []);
+  const out = [];
+  for (const key of Object.keys(curves)) {
+    if (out.length >= 100) break;
+    if (typeof key !== "string" || !key || key.length > 80) continue;
+    if (key === "__proto__" || key === "constructor" || key === "prototype") continue;
+    if (!idSet.has(key)) continue;
+    const v = curves[key];
+    if (!v || typeof v !== "object" || Array.isArray(v)) continue;
+    if (v.v !== CURVE_CODEC_VERSION) continue;             // unknown version → closed
+    const p = sanitizeCurveDetailB64(v.b64);
+    if (!p) continue;
+    out.push({ id: key, bytes: p.bytes, count: p.count, totalStrokes: p.totalStrokes });
+  }
+  return out;
 }

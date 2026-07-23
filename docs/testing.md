@@ -54,17 +54,25 @@ When releasing a new version I walk through this checklist:
 
 ## Performance budget
 
-| Metric | Target | Last measured |
+Corrected in v1.21.0 — the previous table dated from the ~330 KB single-file era and
+had not been re-measured since.
+
+| Metric | Guard / target | Last measured (v1.21.0) |
 |---|---|---|
-| First paint | < 1 s | ~600 ms (Chrome desktop, Surge.sh, broadband) |
-| Time to interactive | < 2 s | ~1.2 s |
-| Render time per BLE update | < 10 ms | ~4 ms typical, ~8 ms when force-curve overlay is active |
-| Memory after 1 hr session | < 50 MB | ~30 MB |
-| Bundle size | < 400 KB | 332 KB |
+| Offline app size (index + analysis + curves + sw) | < 768 KB (enforced by `npm test`) | ~767 KB |
+| index.html alone | < 660 KB (enforced) | ~640 KB |
+| Curve payload, typical 30-min session | ≤ 512 KiB/session (enforced) | ~112 KB binary (1,500 strokes) |
+| Curve decode (validate + index a full 512 KiB payload) | < 250 ms (enforced in suite) | ~15 ms (Node; see suite output) |
+| Single-stroke curve decode during replay scrub | imperceptible | O(1), 64 samples via bounded LRU |
+| First paint / interactive | no regression vs v1.20 | see release notes; re-measure per release |
 
-Tested on a 2024 mid-tier laptop (Ryzen 5, integrated graphics).
+Render-per-BLE-update and long-session memory figures from the old table were removed
+rather than restated — they predate the current codebase and would be misleading.
 
+## v1.21.0 note
 
-## v1.20.0 note
-
-The suite (316 assertions) runs both app scripts — `analysis.js` + the inline main script — concatenated in one Node vm sandbox. New-engine groups (baseline, live cues, Race Lab, power profile, v1.20 compat) use deterministic synthetic fixtures only; no personal workout data is committed.
+The suite (see `npm run check` for the current assertion count — 400+ since v1.21.0)
+runs all three app scripts — `analysis.js` + `curves.js` + the inline main script —
+concatenated in one Node vm sandbox in load order. The v1.21 groups (curve codec,
+retention, import/compat, stroke evidence, window baselines, replay curve sync) use
+deterministic synthetic fixtures only; no personal workout data is committed.

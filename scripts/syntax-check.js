@@ -1,19 +1,21 @@
-// Standalone syntax check for the app's scripts (v1.20.0: two classic
-// scripts — pm5web/analysis.js and the inline main script). Used by CI
-// so a broken edit fails the build before tests run.
+// Standalone syntax check for the app's scripts (v1.21.0: three classic
+// scripts — pm5web/analysis.js, pm5web/curves.js, and the inline main
+// script). Used by CI so a broken edit fails the build before tests run.
 const fs = require("fs");
 const path = require("path");
 
 const idxFile = path.join(__dirname, "..", "pm5web", "index.html");
-const anaFile = path.join(__dirname, "..", "pm5web", "analysis.js");
 
-const analysis = fs.readFileSync(anaFile, "utf8");
-try {
-  new Function(analysis);
-} catch (e) {
-  console.error("Syntax error in analysis.js:", e.message);
-  process.exit(1);
+for (const name of ["analysis.js", "curves.js"]) {
+  const src = fs.readFileSync(path.join(__dirname, "..", "pm5web", name), "utf8");
+  try {
+    new Function(src);
+  } catch (e) {
+    console.error(`Syntax error in ${name}:`, e.message);
+    process.exit(1);
+  }
 }
+const analysis = fs.readFileSync(path.join(__dirname, "..", "pm5web", "analysis.js"), "utf8");
 
 const html = fs.readFileSync(idxFile, "utf8");
 const blocks = [...html.matchAll(/<script(?:\s+type="module")?>([\s\S]*?)<\/script>/g)];

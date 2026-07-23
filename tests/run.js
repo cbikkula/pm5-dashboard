@@ -1145,6 +1145,419 @@ if (app.computeRaceDebrief && app.resolveBaseline && app.importSessionsFromText)
 }
 
 // ---------------------------------------------------------------------
+// v1.21.0 — Stroke-Level Evidence. Deterministic fixtures only.
+// ---------------------------------------------------------------------
+group("curve codec");
+if (app.encodeCurveDetail) {
+  // Deterministic bell-shaped drive: peak `peak` lbf at fraction `at`.
+  const bell = (peak, at) => Array.from({ length: 64 }, (_, k) => {
+    const t = k / 63;
+    const f = t < at ? Math.sin((t / at) * Math.PI / 2)
+                     : Math.sin(((1 - t) / (1 - at)) * Math.PI / 2);
+    return peak * f;
+  });
+  const mkRecords = n => Array.from({ length: n }, (_, j) => ({
+    i: j + 1, d: j * 10, peak: 150 + (j % 7),
+    s: bell(150 + (j % 7), 0.38 + (j % 5) * 0.02),
+  }));
+
+  const recs = mkRecords(240);                       // ~2k session
+  const snap = JSON.stringify(recs);
+  const enc = app.encodeCurveDetail(recs, 240);
+  ok("encode: source records never mutated", JSON.stringify(recs) === snap);
+  ok("encode: payload size = header + n×record",
+    enc && enc.length === app.CURVE_HEADER_BYTES + 240 * app.CURVE_RECORD_BYTES);
+  const h = app.decodeCurveHeader(enc);
+  ok("header: version/count/total round-trip",
+    h && h.v === 1 && h.samples === 64 && h.count === 240 && h.totalStrokes === 240);
+  ok("encode is deterministic", app.curveB64Encode(app.encodeCurveDetail(recs, 240)) === app.curveB64Encode(enc));
+
+  // Random access + stable stroke association.
+  const r5 = app.decodeCurveRecord(enc, 5);
+  ok("record 5 decodes with its own identity", r5 && r5.i === 6 && r5.d === 50);
+  ok("peak force exact to 0.1 lbf", Math.abs(r5.peak - recs[5].peak) < 0.051);
+  ok("invalid record indexes rejected",
+    app.decodeCurveRecord(enc, -1) === null && app.decodeCurveRecord(enc, 240) === null &&
+    app.decodeCurveRecord(enc, 1.5) === null);
+
+  // Fidelity: reconstruction error bounded by peak/510 (8-bit peak-scaled).
+  let maxErr = 0, sumErr = 0, nErr = 0, maxPtErr = 0;
+  for (let j = 0; j < 240; j++) {
+    const dec = app.decodeCurveRecord(enc, j);
+    const bound = recs[j].peak / 510 + 1e-9;
+    for (let k = 0; k < 64; k++) {
+      const e = Math.abs(dec.samples[k] - recs[j].s[k]);
+      if (e > maxErr) maxErr = e;
+      sumErr += e; nErr++;
+    }
+    const ptErr = Math.abs(app.strokePeakTiming(dec.samples) - app.strokePeakTiming(recs[j].s));
+    if (ptErr > maxPtErr) maxPtErr = ptErr;
+    if (maxErr > bound) break;
+  }
+  ok("reconstruction error ≤ peak/510 on every sample", maxErr <= (156 / 510) + 1e-9);
+  ok("average reconstruction error well under the bound", (sumErr / nErr) < 0.16);
+  ok("peak timing survives quantisation (≤1 sample)", maxPtErr <= 1 / 63 + 1e-9);
+  const dec0 = app.decodeCurveRecord(enc, 0);
+  ok("decoded curve is shape-identical (similarity 100)",
+    app.curveSimilarity(dec0.samples, recs[0].s) === 100);
+  const sm0 = app.curveShapeMetrics(dec0.samples), smo = app.curveShapeMetrics(recs[0].s);
+  ok("shape metrics stable through codec (peak ≤1 sample, frontLoad <1%)",
+    sm0 && smo && Math.abs(sm0.peakPos - smo.peakPos) <= 1 / 63 + 1e-9 &&
+    Math.abs(sm0.frontLoad - smo.frontLoad) < 0.01);
+
+  // Differently-sampled input is the caller's job (capture resamples to
+  // 64) — codec rejects wrong-length curves rather than guessing.
+  ok("wrong sample count rejected",
+    app.encodeCurveDetail([{ i: 1, d: 0, peak: 100, s: bell(100, 0.4).slice(0, 32) }], 1) === null);
+  ok("empty record list rejected", app.encodeCurveDetail([], 1) === null);
+  ok("non-finite samples rejected", app.encodeCurveDetail(
+    [{ i: 1, d: 0, peak: 100, s: [...bell(100, 0.4).slice(0, 63), NaN] }], 1) === null);
+  const big = app.encodeCurveDetail([{ i: 1, d: 999999, peak: 2999.9, s: bell(2999.9, 0.5) }], 1);
+  const bigDec = app.decodeCurveRecord(big, 1 - 1);
+  ok("maximum valid values survive", bigDec && Math.abs(bigDec.peak - 2999.9) < 0.06 && bigDec.d === 999999);
+  ok("duplicate ordinals deduped deterministically",
+    app.decodeCurveHeader(app.encodeCurveDetail(
+      [{ i: 3, d: 0, peak: 100, s: bell(100, 0.4) }, { i: 3, d: 9, peak: 120, s: bell(120, 0.4) }], 5)).count === 1);
+
+  // base64 codec: strict round trip + strict rejection.
+  const b64 = app.curveB64Encode(enc);
+  const back = app.curveB64Decode(b64);
+  ok("b64 round trip is byte-exact", back && back.length === enc.length &&
+    back.every((v, i) => v === enc[i]));
+  ok("b64 rejects bad length", app.curveB64Decode("abc") === null);
+  ok("b64 rejects bad charset", app.curveB64Decode("ab!d") === null);
+  ok("b64 rejects interior padding", app.curveB64Decode("ab=dabcd") === null);
+
+  // Corruption, truncation, tampering — all fail closed.
+  const flip = new Uint8Array(enc); flip[app.CURVE_HEADER_BYTES + 20] ^= 0xFF;
+  ok("checksum catches a flipped byte", app.decodeCurveHeader(flip) === null);
+  ok("truncated payload rejected", app.decodeCurveHeader(enc.slice(0, enc.length - 10)) === null);
+  const vUp = new Uint8Array(enc); vUp[4] = 2;
+  ok("unknown codec version fails closed", app.decodeCurveHeader(vUp) === null);
+  const lie = new Uint8Array(enc);
+  new DataView(lie.buffer).setUint16(6, 60000, true);
+  ok("malicious declared count rejected (no allocation from claims)",
+    app.decodeCurveHeader(lie) === null);
+  ok("oversized b64 rejected before decoding",
+    app.sanitizeCurveDetailB64("A".repeat(app.CURVE_B64_MAX_CHARS + 4)) === null);
+  ok("non-string / junk payloads rejected",
+    app.sanitizeCurveDetailB64(null) === null && app.sanitizeCurveDetailB64(12345) === null &&
+    app.sanitizeCurveDetailB64("QUJD") === null);
+  ok("valid payload passes full sanitisation",
+    (() => { const p = app.sanitizeCurveDetailB64(b64); return p && p.count === 240 && p.totalStrokes === 240; })());
+  // Tamper: swap two records in place and fix the checksum — the
+  // ordinal-order scan still refuses it.
+  const swap = new Uint8Array(enc);
+  const R = app.CURVE_RECORD_BYTES, H = app.CURVE_HEADER_BYTES;
+  const tmp = swap.slice(H, H + R);
+  swap.set(swap.slice(H + R, H + 2 * R), H);
+  swap.set(tmp, H + R);
+  new DataView(swap.buffer).setUint32(12, app.curveChecksum(swap, H, swap.length), true);
+  ok("misordered ordinals detected even with a valid checksum",
+    app.curveOrdinalIndex(swap) === null);
+  const oi = app.curveOrdinalIndex(enc);
+  ok("ordinal index maps stroke number → record", oi && oi.get(6) === 5 && oi.get(241) === undefined);
+}
+
+group("curve retention");
+if (app.retainCurveRecords) {
+  const bell = (peak, at) => Array.from({ length: 64 }, (_, k) => {
+    const t = k / 63;
+    return peak * (t < at ? Math.sin((t / at) * Math.PI / 2)
+                          : Math.sin(((1 - t) / (1 - at)) * Math.PI / 2));
+  });
+  const mk = n => Array.from({ length: n }, (_, j) => ({
+    i: j + 1, d: j * 10, peak: 150, s: bell(150, 0.4),
+  }));
+  // Ordinary sessions keep every curve: 2k (~240), 30 min (~600 after
+  // stride decimation), 6k (~700) all fit the 512 KiB ceiling.
+  for (const [label, n] of [["2k", 240], ["6k", 700], ["30min", 1500], ["intervals", 900]]) {
+    const r = app.retainCurveRecords(mk(n), {});
+    ok(`${label} session retains all ${n} curves`, r.complete && r.retained === n && r.total === n);
+  }
+  // Long session: deterministic retention under a small test budget.
+  const rows = mk(100);
+  const budget = app.CURVE_HEADER_BYTES + 10 * app.CURVE_RECORD_BYTES;
+  const opts = { budgetBytes: budget, anchorDistances: [500, 730] };
+  const r1 = app.retainCurveRecords(rows, opts);
+  const r2 = app.retainCurveRecords(rows, opts);
+  ok("long-session retention is deterministic",
+    JSON.stringify(r1.kept.map(k => k.i)) === JSON.stringify(r2.kept.map(k => k.i)));
+  ok("ceiling never exceeded", r1.kept.length <= 10);
+  ok("first and final curves survive",
+    r1.kept[0].i === 1 && r1.kept[r1.kept.length - 1].i === 100);
+  ok("anchor strokes survive (bookmark/drift/transition distances)",
+    r1.kept.some(k => k.d === 500) && r1.kept.some(k => k.d === 730));
+  ok("remaining slots distributed across the session",
+    (() => { const is = r1.kept.map(k => k.i);
+      let maxGap = 0; for (let j = 1; j < is.length; j++) maxGap = Math.max(maxGap, is[j] - is[j - 1]);
+      return maxGap <= 30; })());
+  ok("coverage metadata is accurate", !r1.complete && r1.retained === r1.kept.length && r1.total === 100);
+  ok("retention never mutates its input", rows.length === 100 && rows[0].i === 1);
+  // Full-budget path: an ultra session trims to the real ceiling and
+  // the encoded result stays under 512 KiB.
+  const ultra = app.retainCurveRecords(mk(7100), {});
+  const encU = app.encodeCurveDetail(ultra.kept, 7100);
+  ok("ultra session trims to the hard ceiling",
+    !ultra.complete && ultra.retained === app.CURVE_MAX_RECORDS);
+  ok("encoded ultra payload ≤ 512 KiB", encU && encU.length <= app.CURVE_SESSION_BUDGET_BYTES);
+
+  // Coverage metadata sanitizer (rides history/exports/Drive).
+  ok("curve meta: valid values pass",
+    (() => { const m = app.sanitizeCurveMeta({ v: 1, coverage: "partial", retained: 500, total: 900 });
+      return m && m.v === 1 && m.coverage === "partial" && m.retained === 500 && m.total === 900; })());
+  ok("curve meta: unknown coverage state rejected",
+    app.sanitizeCurveMeta({ v: 1, coverage: "<script>" }) === null);
+  ok("curve meta: missing version rejected",
+    app.sanitizeCurveMeta({ coverage: "complete" }) === null);
+  ok("curve meta: hostile numbers zeroed",
+    app.sanitizeCurveMeta({ v: 1, coverage: "complete", retained: -5, total: Infinity }).retained === 0);
+}
+
+group("curve import + compat");
+if (app.sanitizeImportedCurveMap) {
+  const bell = (peak, at) => Array.from({ length: 64 }, (_, k) => {
+    const t = k / 63;
+    return peak * (t < at ? Math.sin((t / at) * Math.PI / 2)
+                          : Math.sin(((1 - t) / (1 - at)) * Math.PI / 2));
+  });
+  const recs = Array.from({ length: 50 }, (_, j) => ({ i: j + 1, d: j * 10, peak: 150, s: bell(150, 0.4) }));
+  const b64 = app.curveB64Encode(app.encodeCurveDetail(recs, 50));
+
+  // Export → import round trip preserves curve-to-stroke alignment.
+  const got = app.sanitizeImportedCurveMap({ "S1": { v: 1, b64 } }, ["S1"]);
+  ok("new-format round trip validates", got.length === 1 && got[0].id === "S1" && got[0].count === 50);
+  ok("round-tripped ordinals still map to strokes",
+    (() => { const m = app.curveOrdinalIndex(got[0].bytes); return m && m.get(1) === 0 && m.get(50) === 49; })());
+
+  // Hostile input: pollution keys, unknown ids, unknown versions,
+  // malformed and oversized payloads — none survive.
+  const hostile = JSON.parse(`{"__proto__":{"polluted":1},"constructor":{"v":1},"S1":{"v":1,"b64":"${b64}"},"GHOST":{"v":1,"b64":"${b64}"},"S2":{"v":9,"b64":"${b64}"},"S3":{"v":1,"b64":"AAAA"},"S4":{"v":1,"b64":12}}`);
+  const out = app.sanitizeImportedCurveMap(hostile, ["S1", "S2", "S3", "S4"]);
+  ok("hostile curve map: only the one valid payload survives",
+    out.length === 1 && out[0].id === "S1");
+  ok("prototype pollution keys are inert", ({}).polluted === undefined &&
+    !Object.prototype.hasOwnProperty.call(Object.prototype, "polluted"));
+  ok("curve map result is an array, never a keyed object", Array.isArray(out));
+  ok("non-object curve maps rejected",
+    app.sanitizeImportedCurveMap(null, ["a"]).length === 0 &&
+    app.sanitizeImportedCurveMap([1, 2], ["a"]).length === 0 &&
+    app.sanitizeImportedCurveMap("x", ["a"]).length === 0);
+
+  // v1.20-and-older sessions load unchanged (no curve fields at all).
+  app.state.history = [];
+  app.importSessionsFromText(JSON.stringify({ kind: "pm5-history-export", history: [{
+    id: "OLD1", title: "v1.20 session", schemaVersion: 3,
+    totals: { distanceM: 2000, elapsedS: 480 },
+    strokes: Array.from({ length: 20 }, (_, j) => ({ t: j * 2, d: j * 100, p: 120, dl: 1.4, dt: 0.8, rt: 1.6 })),
+    fc: { best: bell(150, 0.4), avg: bell(140, 0.42), peak: 150, n: 20 },
+  }] }));
+  const old1 = app.state.history[0];
+  ok("v1.20 export imports unchanged (no curve meta invented)",
+    old1 && old1.id === "OLD1" && !("curveMeta" in old1) && !("strokeStride" in old1));
+  ok("v1.20 session still replays at stroke fidelity",
+    app.getSessionReplayCapability(old1) === "stroke");
+
+  // v1.21 entry fields: curveMeta + strokeStride sanitized on import.
+  app.state.history = [];
+  app.importSessionsFromText(JSON.stringify({ kind: "pm5-history-export", history: [{
+    id: "NEW1", title: "v1.21 session", schemaVersion: 3,
+    totals: { distanceM: 2000, elapsedS: 480 },
+    strokes: Array.from({ length: 20 }, (_, j) => ({ t: j * 2, d: j * 100, p: 120 })),
+    strokeStride: 2, curveMeta: { v: 1, coverage: "complete", retained: 40, total: 40 },
+  }, {
+    id: "NEW2", title: "hostile fields", totals: { distanceM: 100, elapsedS: 30 },
+    strokes: [{ t: 0, d: 0 }, { t: 2, d: 10 }],
+    strokeStride: "8; drop tables", curveMeta: { v: 1, coverage: "evil", retained: {} },
+  }] }));
+  const n1 = app.state.history.find(e => e.id === "NEW1");
+  const n2 = app.state.history.find(e => e.id === "NEW2");
+  ok("valid strokeStride survives import", n1 && n1.strokeStride === 2);
+  ok("valid curveMeta survives import (coverage downgraded without payload)",
+    n1 && n1.curveMeta && n1.curveMeta.v === 1 && n1.curveMeta.coverage === "unavailable");
+  ok("hostile strokeStride dropped", n2 && !("strokeStride" in n2));
+  ok("hostile curveMeta dropped", n2 && !("curveMeta" in n2));
+  app.state.history = [];
+
+  // Demo-session quarantine: synthetic sessions never become baselines
+  // or power-profile evidence.
+  const demoE = { id: "D1", demo: true, date: "2026-07-20T10:00:00Z", title: "Demo (synthetic)",
+    totals: { distanceM: 2000, elapsedS: 480 },
+    strokes: Array.from({ length: 60 }, (_, j) => ({ t: j * 2, d: j * 33, p: 120, w: 200, r: 24, dl: 1.4, dt: 0.8, rt: 1.6 })),
+    fc: { avg: bell(150, 0.4), best: bell(160, 0.4), peak: 160, n: 60 } };
+  ok("auto baseline never picks a synthetic demo session",
+    app.resolveBaseline("auto", { history: [demoE] }) === null);
+  ok("rolling baseline never pools synthetic demo sessions",
+    app.buildRollingBaseline([demoE, demoE, demoE], null, 5) === null);
+  ok("power profile ignores synthetic demo sessions",
+    app.computePowerProfile([demoE], Date.parse("2026-07-21")).rows.every(r => !r.sufficient));
+}
+
+group("stroke evidence");
+if (app.findEvidenceStrokes) {
+  const bell = (peak, at) => Array.from({ length: 64 }, (_, k) => {
+    const t = k / 63;
+    return peak * (t < at ? Math.sin((t / at) * Math.PI / 2)
+                          : Math.sin(((1 - t) / (1 - at)) * Math.PI / 2));
+  });
+  // 100-stroke timeline: steady 120 s/500m; one clean fastest (118 at
+  // 40), a SUSTAINED slow patch (69-71), and one isolated 300 s spike
+  // at 20 (a dropped-packet artifact).
+  const tl = Array.from({ length: 100 }, (_, j) => ({
+    index: j, split: 120, distanceM: j * 10, driveLengthM: 1.4, ratio: 2.0,
+  }));
+  tl[40].split = 118;
+  tl[69].split = 133; tl[70].split = 136; tl[71].split = 134;
+  tl[20].split = 300;
+  const curves = tl.map((_, j) => bell(150, j === 90 ? 0.70 : 0.42));
+  const ev = app.findEvidenceStrokes(tl, {
+    curveAt: j => curves[j], baselineCurve: bell(148, 0.42),
+  });
+  ok("fastest valid stroke found", ev.fastest && ev.fastest.pos === 40 && ev.fastest.split === 118);
+  ok("slowest is the sustained patch, not the artifact",
+    ev.slowest && ev.slowest.pos === 70);
+  ok("isolated split spike excluded as artifact",
+    ev.artifactsExcluded >= 1 && ev.slowest.pos !== 20);
+  ok("largest deviation from baseline found", ev.deviation && ev.deviation.pos === 90);
+  ok("closest-to-baseline is a normal stroke", ev.closest && ev.closest.pos !== 90);
+  ok("most representative matches the majority shape",
+    ev.representative && ev.representative.pos !== 90);
+  ok("no 'best technique' classification exists in the result",
+    !("best" in ev) && !("bestTechnique" in ev));
+  ok("valid count excludes the artifact", ev.validCount === 99);
+
+  // Deterministic ties: equal splits → earliest stroke wins.
+  const tie = tl.map(p => ({ ...p }));
+  tie[60].split = 118;
+  const evTie = app.findEvidenceStrokes(tie, { curveAt: () => null });
+  ok("split ties break to the earliest stroke", evTie.fastest.pos === 40);
+
+  // Insufficient data: too few valid strokes → nulls, never guesses.
+  const thin = [{ index: 0, split: 120 }, { index: 1, split: 121 }, { index: 2 }];
+  const evThin = app.findEvidenceStrokes(thin, { curveAt: () => null });
+  ok("insufficient data returns nulls", evThin.fastest === null && evThin.slowest === null);
+  const noCurves = app.findEvidenceStrokes(tl, { curveAt: () => null, baselineCurve: bell(148, 0.42) });
+  ok("no stored curves → no curve-based picks, split picks still work",
+    noCurves.representative === null && noCurves.closest === null && noCurves.fastest.pos === 40);
+  ok("evidence selection never mutates the timeline", tl[40].split === 118 && tl.length === 100);
+}
+
+group("window baselines");
+if (app.buildCurveWindowBaseline) {
+  const bell = (peak, at) => Array.from({ length: 64 }, (_, k) => {
+    const t = k / 63;
+    return peak * (t < at ? Math.sin((t / at) * Math.PI / 2)
+                          : Math.sin(((1 - t) / (1 - at)) * Math.PI / 2));
+  });
+  // 200 strokes: first half easy (dl 1.30), second half harder (1.40).
+  const tl = Array.from({ length: 200 }, (_, j) => ({
+    index: j, distanceM: j * 10, split: j < 100 ? 125 : 118,
+    driveLengthM: j < 100 ? 1.30 : 1.40, ratio: j < 100 ? 2.2 : 1.9,
+  }));
+  const snap = JSON.stringify(tl);
+  const curveAt = j => bell(150 + (j >= 100 ? 10 : 0), 0.42);
+  const w1 = app.buildCurveWindowBaseline(tl, 0, 99, { curveAt, label: "first half" });
+  ok("window averages only retained curves", w1.curve && w1.retained === 100 && w1.total === 100);
+  ok("window DL stats reported", Math.abs(w1.stats.dl.mean - 1.30) < 1e-9 && w1.stats.dl.sd < 1e-9);
+  ok("full-coverage window: high confidence, not partial",
+    w1.confidence === "high" && !w1.partial && /complete coverage/.test(w1.confidenceWhy));
+  ok("window source range is stated", w1.from === 0 && w1.to === 99 && w1.label === "first half");
+  const w2 = app.buildCurveWindowBaseline(tl, 100, 199, { curveAt, label: "second half" });
+  ok("start-vs-base style comparison sees the difference",
+    w2.stats.dl.mean > w1.stats.dl.mean && w2.curve[32] > w1.curve[32]);
+
+  // Partial coverage: only every 2nd curve retained.
+  const wPart = app.buildCurveWindowBaseline(tl, 100, 199,
+    { curveAt: j => (j % 2 === 0 ? bell(160, 0.42) : null), label: "partial" });
+  ok("partial retained sample is disclosed",
+    wPart.partial && wPart.retained === 50 && wPart.total === 100 && /partial/.test(wPart.confidenceWhy));
+  ok("partial coverage lowers confidence", wPart.confidence === "medium");
+
+  // Minimum samples + invalid ranges never fabricate.
+  ok("below minimum samples → insufficient",
+    !!app.buildCurveWindowBaseline(tl, 0, 5, { curveAt }).insufficient);
+  ok("legacy session (no curves) → insufficient, nothing invented",
+    !!app.buildCurveWindowBaseline(tl, 0, 99, { curveAt: () => null }).insufficient);
+  ok("invalid range → insufficient",
+    !!app.buildCurveWindowBaseline(tl, 50, 20, { curveAt }).insufficient &&
+    !!app.buildCurveWindowBaseline(tl, -1, 20, { curveAt }).insufficient);
+  ok("window baseline never mutates the timeline", JSON.stringify(tl) === snap);
+
+  // Interval + race-segment ranges resolve from persisted data.
+  const sess = { results: [{ distanceM: 1000, elapsedS: 240 }, { distanceM: 1000, elapsedS: 235 }],
+    plan: { race: { distanceM: 2000, segments: [
+      { phase: "start", fromM: 0, toM: 200 }, { phase: "base", fromM: 200, toM: 1600 },
+      { phase: "sprint", fromM: 1600, toM: 2000 }] } } };
+  const iv1 = app.strokeRangeForInterval(sess, tl, 1);
+  ok("interval range maps to strokes", iv1 && tl[iv1.from].distanceM >= 1000 && iv1.label === "interval 2");
+  const sg2 = app.strokeRangeForRaceSegment(sess, tl, 2);
+  ok("race-segment range maps to strokes", sg2 && tl[sg2.from].distanceM >= 1600 && /sprint/.test(sg2.label));
+  ok("out-of-range interval/segment → null",
+    app.strokeRangeForInterval(sess, tl, 9) === null && app.strokeRangeForRaceSegment(sess, tl, 9) === null);
+  // Same-segment comparison against a compatible prior attempt: the
+  // same range builder works on the OTHER session's timeline.
+  const prevTl = tl.map(p => ({ ...p, driveLengthM: 1.35 }));
+  const sgPrev = app.strokeRangeForRaceSegment(sess, prevTl, 2);
+  const wPrev = app.buildCurveWindowBaseline(prevTl, sgPrev.from, sgPrev.to, { curveAt, label: "prior sprint" });
+  ok("compatible prior-attempt segment builds its own baseline",
+    wPrev.curve && Math.abs(wPrev.stats.dl.mean - 1.35) < 1e-9);
+}
+
+group("replay curve sync");
+if (app.strokePosToOrdinal) {
+  const bell = (peak, at) => Array.from({ length: 64 }, (_, k) => {
+    const t = k / 63;
+    return peak * (t < at ? Math.sin((t / at) * Math.PI / 2)
+                          : Math.sin(((1 - t) / (1 - at)) * Math.PI / 2));
+  });
+  ok("stride 1: position == ordinal-1",
+    app.strokePosToOrdinal(0, 1) === 1 && app.strokePosToOrdinal(5, 1) === 6);
+  ok("stride 4: decimated log maps exactly",
+    app.strokePosToOrdinal(5, 4) === 21 && app.ordinalToStrokePos(21, 4, 600) === 5);
+  ok("off-grid ordinals refuse to map (no nearest-neighbour lying)",
+    app.ordinalToStrokePos(22, 4, 600) === null);
+  ok("out-of-range positions refuse to map",
+    app.ordinalToStrokePos(21, 4, 5) === null && app.strokePosToOrdinal(-1, 1) === null);
+
+  // End-to-end: 600 strokes, stride 1 — selected stroke j must decode
+  // record with ordinal j+1 (no off-by-one).
+  const recs = Array.from({ length: 600 }, (_, j) => ({ i: j + 1, d: j * 5, peak: 150, s: bell(150, 0.4) }));
+  const enc = app.encodeCurveDetail(recs, 600);
+  const oi = app.curveOrdinalIndex(enc);
+  let aligned = true;
+  for (const j of [0, 1, 299, 598, 599]) {
+    const rec = app.decodeCurveRecord(enc, oi.get(app.strokePosToOrdinal(j, 1)));
+    if (!rec || rec.i !== j + 1 || rec.d !== j * 5) aligned = false;
+  }
+  ok("timeline → stroke → curve alignment exact at both ends", aligned);
+
+  // With retention: dropped strokes report "no curve", never a neighbour.
+  const kept = app.retainCurveRecords(recs, { budgetBytes: app.CURVE_HEADER_BYTES + 50 * app.CURVE_RECORD_BYTES });
+  const encK = app.encodeCurveDetail(kept.kept, 600);
+  const oiK = app.curveOrdinalIndex(encK);
+  const missing = [];
+  for (let j = 0; j < 600; j++) if (!oiK.has(j + 1)) missing.push(j);
+  ok("retained subset: missing strokes are reported missing",
+    missing.length === 600 - kept.retained && oiK.has(1) && oiK.has(600));
+  ok("lazy decode: ordinal index touches no samples",
+    (() => { const t0 = process.hrtime.bigint(); app.curveOrdinalIndex(enc);
+      return Number(process.hrtime.bigint() - t0) < 50e6; })());
+  // Worst-case accepted payload decodes promptly (all records).
+  const worst = app.retainCurveRecords(
+    Array.from({ length: app.CURVE_MAX_RECORDS }, (_, j) => ({ i: j + 1, d: j, peak: 150, s: bell(150, 0.4) })), {});
+  const encW = app.encodeCurveDetail(worst.kept, app.CURVE_MAX_RECORDS);
+  // Replay's real pattern: validate ONCE, then random-access via the
+  // unchecked fast path (decodeCurveRecord re-checksums the whole
+  // payload per call — safe for one-shot use, wrong for scrubbing).
+  const t0 = process.hrtime.bigint();
+  const hW = app.decodeCurveHeader(encW);
+  const oiW = app.curveOrdinalIndex(encW);
+  for (let j = 0; j < hW.count; j += 97) app.decodeCurveRecordUnchecked(encW, j);
+  const ms = Number(process.hrtime.bigint() - t0) / 1e6;
+  ok("worst-case accepted payload: validate + index + spot-decode < 250 ms", ms < 250 && oiW.size === hW.count);
+}
+
+// ---------------------------------------------------------------------
 // 8. App-size guard (#25) — keep the whole offline app under budget.
 // Budget history: 600 KB (index.html only) through v1.17.0; 660 KB in
 // v1.18.0; v1.20.0 split the pure analysis layer into analysis.js and
@@ -1156,12 +1569,14 @@ if (app.computeRaceDebrief && app.resolveBaseline && app.importSessionsFromText)
 group("app size");
 const html = fs.readFileSync(INDEX, "utf8");
 const analysisSrc = fs.readFileSync(ANALYSIS, "utf8");
+const curvesSrc = fs.readFileSync(path.join(path.dirname(INDEX), "curves.js"), "utf8");
 const swSrc = fs.readFileSync(path.join(path.dirname(INDEX), "sw.js"), "utf8");
 const idxKb = Buffer.byteLength(html, "utf8") / 1024;
 const anaKb = Buffer.byteLength(analysisSrc, "utf8") / 1024;
+const curKb = Buffer.byteLength(curvesSrc, "utf8") / 1024;
 const swKb = Buffer.byteLength(swSrc, "utf8") / 1024;
-const totalKb = idxKb + anaKb + swKb;
-console.log(`  index.html = ${idxKb.toFixed(0)} KB · analysis.js = ${anaKb.toFixed(0)} KB · sw.js = ${swKb.toFixed(0)} KB · total = ${totalKb.toFixed(0)} KB`);
+const totalKb = idxKb + anaKb + curKb + swKb;
+console.log(`  index.html = ${idxKb.toFixed(0)} KB · analysis.js = ${anaKb.toFixed(0)} KB · curves.js = ${curKb.toFixed(0)} KB · sw.js = ${swKb.toFixed(0)} KB · total = ${totalKb.toFixed(0)} KB`);
 ok("index.html under 660 KB", idxKb < 660);
 ok("total offline app under 768 KB", totalKb < 768);
 

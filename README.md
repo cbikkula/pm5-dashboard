@@ -21,7 +21,13 @@
 
 > Open in Chrome or Edge on a desktop or Android phone. Click **Connect**, pair the PM5 over Bluetooth, and row.
 
-**Current release: `v1.22.0`** — v1.23.0 "Hardware Confidence" is a built release candidate awaiting physical-PM5 qualification ([gate checklist](docs/hardware-qualification.md)). ~857 KB offline app (one HTML file + four focused scripts), no framework, no build step.
+# RowTrace
+
+**Every stroke, explained.** *Capture every stroke. Understand what changed.*
+
+> **PM5 Dashboard is now RowTrace.** Existing workouts, exports, settings, and supported PM5 connections continue to work. The GitHub path and the three production URLs are unchanged.
+
+**Current release: `v1.24.0`** ([changelog](CHANGELOG.md)) · ~857 KB offline app, no framework, no build step. Physical-PM5 revalidation of the v1.23 transport work remains a recommended follow-up ([checklist](docs/hardware-qualification.md)) — automated + simulated coverage shipped.
 
 ---
 

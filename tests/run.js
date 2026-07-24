@@ -653,7 +653,7 @@ if (app.benchmarkPaceOf && app.suggestTargetsForPlan && app.buildTrainingReport)
       totals: { distanceM: 8000, elapsedS: 2000, avgPaceS: 125, avgWatts: 170, avgHr: 150 },
       results: [] },
   ], { benchmarks: { "2k": 420 }, benchmarkMeta: { "2k": { sessionId: "x", dateISO: "2026-06-01", distanceM: 2000, elapsedS: 420, paceS: 105 } } }, NOWR);
-  ok("report has a title", /# PM5 Dashboard — Training report/.test(rep));
+  ok("report has a title", /# RowTrace — Training report/.test(rep));
   ok("report rolls up the week", /Last 7 days/.test(rep) && /8,000 m/.test(rep));
   ok("report lists PRs", /Personal records/.test(rep) && /2k/.test(rep));
 }
@@ -2067,6 +2067,42 @@ if (app.sanitizeCaptureMeta && app.importSessionsFromText) {
     return q.capture === "clean" || q.capture === null || q.capture === "simulated"; })());
 }
 
+group("rowtrace brand");
+{
+  const html = fs.readFileSync(INDEX, "utf8");
+  const manifest = JSON.parse(fs.readFileSync(path.join(path.dirname(INDEX), "manifest.json"), "utf8"));
+  const sw = fs.readFileSync(path.join(path.dirname(INDEX), "sw.js"), "utf8");
+  const svg = fs.readFileSync(path.join(path.dirname(INDEX), "icon.svg"), "utf8");
+  const tjs = fs.readFileSync(path.join(path.dirname(INDEX), "transport.js"), "utf8");
+  ok("document title is RowTrace", html.includes("<title>RowTrace"));
+  ok("header wordmark + tagline", html.includes(">ROWTRACE<") && html.includes("Every stroke, explained."));
+  ok("metadata + Open Graph branded",
+    html.includes('name="description" content="RowTrace') && html.includes('og:title" content="RowTrace"'));
+  ok("manifest name + short_name are RowTrace", manifest.name === "RowTrace" && manifest.short_name === "RowTrace");
+  ok("manifest keeps PNG icons and adds SVG",
+    manifest.icons.some(i => i.src === "icon.svg") && manifest.icons.some(i => i.src === "icon-512.png"));
+  ok("app version 1.24.0", html.includes('APP_VERSION = "1.24.0"'));
+  ok("sw cache is rowtrace-v51 with icon.svg in shell",
+    sw.includes('"rowtrace-v51"') && sw.includes("./icon.svg"));
+  ok("sw deletes only our own obsolete caches", sw.includes("pm5-v|rowtrace-v"));
+  ok("icon.svg is script-free and original",
+    !/script|onload|onerror|href/i.test(svg) && svg.includes("RowTrace"));
+  ok("exports carry RowTrace producer, legacy kinds retained",
+    html.includes('kind: "pm5-history-export", producer: "RowTrace"') &&
+    html.includes('kind: "pm5-session-export", producer: "RowTrace"'));
+  ok("diagnostics export carries producer",
+    tjs.includes('pm5-connection-diagnostics", producer: "RowTrace"'));
+  ok("export filenames are RowTrace-branded",
+    html.includes("rowtrace-history-") && !html.includes("`pm5-history-${"));
+  const oldName = (html.match(/PM5 Dashboard/g) || []).length;
+  ok("old product name only in the allowlisted migration message",
+    oldName === 3 && html.includes("PM5 Dashboard is now RowTrace"));
+  ok("no mixed product names anywhere", ["RowTrace Dashboard", "PM5 RowTrace", "RowTrace PM5"]
+    .every(x => !html.includes(x) && !sw.includes(x)));
+  ok("device term PM5 retained where accurate", tjs.includes("PM5 live") && html.includes("PM5"));
+  ok("legacy import signature untouched for compatibility",
+    html.includes('"pm5-history-export"') && html.includes("pm5_history_"));
+}
 // ---------------------------------------------------------------------
 // 8. App-size guard (#25) — keep the whole offline app under budget.
 // Budget history: 600 KB (index.html only) through v1.17.0; 660 KB in

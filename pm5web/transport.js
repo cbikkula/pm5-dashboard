@@ -1,4 +1,4 @@
-/* PM5 Dashboard — transport module (v1.23.0): the authoritative BLE
+/* RowTrace — transport module (v1.23.0): the authoritative BLE
  * connection state machine, packet-liveness watchdog, gap recorder,
  * privacy-safe diagnostics, packet minimum-length table, continuity
  * decision, and the deterministic transport simulator. Pure logic
@@ -172,7 +172,7 @@ function createDiagnostics(opts) {
     },
     exportSafe(extra) {
       return {
-        kind: "pm5-connection-diagnostics",
+        kind: "pm5-connection-diagnostics", producer: "RowTrace",
         appVersion: typeof APP_VERSION !== "undefined" ? APP_VERSION : "?",
         exportedAtRelS: Math.round((now() - D.startedAt) / 100) / 10,
         note: "Relative timestamps, normalized state/packet categories, and counters only — no device identifiers, packet bytes, credentials, or workout content.",
@@ -388,7 +388,7 @@ function exportConnDiag() {
     gaps: c.live.gaps.length, reconnects: c.diag.reconnects,
   });
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  triggerDownload(blob, `pm5-connection-diagnostics-${new Date().toISOString().slice(0, 10)}.json`);
+  triggerDownload(blob, `rowtrace-connection-diagnostics-${new Date().toISOString().slice(0, 10)}.json`);
   setToast("Diagnostics exported — relative timestamps, states, and counters only (no identifiers, packets, or workout data).", "ok");
 }
 

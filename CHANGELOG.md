@@ -10,7 +10,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Multi-erg synchronization (needs a new per-erg Firestore surface + rules — deliberately not built on the club-scoped schema)
 - AI technique analysis (peak-timing trends)
 
-## [v1.23.0] — July 2026 — Hardware Confidence (release candidate — pending physical PM5 qualification)
+## [v1.24.0] — July 2026 — RowTrace Rebrand
+
+**PM5 Dashboard is now RowTrace.** Your workouts, settings, exports, and supported PM5 connections continue to work. This release also ships (and supersedes) the unreleased v1.23.0 "Hardware Confidence" release candidate — see its entry below for the full transport changes.
+
+- **Identity** — product name RowTrace, tagline "Every stroke, explained.", supporting line "Capture every stroke. Understand what changed." Original stroke-trace `R` mark (repository-native SVG, monochrome-safe, no Concept2 imagery), refreshed header, title, metadata, Open Graph, manifest (name/short_name RowTrace + SVG icon), and regenerated PWA icons. "PM5" remains wherever it accurately names the Concept2 device (`Connect PM5`, connection states, protocol docs).
+- **Compatibility preserved** — no storage, schema, key, or identifier changes: IndexedDB, localStorage, session ids, Force Curve payloads, Drive sync, bookmarks, tags, preferences, and capture/gap metadata are untouched. Legacy `pm5-history-export` / `pm5-session-export` / `pm5-connection-diagnostics` signatures are retained (documented allowlist) so old exports import and Drive merges stay duplicate-free; new exports add `producer: "RowTrace"` and RowTrace filenames.
+- **Service worker** — cache `pm5-v50` → **`rowtrace-v51`**; upgrade deletes only our own obsolete `pm5-v*`/`rowtrace-v*` caches and now explicitly preserves unrelated origin caches; `icon.svg` joins the offline shell.
+- **Hardware status** — physical PM5 verification remains **deliberately deferred** (owner-authorized); all v1.23 transport behavior is covered by 541+ automated assertions and deterministic byte-level simulations. No universal hardware-compatibility claim is made; a real-erg smoke test is the recommended follow-up, not a release blocker.
+- **Name screen** — a public search found no rowing/fitness product named RowTrace (nearest: the differently-named "Row Tracker"); formal trademark review recorded as an optional owner action, not claimed here.
+
+## [v1.23.0] — July 2026 — Hardware Confidence (shipped inside v1.24.0; physical qualification deferred)
 
 BLE reliability becomes explicit and testable. NOT deployed until the physical-PM5 gate in [`docs/hardware-qualification.md`](docs/hardware-qualification.md) passes on the exact release-candidate commit.
 

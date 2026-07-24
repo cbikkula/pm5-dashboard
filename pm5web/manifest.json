@@ -1,7 +1,7 @@
 {
-  "name": "PM5 Dashboard",
-  "short_name": "PM5",
-  "description": "Real-time Concept2 PM5 dashboard with Force Curve, Drive Length, Ratio, workout planning, and HR zone tracking.",
+  "name": "RowTrace",
+  "short_name": "RowTrace",
+  "description": "RowTrace \u2014 every stroke, explained. Private indoor-rowing capture, replay, comparison, and insight for Concept2 PM5 ergometers.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -9,8 +9,18 @@
   "background_color": "#0b0d12",
   "theme_color": "#0b0d12",
   "lang": "en",
-  "categories": ["fitness", "health", "sports"],
+  "categories": [
+    "fitness",
+    "health",
+    "sports"
+  ],
   "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "icon-192.png",
       "sizes": "192x192",

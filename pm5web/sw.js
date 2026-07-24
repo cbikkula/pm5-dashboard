@@ -1,4 +1,4 @@
-/* PM5 Dashboard — minimal service worker.
+/* RowTrace — minimal service worker.
  *
  * Goals (in order):
  *   1. Make the page eligible for the browser's "Install app" prompt.
@@ -14,7 +14,7 @@
  * everything else, so authenticated Drive calls etc. always go live.
  */
 // Bump this when you redeploy to force a fresh shell on every client.
-const CACHE_VERSION = "pm5-v50";
+const CACHE_VERSION = "rowtrace-v51";
 const SHELL = [
   "./manifest.json",
   "./icon-192.png",
@@ -24,6 +24,7 @@ const SHELL = [
   "./curves.js",
   "./insights.js",
   "./transport.js",
+  "./icon.svg",
 ];
 
 self.addEventListener("install", (event) => {
@@ -37,7 +38,10 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((names) => Promise.all(
-      names.filter((n) => n !== CACHE_VERSION).map((n) => caches.delete(n))
+      // Remove only OUR obsolete app caches (pm5-v* and older rowtrace-v*);
+      // unrelated caches on this origin are preserved.
+      names.filter((n) => n !== CACHE_VERSION && /^(pm5-v|rowtrace-v)/.test(n))
+           .map((n) => caches.delete(n))
     )).then(() => self.clients.claim())
   );
 });

@@ -1,4 +1,4 @@
-/* RowTrace — Insights module (v1.22.0): deterministic cross-
+/* RowTracer — Insights module (v1.22.0): deterministic cross-
  * session evidence. Pure engine first, page renderer + charts after.
  * Classic script after curves.js, network-first in the SW. Every
  * threshold and rule is documented in docs/analysis-methods.md. */
@@ -823,7 +823,7 @@ function insRenderOverview() {
   }
   el.appendChild(wk);
   const note = document.createElement("div"); note.className = "ins-note";
-  note.textContent = "Only workouts recorded or imported into RowTrace — not your entire training history.";
+  note.textContent = "Only workouts recorded or imported into RowTracer — not your entire training history.";
   el.appendChild(note);
 }
 

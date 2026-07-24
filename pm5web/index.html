@@ -3,23 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>RowTrace — every stroke, explained</title>
-<meta name="description" content="RowTrace: private indoor-rowing capture, replay, comparison, and insight for Concept2 PM5 ergometers. Capture every stroke. Understand what changed.">
-<meta property="og:title" content="RowTrace">
+<title>RowTracer — every stroke, explained</title>
+<meta name="description" content="RowTracer: private indoor-rowing capture, replay, comparison, and insight for Concept2 PM5 ergometers. Capture every stroke. Understand what changed.">
+<meta property="og:title" content="RowTracer">
 <meta property="og:description" content="Every stroke, explained. Capture every stroke. Understand what changed.">
 <meta property="og:type" content="website">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0b0d12">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="RowTrace">
+<meta name="apple-mobile-web-app-title" content="RowTracer">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <style>
   /* ==========================================================
-     RowTrace (formerly PM5 Dashboard) — web edition. Same feature set as the
+     RowTracer (formerly PM5 Dashboard) — web edition. Same feature set as the
      desktop app: hero metrics (Force Curve, Drive Length,
      Ratio), secondary cards, workout builder + summary, and
      Bluetooth via the Web Bluetooth API. Single-file by
@@ -2997,7 +2997,7 @@
     <div class="brand">
       <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M8.5 25.5 V8.5 C14 7.5 21.5 8.5 21.5 13 C21.5 17 15.5 18.2 11.5 18.2 L22.5 25.5" fill="none" stroke="var(--accent)" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 28.2 C10 28.2 12 26.6 16 26.6 C20 26.6 22 28.2 26.5 28.2" fill="none" stroke="var(--text-muted)" stroke-width="1.6" stroke-linecap="round" opacity="0.7"/></svg>
       <div>
-        <div class="title">ROWTRACE</div>
+        <div class="title">ROWTRACER</div>
         <div class="subtitle">Every stroke, explained.</div>
       </div>
     </div>
@@ -3084,9 +3084,9 @@
         <div class="card-sub">Layout, theme, HR zones, account</div>
       </button>
     </div>
-    <div class="global-counter" id="globalCounter" title="Workouts logged across all RowTrace users">
+    <div class="global-counter" id="globalCounter" title="Workouts logged across all RowTracer users">
       <span class="gc-value" id="gcValue">—</span>
-      <span class="gc-label">workouts logged on RowTrace</span>
+      <span class="gc-label">workouts logged on RowTracer</span>
     </div>
   </div>
 
@@ -4981,7 +4981,7 @@ const GOOGLE_CLIENT_ID = "651380880092-i6g4a0arq99ilr95jg185c5hlq7e144v.apps.goo
 // release-notes modal can fire on the first load after an update.
 // Released versions are listed in RELEASE_NOTES below — keep these
 // in sync with CHANGELOG.md in the repo.
-const APP_VERSION = "1.24.0";
+const APP_VERSION = "1.24.1";
 // Session record schema version (#12). Bump when the saved-entry shape
 // changes incompatibly so migrations have a foothold.
 // v3 (1.18.0) adds optional entry.strokes (compact per-stroke samples)
@@ -4990,15 +4990,12 @@ const APP_VERSION = "1.24.0";
 const SESSION_SCHEMA_VERSION = 3;
 
 const RELEASE_NOTES = {
-  "1.24.0": {
+  "1.24.1": {
     date: "July 2026",
-    headline: "PM5 Dashboard is now RowTrace",
+    headline: "RowTrace is now RowTracer",
     items: [
-      "New name, same product: RowTrace — every stroke, explained. Your workouts, settings, exports, and supported PM5 connections continue to work.",
-      "A new stroke-trace identity: original mark, updated icons, and consistent naming across the app, installer, and exports",
-      "Everything from the v1.23 line ships too: the Bluetooth connection state machine, packet-liveness watchdog, continuity-checked reconnection, capture-quality metadata, Connection Diagnostics, and the Insights local-date fix",
-      "Compatibility preserved end-to-end: old PM5 Dashboard exports still import, storage stays in place, and Drive sync merges records from both identities without duplicates",
-      "Physical PM5 verification remains deliberately deferred — automated + simulated coverage only; a real-erg smoke test is the recommended follow-up",
+      "RowTrace is now RowTracer. Your workouts, settings, exports, and supported PM5 connections continue to work.",
+      "Naming-only release: no feature, transport, storage, or URL changes — old PM5 Dashboard and RowTrace exports still import, and Drive sync merges records from all three identities without duplicates",
     ],
   },
   // Entries older than 1.20.0 were trimmed (v1.19.0/v1.21.0) — the full
@@ -15171,13 +15168,13 @@ async function collectCurveExports(entries) {
 
 async function exportHistoryJson() {
   const curves = await collectCurveExports(state.history);
-  const payload = { kind: "pm5-history-export", producer: "RowTrace",
+  const payload = { kind: "pm5-history-export", producer: "RowTracer",
                     schemaVersion: SESSION_SCHEMA_VERSION,
                     appVersion: APP_VERSION, exportedAt: new Date().toISOString(),
                     user: { id: state.user.id }, history: state.history };
   if (Object.keys(curves).length) { payload.curveFormat = CURVE_CODEC_VERSION; payload.curves = curves; }
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  triggerDownload(blob, `rowtrace-history-${new Date().toISOString().slice(0,10)}.json`);
+  triggerDownload(blob, `rowtracer-history-${new Date().toISOString().slice(0,10)}.json`);
 }
 
 // Export a single session as raw JSON (#30) — full metadata, results,
@@ -15192,7 +15189,7 @@ async function exportSessionJson(entry) {
     bookmarks: state.bookmarks || [],
   };
   const payload = {
-    kind: "pm5-session-export", producer: "RowTrace",
+    kind: "pm5-session-export", producer: "RowTracer",
     schemaVersion: SESSION_SCHEMA_VERSION,
     appVersion: APP_VERSION, exportedAt: new Date().toISOString(), session: e,
   };
@@ -15200,7 +15197,7 @@ async function exportSessionJson(entry) {
   if (Object.keys(curves).length) { payload.curveFormat = CURVE_CODEC_VERSION; payload.curves = curves; }
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const safe = (e.title || "session").replace(/[^a-z0-9_-]/gi, "_").slice(0, 60);
-  triggerDownload(blob, `rowtrace-${safe}-${new Date().toISOString().slice(0,10)}.json`);
+  triggerDownload(blob, `rowtracer-${safe}-${new Date().toISOString().slice(0,10)}.json`);
 }
 
 // Import sessions (#17) — accepts a whole-history export, a single
@@ -15367,7 +15364,7 @@ function exportHistoryCsv() {
     ]));
   }
   const blob = new Blob([rows.join("")], { type: "text/csv" });
-  triggerDownload(blob, `rowtrace-history-${new Date().toISOString().slice(0,10)}.csv`);
+  triggerDownload(blob, `rowtracer-history-${new Date().toISOString().slice(0,10)}.csv`);
 }
 
 function exportSessionCsv(entry) {
@@ -15415,7 +15412,7 @@ function exportSessionCsv(entry) {
   }
   const blob = new Blob([rows.join("")], { type: "text/csv" });
   const safe = title.replace(/[^a-z0-9_-]/gi, "_").slice(0, 60);
-  triggerDownload(blob, `rowtrace-${safe}-${new Date().toISOString().slice(0,10)}.csv`);
+  triggerDownload(blob, `rowtracer-${safe}-${new Date().toISOString().slice(0,10)}.csv`);
 }
 
 // ====================

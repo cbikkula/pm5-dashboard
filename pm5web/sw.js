@@ -1,4 +1,4 @@
-/* RowTrace — minimal service worker.
+/* RowTracer — minimal service worker.
  *
  * Goals (in order):
  *   1. Make the page eligible for the browser's "Install app" prompt.
@@ -14,7 +14,7 @@
  * everything else, so authenticated Drive calls etc. always go live.
  */
 // Bump this when you redeploy to force a fresh shell on every client.
-const CACHE_VERSION = "rowtrace-v51";
+const CACHE_VERSION = "rowtracer-v52";
 const SHELL = [
   "./manifest.json",
   "./icon-192.png",
@@ -38,9 +38,9 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((names) => Promise.all(
-      // Remove only OUR obsolete app caches (pm5-v* and older rowtrace-v*);
+      // Remove only OUR obsolete app caches (pm5-v*, rowtrace-v*, and older rowtracer-v*);
       // unrelated caches on this origin are preserved.
-      names.filter((n) => n !== CACHE_VERSION && /^(pm5-v|rowtrace-v)/.test(n))
+      names.filter((n) => n !== CACHE_VERSION && /^(pm5-v|rowtrace)/.test(n))
            .map((n) => caches.delete(n))
     )).then(() => self.clients.claim())
   );

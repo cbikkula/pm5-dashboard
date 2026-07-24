@@ -1,4 +1,4 @@
-/* RowTrace — stroke-level evidence module (v1.21.0): the
+/* RowTracer — stroke-level evidence module (v1.21.0): the
  * IndexedDB curve-detail store, in-memory capture append, retention
  * anchors, and the replay Stroke Evidence UI (selected-stroke curve,
  * A/B pins, evidence navigator, window baselines). Classic script,

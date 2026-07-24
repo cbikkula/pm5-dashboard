@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="docs/logo.svg" alt="PM5 Dashboard" width="320">
+<img src="pm5web/icon.svg" alt="RowTracer" width="96">
 
-# PM5 Dashboard
+# RowTracer
 
-**Real-time Bluetooth dashboard for the Concept2 PM5 — built by a rower, for rowers.**
+**Every stroke, explained. A private, evidence-focused rowing performance app for the Concept2 PM5 — built by a rower, for rowers.**
 
 [![CI](https://github.com/cbikkula/pm5-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/cbikkula/pm5-dashboard/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -21,13 +21,10 @@
 
 > Open in Chrome or Edge on a desktop or Android phone. Click **Connect**, pair the PM5 over Bluetooth, and row.
 
-# RowTrace
 
-**Every stroke, explained.** *Capture every stroke. Understand what changed.*
+> **PM5 Dashboard is now RowTracer** (briefly RowTrace in v1.24.0). Existing workouts, exports, settings, and supported PM5 connections continue to work. The GitHub path and the three production URLs are unchanged.
 
-> **PM5 Dashboard is now RowTrace.** Existing workouts, exports, settings, and supported PM5 connections continue to work. The GitHub path and the three production URLs are unchanged.
-
-**Current release: `v1.24.0`** ([changelog](CHANGELOG.md)) · ~857 KB offline app, no framework, no build step. Physical-PM5 revalidation of the v1.23 transport work remains a recommended follow-up ([checklist](docs/hardware-qualification.md)) — automated + simulated coverage shipped.
+**Current release: `v1.24.1`** ([changelog](CHANGELOG.md)) · ~857 KB offline app, no framework, no build step. Physical-PM5 revalidation of the v1.23 transport work remains a recommended follow-up ([checklist](docs/hardware-qualification.md)) — automated + simulated coverage shipped.
 
 ---
 

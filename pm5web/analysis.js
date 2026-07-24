@@ -1,5 +1,5 @@
 // ====================
-// RowTrace — analysis.js (v1.20.0 modular split)
+// RowTracer — analysis.js (v1.20.0 modular split)
 // ====================
 // The PURE analysis layer: import sanitizers, curve shape analysis,
 // drift detection, performance analytics, replay readiness, and the
@@ -898,7 +898,7 @@ function suggestTargetsForPlan(plan, prefs) {
 function buildTrainingReport(history, prefs, nowMs) {
   history = history || [];
   const L = [];
-  L.push("# RowTrace — Training report");
+  L.push("# RowTracer — Training report");
   L.push("");
   L.push(`Generated ${new Date(nowMs).toISOString().slice(0, 10)} · ${history.length} logged session${history.length === 1 ? "" : "s"}`);
   const ov = computePerformanceOverview(history, nowMs);
@@ -933,7 +933,7 @@ function buildTrainingReport(history, prefs, nowMs) {
   if (hr.has && hr.text) { L.push(""); L.push("## Heart rate"); L.push(hr.text); }
   L.push("");
   L.push("---");
-  L.push("Exported from RowTrace.");
+  L.push("Exported from RowTracer.");
   return L.join("\n");
 }
 

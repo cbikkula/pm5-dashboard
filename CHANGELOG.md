@@ -10,6 +10,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Multi-erg synchronization (needs a new per-erg Firestore surface + rules — deliberately not built on the club-scoped schema)
 - AI technique analysis (peak-timing trends)
 
+## [v1.24.1] — July 2026 — RowTracer
+
+**RowTrace is now RowTracer.** Naming-only correction aligning the public product identity; workouts, settings, URLs, imports, and PM5 support are unchanged. Exports produced by PM5 Dashboard, RowTrace, and RowTracer all import (identity is kind- and id-based, never producer-based, so no duplicates). Cache `rowtrace-v51` → `rowtracer-v52`; BLE transport untouched; physical PM5 testing not performed and not required for a naming-only release.
+
 ## [v1.24.0] — July 2026 — RowTrace Rebrand
 
 **PM5 Dashboard is now RowTrace.** Your workouts, settings, exports, and supported PM5 connections continue to work. This release also ships (and supersedes) the unreleased v1.23.0 "Hardware Confidence" release candidate — see its entry below for the full transport changes.

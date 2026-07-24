@@ -1,7 +1,7 @@
 {
-  "name": "RowTrace",
-  "short_name": "RowTrace",
-  "description": "RowTrace \u2014 every stroke, explained. Private indoor-rowing capture, replay, comparison, and insight for Concept2 PM5 ergometers.",
+  "name": "RowTracer",
+  "short_name": "RowTracer",
+  "description": "RowTracer \u2014 every stroke, explained. Private indoor-rowing capture, replay, comparison, and insight for Concept2 PM5 ergometers.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

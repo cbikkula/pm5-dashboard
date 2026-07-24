@@ -1,9 +1,9 @@
-# RowTrace brand notes (v1.24.0)
+# RowTracer brand notes (v1.24.1; named RowTrace in v1.24.0 only)
 
-- **Name:** RowTrace · **Tagline:** Every stroke, explained. · **Support line:** Capture every stroke. Understand what changed.
+- **Name:** RowTracer · **Tagline:** Every stroke, explained. · **Support line:** Capture every stroke. Understand what changed.
 - **Mark:** an original stroke-trace `R` — the letter drawn as measured linework over a small trace baseline. Two tokens only: the app accent (mint) for the stroke, the data accent (blue) / muted gray for the baseline. Monochrome-safe (single-path legibility), crisp at 16–512 px. Source: `pm5web/icon.svg`; PNG icons are rasterized from it. No Concept2 shapes, colors, or monitor imagery.
 - **Tokens/typography:** existing design-token system and local system font stack; no new color literals beyond the two icon strokes, no web fonts.
-- **"PM5" usage:** retained only as the accurate device term (Connect PM5, PM5 live/stale, protocol docs) — never as the product name. Banned combinations: "RowTrace Dashboard", "PM5 RowTrace", "RowTrace PM5 Dashboard".
+- **"PM5" usage:** retained only as the accurate device term (Connect PM5, PM5 live/stale, protocol docs) — never as the product name. Banned combinations: "RowTracer Dashboard", "PM5 RowTracer", "RowTracer PM5 Dashboard".
 - **Legacy-name allowlist** (tested in `tests/run.js`, group "rowtrace brand"): historical CHANGELOG/release-notes entries; the migration message itself; import signatures `pm5-history-export` / `pm5-session-export` / `pm5-connection-diagnostics` (compatibility identifiers — renaming would break imports); storage keys and cache prefixes containing `pm5` (compatibility); the counterapi namespace `pm5dashboard` (shared external counter — renaming would zero the count); repository path and Surge hostnames (owner-controlled URLs, unchanged by design); `docs/reflection.md`/historical docs.
-- **External identities unchanged:** GitHub repo path, Surge hostnames, OAuth/Firebase/Drive identifiers. Optional owner actions: repo rename, RowTrace domain + redirects, display-name updates, formal trademark review.
-- **Conflict screen:** public web search only (July 2026) — no rowing/fitness product named RowTrace found; not legal clearance.
+- **External identities unchanged:** GitHub repo path, Surge hostnames, OAuth/Firebase/Drive identifiers. Optional owner actions: repo rename, RowTracer domain + redirects, display-name updates, formal trademark review.
+- **Conflict screen:** public web search only (July 2026) — no rowing/fitness product named RowTracer found; not legal clearance.

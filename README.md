@@ -14,6 +14,8 @@
 ![Chrome / Edge](https://img.shields.io/badge/browser-Chrome%20%C2%B7%20Edge-22a753.svg)
 ![Concept2 PM5](https://img.shields.io/badge/Concept2-PM5-f5712f.svg)
 
+**Contact:** [rowtracer@gmail.com](mailto:rowtracer@gmail.com)
+
 **Live demo:**
 [pm5row.surge.sh](https://pm5row.surge.sh) · [rowerg-dashboard.surge.sh](https://rowerg-dashboard.surge.sh) · [ergdash.surge.sh](https://ergdash.surge.sh)
 

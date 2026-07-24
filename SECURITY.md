@@ -17,7 +17,7 @@ Live deployments: [pm5row.surge.sh](https://pm5row.surge.sh) · [rowerg-dashboar
 Open a GitHub issue at <https://github.com/cbikkula/pm5-dashboard/issues> with the label
 `security`, or use GitHub's **private vulnerability reporting** on the repository if the
 issue exposes user data. Please include reproduction steps but **not** working exploit
-payloads against the live mirrors. Best-effort response — this is a solo project.
+payloads against the live mirrors. Best-effort response — this is a solo project. General/support contact: rowtracer@gmail.com.
 
 ## Security model in one paragraph
 

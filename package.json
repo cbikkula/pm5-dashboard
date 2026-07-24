@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node tests/run.js",
     "lint": "node scripts/syntax-check.js",
-    "check": "npm run lint && npm test"
+    "check": "npm run lint && npm test",
+    "ig:publish": "node marketing/scripts/post-to-instagram.js --image marketing/instagram/rowtracer-launch.png --caption marketing/instagram/rowtracer-launch-caption.md"
   },
   "license": "MIT"
 }
